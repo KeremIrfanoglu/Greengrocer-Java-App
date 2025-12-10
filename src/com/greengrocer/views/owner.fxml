@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox prefHeight="540.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.greengrocer.controllers.OwnerController">
+   <children>
+      <Label maxWidth="1.7976931348623157E308" style="-fx-background-color: #ddd; -fx-padding: 10;" text="Owner Dashboard" />
+      <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+        <tabs>
+          <Tab text="Products">
+            <content>
+              <VBox spacing="10.0">
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <TextField fx:id="prodNameField" promptText="Name" />
+                              <ComboBox fx:id="prodTypeCombo" prefWidth="100.0" promptText="Type" />
+                              <TextField fx:id="prodPriceField" prefWidth="80.0" promptText="Price" />
+                              <TextField fx:id="prodStockField" prefWidth="80.0" promptText="Stock" />
+                              <TextField fx:id="prodThresholdField" prefWidth="80.0" promptText="Threshold" />
+                              <Button fx:id="browseImageBtn" onAction="#handleBrowseImage" text="Image..." />
+                              <Button fx:id="addProdBtn" onAction="#handleAddProduct" text="Add Product" />
+                              <Button fx:id="refreshProdBtn" onAction="#handleRefreshProducts" text="Refresh" />
+                           </children>
+                        </HBox>
+                        <Label fx:id="statusLabel" textFill="BLUE" />
+                        <TableView fx:id="productTable" VBox.vgrow="ALWAYS">
+                          <columns>
+                            <TableColumn fx:id="colId" prefWidth="50.0" text="ID" />
+                            <TableColumn fx:id="colName" prefWidth="150.0" text="Name" />
+                              <TableColumn fx:id="colType" prefWidth="100.0" text="Type" />
+                              <TableColumn fx:id="colPrice" prefWidth="100.0" text="Price" />
+                              <TableColumn fx:id="colStock" prefWidth="100.0" text="Stock" />
+                              <TableColumn fx:id="colThreshold" prefWidth="100.0" text="Threshold" />
+                          </columns>
+                        </TableView>
+                        <Button onAction="#handleDeleteProduct" text="Delete Selected" />
+                     </children>
+              </VBox>
+            </content>
+          </Tab>
+          <Tab text="Carriers">
+            <content>
+              <VBox spacing="10.0">
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <TextField fx:id="carrUsernameField" promptText="Username" />
+                              <TextField fx:id="carrPasswordField" promptText="Password" />
+                              <TextField fx:id="carrNameField" promptText="Name" />
+                              <TextField fx:id="carrSurnameField" promptText="Surname" />
+                              <TextField fx:id="carrPhoneField" promptText="Phone" />
+                              <Button onAction="#handleAddCarrier" text="Recruit" />
+                           </children>
+                        </HBox>
+                        <TableView fx:id="carrierTable" VBox.vgrow="ALWAYS">
+                           <columns>
+                              <TableColumn fx:id="colCarrId" prefWidth="50.0" text="ID" />
+                              <TableColumn fx:id="colCarrUsername" prefWidth="100.0" text="Username" />
+                              <TableColumn fx:id="colCarrName" prefWidth="100.0" text="Name" />
+                              <TableColumn fx:id="colCarrSurname" prefWidth="100.0" text="Surname" />
+                              <TableColumn fx:id="colCarrPhone" prefWidth="100.0" text="Phone" />
+                           </columns>
+                        </TableView>
+                        <Button onAction="#handleFireCarrier" text="Fire Selected" />
+                     </children>
+              </VBox>
+            </content>
+          </Tab>
+            <Tab text="Reports">
+               <content>
+                  <VBox spacing="20.0">
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <children>
+                        <HBox spacing="20.0">
+                           <children>
+                              <Button onAction="#handleRefreshReports" text="Refresh Reports" />
+                              <Label fx:id="reportStatusLabel" textFill="BLUE" />
+                           </children>
+                        </HBox>
+                        <HBox spacing="20.0" VBox.vgrow="ALWAYS">
+                           <children>
+                              <VBox HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-weight: bold;" text="Sales by Product Type" />
+                                    <javafx.scene.chart.PieChart fx:id="productTypeChart" prefHeight="300.0" />
+                                 </children>
+                              </VBox>
+                              <VBox HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-weight: bold;" text="Daily Revenue (Last 7 Days)" />
+                                    <javafx.scene.chart.BarChart fx:id="revenueChart" prefHeight="300.0">
+                                       <xAxis>
+                                          <javafx.scene.chart.CategoryAxis label="Date" />
+                                       </xAxis>
+                                       <yAxis>
+                                          <javafx.scene.chart.NumberAxis label="Revenue ($)" />
+                                       </yAxis>
+                                    </javafx.scene.chart.BarChart>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <VBox spacing="5.0">
+                           <children>
+                              <Label style="-fx-font-weight: bold;" text="Summary Statistics" />
+                              <Label fx:id="totalRevenueLabel" text="Total Revenue: $0.00" />
+                              <Label fx:id="totalOrdersLabel" text="Total Orders: 0" />
+                              <Label fx:id="totalProductsLabel" text="Total Products: 0" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+            <Tab text="Orders">
+               <content>
+                  <VBox spacing="10.0">
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <Button onAction="#handleRefreshAllOrders" text="Refresh Orders" />
+                              <javafx.scene.control.ComboBox fx:id="orderStatusFilter" prefWidth="150.0" promptText="All Statuses" onAction="#handleFilterOrders" />
+                              <Label fx:id="orderManagementStatus" textFill="BLUE" />
+                           </children>
+                        </HBox>
+                        <TableView fx:id="allOrdersTable" VBox.vgrow="ALWAYS">
+                          <columns>
+                            <TableColumn fx:id="colAllOrderId" prefWidth="80.0" text="Order ID" />
+                            <TableColumn fx:id="colAllOrderCustomer" prefWidth="100.0" text="Customer ID" />
+                            <TableColumn fx:id="colAllOrderCarrier" prefWidth="100.0" text="Carrier ID" />
+                            <TableColumn fx:id="colAllOrderDate" prefWidth="150.0" text="Date" />
+                            <TableColumn fx:id="colAllOrderTotal" prefWidth="100.0" text="Total" />
+                            <TableColumn fx:id="colAllOrderStatus" prefWidth="100.0" text="Status" />
+                          </columns>
+                        </TableView>
+                        <HBox spacing="10.0">
+                           <children>
+                              <Button onAction="#handleCancelOrder" style="-fx-background-color: #f44336; -fx-text-fill: white;" text="Cancel Selected Order" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+        </tabs>
+      </TabPane>
+   </children>
+</VBox>

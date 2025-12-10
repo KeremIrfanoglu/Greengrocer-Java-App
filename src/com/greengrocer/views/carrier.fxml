@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="540.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.greengrocer.controllers.CarrierController">
+   <children>
+      <VBox spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="20.0" style="-fx-background-color: #eee; -fx-padding: 10;">
+               <children>
+                  <Label fx:id="welcomeLabel" style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Carrier Dashboard" />
+                  <Label fx:id="statusLabel" textFill="RED" />
+               </children>
+            </HBox>
+            <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+              <tabs>
+                <Tab text="Available Orders">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox layoutX="10.0" layoutY="10.0" spacing="10.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+                                 <children>
+                                    <TableView fx:id="availableTable" VBox.vgrow="ALWAYS">
+                                      <columns>
+                                        <TableColumn fx:id="colAvId" prefWidth="100.0" text="Order ID" />
+                                        <TableColumn fx:id="colAvDate" prefWidth="200.0" text="Date" />
+                                          <TableColumn fx:id="colAvTotal" prefWidth="100.0" text="Total" />
+                                      </columns>
+                                    </TableView>
+                                    <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                                       <children>
+                                           <Button mnemonicParsing="false" onAction="#handleRefresh" text="Refresh" />
+                                          <Button mnemonicParsing="false" onAction="#handleTakeOrder" style="-fx-background-color: #2196F3; -fx-text-fill: white;" text="Take Order" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                  </content>
+                </Tab>
+                <Tab text="My Deliveries">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <VBox layoutX="10.0" layoutY="10.0" spacing="10.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+                                 <children>
+                                    <TableView fx:id="deliveryTable" VBox.vgrow="ALWAYS">
+                                      <columns>
+                                        <TableColumn fx:id="colDelId" prefWidth="100.0" text="Order ID" />
+                                        <TableColumn fx:id="colDelDate" prefWidth="200.0" text="Date" />
+                                          <TableColumn fx:id="colDelTotal" prefWidth="100.0" text="Total" />
+                                          <TableColumn fx:id="colDelStatus" prefWidth="150.0" text="Status" />
+                                      </columns>
+                                    </TableView>
+                                    <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                                       <children>
+                                           <Button mnemonicParsing="false" onAction="#handleRefresh" text="Refresh" />
+                                          <Button mnemonicParsing="false" onAction="#handleCompleteDelivery" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" text="Complete Delivery" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                  </content>
+                </Tab>
+              </tabs>
+            </TabPane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
