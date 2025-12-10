@@ -153,6 +153,8 @@ public class OwnerController {
     @FXML
     private javafx.scene.control.ComboBox<String> orderStatusFilter;
     @FXML
+    private Label welcomeLabel;
+    @FXML
     private Label orderManagementStatus;
 
     private com.greengrocer.dao.OrderDAO orderDAO;
@@ -167,6 +169,11 @@ public class OwnerController {
     public void initData(User user) {
         this.currentUser = user;
         System.out.println("Owner initialized: " + user.getUsername());
+
+        // Welcome message
+        if (welcomeLabel != null) {
+            welcomeLabel.setText("Welcome, " + currentUser.getFirstName() + " " + currentUser.getLastName() + "!");
+        }
 
         prodTypeCombo.setItems(FXCollections.observableArrayList("Vegetable", "Fruit"));
 
@@ -702,6 +709,21 @@ public class OwnerController {
             e.printStackTrace();
             statusLabel.setText("Database error: " + e.getMessage());
             statusLabel.setStyle("-fx-text-fill: red;");
+        }
+    }
+
+    @FXML
+    public void handleLogout() {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/com/greengrocer/views/login.fxml"));
+            javafx.scene.Parent root = loader.load();
+            javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
+            stage.setScene(new javafx.scene.Scene(root, 960, 540));
+            stage.setTitle("Greengrocer Login");
+            stage.centerOnScreen();
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
         }
     }
 }

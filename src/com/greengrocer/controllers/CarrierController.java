@@ -141,4 +141,19 @@ public class CarrierController {
             statusLabel.setText("Database error.");
         }
     }
+
+    @FXML
+    public void handleLogout() {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/com/greengrocer/views/login.fxml"));
+            javafx.scene.Parent root = loader.load();
+            javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
+            stage.setScene(new javafx.scene.Scene(root, 960, 540));
+            stage.setTitle("Greengrocer Login");
+            stage.centerOnScreen();
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

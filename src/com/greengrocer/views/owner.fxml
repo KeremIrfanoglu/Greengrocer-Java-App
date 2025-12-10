@@ -14,7 +14,14 @@
 
 <VBox prefHeight="540.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.greengrocer.controllers.OwnerController">
    <children>
-      <Label maxWidth="1.7976931348623157E308" style="-fx-background-color: #ddd; -fx-padding: 10;" text="Owner Dashboard" />
+      <HBox style="-fx-background-color: #ddd; -fx-padding: 10;" alignment="CENTER_LEFT" spacing="20.0">
+         <children>
+            <Label text="Owner Dashboard" style="-fx-font-weight: bold; -fx-font-size: 16;" />
+            <Label fx:id="welcomeLabel" text="Welcome!" style="-fx-font-style: italic;" HBox.hgrow="ALWAYS" />
+            <javafx.scene.layout.Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#handleLogout" text="🚪 Logout" style="-fx-background-color: #f44336; -fx-text-fill: white;" />
+         </children>
+      </HBox>
       <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <tabs>
           <Tab text="Products">
