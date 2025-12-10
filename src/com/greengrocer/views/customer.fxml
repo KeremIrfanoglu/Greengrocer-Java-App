@@ -32,10 +32,11 @@
                                  <children>
                                     <TableView fx:id="shopTable" VBox.vgrow="ALWAYS">
                                       <columns>
-                                        <TableColumn fx:id="colShopName" prefWidth="200.0" text="Product Name" />
-                                        <TableColumn fx:id="colShopType" prefWidth="100.0" text="Type" />
-                                          <TableColumn fx:id="colShopPrice" prefWidth="100.0" text="Price" />
-                                          <TableColumn fx:id="colShopStock" prefWidth="100.0" text="Stock" />
+                                        <TableColumn fx:id="colShopImage" prefWidth="60.0" text="Image" />
+                                        <TableColumn fx:id="colShopName" prefWidth="180.0" text="Product Name" />
+                                        <TableColumn fx:id="colShopType" prefWidth="80.0" text="Type" />
+                                          <TableColumn fx:id="colShopPrice" prefWidth="80.0" text="Price" />
+                                          <TableColumn fx:id="colShopStock" prefWidth="80.0" text="Stock" />
                                       </columns>
                                     </TableView>
                                     <HBox alignment="CENTER_LEFT" spacing="10.0">

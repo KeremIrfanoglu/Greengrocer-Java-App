@@ -40,6 +40,8 @@ public class CustomerController {
     private TableColumn<Product, Double> colShopPrice;
     @FXML
     private TableColumn<Product, Double> colShopStock;
+    @FXML
+    private TableColumn<Product, javafx.scene.image.ImageView> colShopImage;
 
     @FXML
     private javafx.scene.control.ComboBox<String> filterTypeCombo;
@@ -96,6 +98,32 @@ public class CustomerController {
         colShopType.setCellValueFactory(new PropertyValueFactory<>("type"));
         colShopPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
         colShopStock.setCellValueFactory(new PropertyValueFactory<>("stock"));
+
+        // Image Column with ImageView
+        colShopImage
+                .setCellFactory(column -> new javafx.scene.control.TableCell<Product, javafx.scene.image.ImageView>() {
+                    private final javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
+
+                    @Override
+                    protected void updateItem(javafx.scene.image.ImageView item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                            setGraphic(null);
+                        } else {
+                            Product product = getTableRow().getItem();
+                            javafx.scene.image.Image img = product.getImage();
+                            if (img != null) {
+                                imageView.setImage(img);
+                                imageView.setFitWidth(50);
+                                imageView.setFitHeight(50);
+                                imageView.setPreserveRatio(true);
+                                setGraphic(imageView);
+                            } else {
+                                setGraphic(null);
+                            }
+                        }
+                    }
+                });
 
         // Setup Filter/Sort ComboBoxes
         filterTypeCombo.setItems(FXCollections.observableArrayList("All", "Vegetable", "Fruit"));

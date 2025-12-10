@@ -38,7 +38,11 @@ public class OwnerController {
     @FXML
     private TextField prodThresholdField;
     @FXML
+    private TextField prodCostField;
+    @FXML
     private Label statusLabel;
+
+    private int selectedProductId = -1; // For update functionality
 
     @FXML
     private TableView<Product> productTable;
@@ -54,6 +58,10 @@ public class OwnerController {
     private TableColumn<Product, Double> colStock;
     @FXML
     private TableColumn<Product, Double> colThreshold;
+    @FXML
+    private TableColumn<Product, Double> colCost;
+    @FXML
+    private TableColumn<Product, javafx.scene.image.ImageView> colImage;
 
     // Carrier Tab Fields
     @FXML
@@ -96,6 +104,36 @@ public class OwnerController {
     private Label totalOrdersLabel;
     @FXML
     private Label totalProductsLabel;
+    @FXML
+    private Label totalProfitLabel;
+    @FXML
+    private Label inventoryCostLabel;
+    @FXML
+    private javafx.scene.control.ComboBox<String> revenueViewCombo;
+
+    // Profit/Loss Table
+    @FXML
+    private TableView<Object[]> profitLossTable;
+    @FXML
+    private TableColumn<Object[], String> colPLProduct;
+    @FXML
+    private TableColumn<Object[], Double> colPLRevenue;
+    @FXML
+    private TableColumn<Object[], Double> colPLCost;
+    @FXML
+    private TableColumn<Object[], Double> colPLProfit;
+
+    // Cost Analysis Table
+    @FXML
+    private TableView<Object[]> costAnalysisTable;
+    @FXML
+    private TableColumn<Object[], String> colCAProduct;
+    @FXML
+    private TableColumn<Object[], Double> colCAPrice;
+    @FXML
+    private TableColumn<Object[], Double> colCACost;
+    @FXML
+    private TableColumn<Object[], Double> colCAMargin;
 
     // Order Management Tab Fields
     @FXML
@@ -139,6 +177,32 @@ public class OwnerController {
         colPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
         colStock.setCellValueFactory(new PropertyValueFactory<>("stock"));
         colThreshold.setCellValueFactory(new PropertyValueFactory<>("threshold"));
+        colCost.setCellValueFactory(new PropertyValueFactory<>("costPrice"));
+
+        // Image Column with ImageView
+        colImage.setCellFactory(column -> new javafx.scene.control.TableCell<Product, javafx.scene.image.ImageView>() {
+            private final javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
+
+            @Override
+            protected void updateItem(javafx.scene.image.ImageView item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    Product product = getTableRow().getItem();
+                    javafx.scene.image.Image img = product.getImage();
+                    if (img != null) {
+                        imageView.setImage(img);
+                        imageView.setFitWidth(50);
+                        imageView.setFitHeight(50);
+                        imageView.setPreserveRatio(true);
+                        setGraphic(imageView);
+                    } else {
+                        setGraphic(null);
+                    }
+                }
+            }
+        });
 
         loadProducts();
 
@@ -200,6 +264,7 @@ public class OwnerController {
         String name = prodNameField.getText();
         String type = prodTypeCombo.getValue();
         String priceStr = prodPriceField.getText();
+        String costStr = prodCostField.getText();
         String stockStr = prodStockField.getText();
         String thresholdStr = prodThresholdField.getText();
 
@@ -211,10 +276,11 @@ public class OwnerController {
 
         try {
             double price = Double.parseDouble(priceStr);
+            double costPrice = costStr.isEmpty() ? 0 : Double.parseDouble(costStr);
             double stock = Double.parseDouble(stockStr);
             double threshold = Double.parseDouble(thresholdStr);
 
-            if (price < 0 || stock < 0 || threshold < 0) {
+            if (price < 0 || stock < 0 || threshold < 0 || costPrice < 0) {
                 statusLabel.setText("Values cannot be negative.");
                 statusLabel.setStyle("-fx-text-fill: red;");
                 return;
@@ -225,7 +291,7 @@ public class OwnerController {
                 fis = new FileInputStream(selectedImageFile);
             }
 
-            boolean success = productDAO.addProduct(name, type, price, stock, threshold, fis);
+            boolean success = productDAO.addProduct(name, type, price, costPrice, stock, threshold, fis);
             if (success) {
                 statusLabel.setText("Product added successfully!");
                 statusLabel.setStyle("-fx-text-fill: green;");
@@ -376,6 +442,12 @@ public class OwnerController {
 
     private void loadReports() {
         try {
+            // Initialize revenue view combo if not done
+            if (revenueViewCombo.getItems().isEmpty()) {
+                revenueViewCombo.setItems(FXCollections.observableArrayList("Daily", "Weekly", "Monthly"));
+                revenueViewCombo.setValue("Daily");
+            }
+
             // Pie Chart - Sales by Product Type
             Map<String, Double> salesByType = reportDAO.getSalesByProductType();
             ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
@@ -385,24 +457,34 @@ public class OwnerController {
             }
             productTypeChart.setData(pieData);
 
-            // Bar Chart - Daily Revenue
-            Map<String, Double> dailyRevenue = reportDAO.getDailyRevenue();
-            XYChart.Series<String, Number> series = new XYChart.Series<>();
-            series.setName("Revenue");
-            for (Map.Entry<String, Double> entry : dailyRevenue.entrySet()) {
-                series.getData().add(new XYChart.Data<>(entry.getKey(), entry.getValue()));
-            }
-            revenueChart.getData().clear();
-            revenueChart.getData().add(series);
+            // Bar Chart - Revenue based on selected view
+            loadRevenueChart();
 
             // Summary Statistics
             double totalRevenue = reportDAO.getTotalRevenue();
             int totalOrders = reportDAO.getTotalOrders();
             int totalProducts = reportDAO.getTotalProducts();
+            double totalProfit = reportDAO.getTotalProfit();
+            double inventoryCost = reportDAO.getTotalInventoryCost();
 
             totalRevenueLabel.setText("Total Revenue: $" + String.format("%.2f", totalRevenue));
             totalOrdersLabel.setText("Total Orders: " + totalOrders);
             totalProductsLabel.setText("Total Products: " + totalProducts);
+
+            // Profit/Loss Summary
+            totalProfitLabel.setText("Total Profit: $" + String.format("%.2f", totalProfit));
+            if (totalProfit >= 0) {
+                totalProfitLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+            } else {
+                totalProfitLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+            }
+            inventoryCostLabel.setText("Inventory Cost: $" + String.format("%.2f", inventoryCost));
+
+            // Profit/Loss Table
+            loadProfitLossTable();
+
+            // Cost Analysis Table
+            loadCostAnalysisTable();
 
             reportStatusLabel.setText("Reports loaded.");
             reportStatusLabel.setStyle("-fx-text-fill: green;");
@@ -411,6 +493,66 @@ public class OwnerController {
             reportStatusLabel.setText("Error loading reports.");
             reportStatusLabel.setStyle("-fx-text-fill: red;");
         }
+    }
+
+    @FXML
+    public void handleRevenueViewChange() {
+        try {
+            loadRevenueChart();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadRevenueChart() throws SQLException {
+        String view = revenueViewCombo.getValue();
+        Map<String, Double> revenueData;
+
+        if ("Weekly".equals(view)) {
+            revenueData = reportDAO.getWeeklyRevenue();
+        } else if ("Monthly".equals(view)) {
+            revenueData = reportDAO.getMonthlyRevenue();
+        } else {
+            revenueData = reportDAO.getDailyRevenue();
+        }
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Revenue");
+        for (Map.Entry<String, Double> entry : revenueData.entrySet()) {
+            series.getData().add(new XYChart.Data<>(entry.getKey(), entry.getValue()));
+        }
+        revenueChart.getData().clear();
+        revenueChart.getData().add(series);
+    }
+
+    private void loadProfitLossTable() throws SQLException {
+        // Setup columns if not done
+        colPLProduct.setCellValueFactory(
+                data -> new javafx.beans.property.SimpleStringProperty((String) data.getValue()[0]));
+        colPLRevenue.setCellValueFactory(
+                data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[1]).asObject());
+        colPLCost.setCellValueFactory(
+                data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[2]).asObject());
+        colPLProfit.setCellValueFactory(
+                data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[3]).asObject());
+
+        java.util.List<Object[]> profitData = reportDAO.getProfitLossPerProduct();
+        profitLossTable.setItems(FXCollections.observableArrayList(profitData));
+    }
+
+    private void loadCostAnalysisTable() throws SQLException {
+        // Setup columns if not done
+        colCAProduct.setCellValueFactory(
+                data -> new javafx.beans.property.SimpleStringProperty((String) data.getValue()[0]));
+        colCAPrice.setCellValueFactory(
+                data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[1]).asObject());
+        colCACost.setCellValueFactory(
+                data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[2]).asObject());
+        colCAMargin.setCellValueFactory(
+                data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[3]).asObject());
+
+        java.util.List<Object[]> costData = reportDAO.getCostAnalysis();
+        costAnalysisTable.setItems(FXCollections.observableArrayList(costData));
     }
 
     // Order Management Methods
@@ -489,6 +631,77 @@ public class OwnerController {
                 orderManagementStatus.setText("Database error.");
                 orderManagementStatus.setStyle("-fx-text-fill: red;");
             }
+        }
+    }
+
+    @FXML
+    public void handleLoadProductToForm() {
+        Product selected = productTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            statusLabel.setText("Select a product to load.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        selectedProductId = selected.getId();
+        prodNameField.setText(selected.getName());
+        prodTypeCombo.setValue(selected.getType());
+        prodPriceField.setText(String.valueOf(selected.getPrice()));
+        prodCostField.setText(String.valueOf(selected.getCostPrice()));
+        prodStockField.setText(String.valueOf(selected.getStock()));
+        prodThresholdField.setText(String.valueOf(selected.getThreshold()));
+
+        statusLabel.setText("Product #" + selected.getId() + " loaded. Edit and click Update.");
+        statusLabel.setStyle("-fx-text-fill: blue;");
+    }
+
+    @FXML
+    public void handleUpdateProduct() {
+        if (selectedProductId == -1) {
+            statusLabel.setText("First load a product using 'Load to Form'.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        String name = prodNameField.getText();
+        String type = prodTypeCombo.getValue();
+        String priceStr = prodPriceField.getText();
+        String costStr = prodCostField.getText();
+        String stockStr = prodStockField.getText();
+        String thresholdStr = prodThresholdField.getText();
+
+        if (name.isEmpty() || type == null || priceStr.isEmpty() || stockStr.isEmpty() || thresholdStr.isEmpty()) {
+            statusLabel.setText("All fields are required.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        try {
+            double price = Double.parseDouble(priceStr);
+            double costPrice = costStr.isEmpty() ? 0 : Double.parseDouble(costStr);
+            double stock = Double.parseDouble(stockStr);
+            double threshold = Double.parseDouble(thresholdStr);
+
+            Product updatedProduct = new Product(selectedProductId, name, type, price, costPrice, stock, threshold,
+                    null);
+
+            if (productDAO.updateProduct(updatedProduct)) {
+                statusLabel.setText("Product #" + selectedProductId + " updated successfully!");
+                statusLabel.setStyle("-fx-text-fill: green;");
+                loadProducts();
+                clearFields();
+                selectedProductId = -1;
+            } else {
+                statusLabel.setText("Failed to update product.");
+                statusLabel.setStyle("-fx-text-fill: red;");
+            }
+        } catch (NumberFormatException e) {
+            statusLabel.setText("Invalid number format.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            statusLabel.setText("Database error: " + e.getMessage());
+            statusLabel.setStyle("-fx-text-fill: red;");
         }
     }
 }

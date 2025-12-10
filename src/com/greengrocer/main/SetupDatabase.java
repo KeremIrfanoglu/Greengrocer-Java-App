@@ -48,9 +48,18 @@ public class SetupDatabase {
                                                 "name VARCHAR(100) NOT NULL, " +
                                                 "type ENUM('Vegetable', 'Fruit') NOT NULL, " +
                                                 "price DOUBLE NOT NULL, " +
+                                                "cost_price DOUBLE DEFAULT 0, " +
                                                 "stock DOUBLE NOT NULL, " +
                                                 "threshold DOUBLE NOT NULL, " +
                                                 "imagelocation LONGBLOB)"); // BLOB for images
+
+                                // Add cost_price column if it doesn't exist (for existing databases)
+                                try {
+                                        stmt.executeUpdate(
+                                                        "ALTER TABLE ProductInfo ADD COLUMN cost_price DOUBLE DEFAULT 0 AFTER price");
+                                } catch (SQLException e) {
+                                        // Column already exists, ignore
+                                }
 
                                 // OrderInfo
                                 stmt.executeUpdate("CREATE TABLE IF NOT EXISTS OrderInfo (" +
