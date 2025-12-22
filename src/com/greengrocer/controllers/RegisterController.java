@@ -12,6 +12,8 @@ import javafx.scene.Parent;
 import java.io.File;
 import java.sql.SQLException;
 
+import com.greengrocer.util.StyleHelper;
+
 public class RegisterController {
 
     @FXML
@@ -75,7 +77,7 @@ public class RegisterController {
             // Use File URI for consistency
             Parent root = FXMLLoader.load(new File("src/com/greengrocer/views/login.fxml").toURI().toURL());
             stage.setTitle("Greengrocer Login");
-            stage.setScene(new Scene(root, 960, 540));
+            stage.setScene(StyleHelper.createStyledScene(root, 960, 540));
         } catch (Exception e) {
             e.printStackTrace();
         }

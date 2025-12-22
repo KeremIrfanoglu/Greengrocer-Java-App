@@ -1,0 +1,24 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Greengrocer",
+            "request": "launch",
+            "mainClass": "com.greengrocer.Main",
+            "vmArgs": "--module-path \"${workspaceFolder}/lib\" --add-modules javafx.controls,javafx.fxml"
+        },
+        {
+            "type": "java",
+            "name": "Setup Database",
+            "request": "launch",
+            "mainClass": "com.greengrocer.setup.SetupDatabase"
+        },
+        {
+            "type": "java",
+            "name": "Seed Data",
+            "request": "launch",
+            "mainClass": "com.greengrocer.setup.SeedData"
+        }
+    ]
+}

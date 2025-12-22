@@ -28,6 +28,9 @@ public class OwnerController {
     private File selectedImageFile;
 
     @FXML
+    private javafx.scene.control.TabPane mainTabPane;
+
+    @FXML
     private TextField prodNameField;
     @FXML
     private ComboBox<String> prodTypeCombo;
@@ -157,13 +160,65 @@ public class OwnerController {
     @FXML
     private Label orderManagementStatus;
 
+    // Stock Alerts Tab
+    @FXML
+    private TableView<Product> alertsTable;
+    @FXML
+    private TableColumn<Product, Integer> colAlertId;
+    @FXML
+    private TableColumn<Product, String> colAlertName;
+    @FXML
+    private TableColumn<Product, String> colAlertType;
+    @FXML
+    private TableColumn<Product, Double> colAlertStock;
+    @FXML
+    private TableColumn<Product, Double> colAlertThreshold;
+    @FXML
+    private TableColumn<Product, Double> colAlertDiff;
+    @FXML
+    private Label alertCountLabel;
+
     private com.greengrocer.dao.OrderDAO orderDAO;
+    private com.greengrocer.dao.CouponDAO couponDAO;
+
+    // Coupon Tab Fields
+    @FXML
+    private TextField couponCodeField;
+    @FXML
+    private TextField couponDiscountField;
+    @FXML
+    private TextField couponMaxUsesField;
+    @FXML
+    private TableView<com.greengrocer.models.Coupon> couponTable;
+    @FXML
+    private TableColumn<com.greengrocer.models.Coupon, String> colCouponCode;
+    @FXML
+    private TableColumn<com.greengrocer.models.Coupon, Double> colCouponDiscount;
+    @FXML
+    private TableColumn<com.greengrocer.models.Coupon, Integer> colCouponMaxUses;
+    @FXML
+    private TableColumn<com.greengrocer.models.Coupon, Integer> colCouponCurrentUses;
+    @FXML
+    private TableColumn<com.greengrocer.models.Coupon, Boolean> colCouponActive;
+    @FXML
+    private Label couponStatusLabel;
+    @FXML
+    private TableView<Object[]> couponHistoryTable;
+    @FXML
+    private TableColumn<Object[], String> colHistoryCode;
+    @FXML
+    private TableColumn<Object[], String> colHistoryDate;
+    @FXML
+    private TableColumn<Object[], String> colHistoryUser;
+    @FXML
+    private TableColumn<Object[], Double> colHistoryAmount;
 
     public OwnerController() {
         this.productDAO = new ProductDAO();
         this.userDAO = new com.greengrocer.dao.UserDAO();
         this.reportDAO = new ReportDAO();
         this.orderDAO = new com.greengrocer.dao.OrderDAO();
+        this.couponDAO = new com.greengrocer.dao.CouponDAO();
     }
 
     public void initData(User user) {
@@ -175,7 +230,29 @@ public class OwnerController {
             welcomeLabel.setText("Welcome, " + currentUser.getFirstName() + " " + currentUser.getLastName() + "!");
         }
 
-        prodTypeCombo.setItems(FXCollections.observableArrayList("Vegetable", "Fruit"));
+        prodTypeCombo.setItems(FXCollections.observableArrayList("Vegetable", "Fruit", "Dairy", "Bakery", "Meat",
+                "Beverages", "Snacks"));
+
+        // Setup tab change listener for auto-refresh
+        if (mainTabPane != null) {
+            mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+                if (newTab != null) {
+                    String tabText = newTab.getText();
+                    if (tabText.contains("Products")) {
+                        loadProducts();
+                    } else if (tabText.contains("Reports")) {
+                        handleRefreshReports();
+                    } else if (tabText.contains("Orders")) {
+                        handleRefreshAllOrders();
+                    } else if (tabText.contains("Alerts")) {
+                        handleRefreshAlerts();
+                    } else if (tabText.contains("Coupons")) {
+                        loadCoupons();
+                        loadCouponHistory();
+                    }
+                }
+            });
+        }
 
         // Setup Table
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -458,11 +535,18 @@ public class OwnerController {
             // Pie Chart - Sales by Product Type
             Map<String, Double> salesByType = reportDAO.getSalesByProductType();
             ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
+
+            // Calculate total for percentages
+            double totalSales = salesByType.values().stream().mapToDouble(Double::doubleValue).sum();
+
             for (Map.Entry<String, Double> entry : salesByType.entrySet()) {
-                pieData.add(new PieChart.Data(entry.getKey() + " ($" + String.format("%.2f", entry.getValue()) + ")",
+                double percentage = totalSales > 0 ? (entry.getValue() / totalSales) * 100 : 0;
+                pieData.add(new PieChart.Data(
+                        entry.getKey() + " (" + String.format("%.1f%%", percentage) + ")",
                         entry.getValue()));
             }
             productTypeChart.setData(pieData);
+            productTypeChart.setLabelsVisible(true);
 
             // Bar Chart - Revenue based on selected view
             loadRevenueChart();
@@ -715,15 +799,239 @@ public class OwnerController {
     @FXML
     public void handleLogout() {
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
-                    getClass().getResource("/com/greengrocer/views/login.fxml"));
-            javafx.scene.Parent root = loader.load();
+            javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(
+                    new java.io.File("src/com/greengrocer/views/login.fxml").toURI().toURL());
             javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
-            stage.setScene(new javafx.scene.Scene(root, 960, 540));
+            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 960, 540));
             stage.setTitle("Greengrocer Login");
             stage.centerOnScreen();
-        } catch (java.io.IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // Stock Alerts Methods
+    @FXML
+    public void handleRefreshAlerts() {
+        loadAlerts();
+    }
+
+    private void loadAlerts() {
+        try {
+            // Setup columns if not done
+            colAlertId.setCellValueFactory(new PropertyValueFactory<>("id"));
+            colAlertName.setCellValueFactory(new PropertyValueFactory<>("name"));
+            colAlertType.setCellValueFactory(new PropertyValueFactory<>("type"));
+            colAlertStock.setCellValueFactory(new PropertyValueFactory<>("stock"));
+            colAlertThreshold.setCellValueFactory(new PropertyValueFactory<>("threshold"));
+
+            // Calculate shortage (threshold - stock)
+            colAlertDiff.setCellValueFactory(cellData -> {
+                Product p = cellData.getValue();
+                double shortage = p.getThreshold() - p.getStock();
+                return new javafx.beans.property.SimpleDoubleProperty(shortage).asObject();
+            });
+
+            // Get products below threshold
+            java.util.List<Product> allProducts = productDAO.getAllProducts();
+            java.util.List<Product> lowStock = allProducts.stream()
+                    .filter(p -> p.getStock() < p.getThreshold())
+                    .collect(java.util.stream.Collectors.toList());
+
+            alertsTable.setItems(FXCollections.observableArrayList(lowStock));
+
+            // Update count label
+            if (lowStock.isEmpty()) {
+                alertCountLabel.setText("✅ All stock levels OK");
+                alertCountLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+            } else {
+                alertCountLabel.setText("⚠️ " + lowStock.size() + " products need restocking!");
+                alertCountLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ==================== COUPON MANAGEMENT ====================
+
+    @FXML
+    public void handleCreateCoupon() {
+        String code = couponCodeField.getText().trim();
+        String discountStr = couponDiscountField.getText().trim();
+        String maxUsesStr = couponMaxUsesField.getText().trim();
+
+        if (code.isEmpty() || discountStr.isEmpty() || maxUsesStr.isEmpty()) {
+            couponStatusLabel.setText("Tüm alanları doldurun!");
+            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        try {
+            double discount = Double.parseDouble(discountStr);
+            int maxUses = Integer.parseInt(maxUsesStr);
+
+            if (discount <= 0 || discount > 100) {
+                couponStatusLabel.setText("Discount must be between 1-100%!");
+                couponStatusLabel.setStyle("-fx-text-fill: red;");
+                return;
+            }
+
+            if (couponDAO.createCoupon(code, discount, maxUses)) {
+                couponStatusLabel.setText("✅ Coupon created: " + code.toUpperCase());
+                couponStatusLabel.setStyle("-fx-text-fill: green;");
+                clearCouponForm();
+                loadCoupons();
+            } else {
+                couponStatusLabel.setText("Failed to create coupon (code may exist)");
+                couponStatusLabel.setStyle("-fx-text-fill: red;");
+            }
+        } catch (NumberFormatException e) {
+            couponStatusLabel.setText("Invalid number format!");
+            couponStatusLabel.setStyle("-fx-text-fill: red;");
+        } catch (SQLException e) {
+            couponStatusLabel.setText("Database error: " + e.getMessage());
+            couponStatusLabel.setStyle("-fx-text-fill: red;");
+        }
+    }
+
+    @FXML
+    public void handleRefreshCoupons() {
+        loadCoupons();
+        loadCouponHistory();
+    }
+
+    @FXML
+    public void handleUpdateCoupon() {
+        com.greengrocer.models.Coupon selected = couponTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            couponStatusLabel.setText("Select a coupon!");
+            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        // Show dialog for new max uses
+        TextInputDialog dialog = new TextInputDialog(String.valueOf(selected.getMaxUses()));
+        dialog.setTitle("Update Coupon");
+        dialog.setHeaderText("Coupon: " + selected.getCode());
+        dialog.setContentText("New maximum uses:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(maxUsesStr -> {
+            try {
+                int newMaxUses = Integer.parseInt(maxUsesStr);
+                if (couponDAO.updateCoupon(selected.getId(), newMaxUses, selected.isActive())) {
+                    couponStatusLabel.setText("✅ Coupon updated!");
+                    couponStatusLabel.setStyle("-fx-text-fill: green;");
+                    loadCoupons();
+                }
+            } catch (NumberFormatException e) {
+                couponStatusLabel.setText("Invalid number!");
+                couponStatusLabel.setStyle("-fx-text-fill: red;");
+            } catch (SQLException e) {
+                couponStatusLabel.setText("Update error!");
+                couponStatusLabel.setStyle("-fx-text-fill: red;");
+            }
+        });
+    }
+
+    @FXML
+    public void handleToggleCouponActive() {
+        com.greengrocer.models.Coupon selected = couponTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            couponStatusLabel.setText("Select a coupon!");
+            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        try {
+            boolean newStatus = !selected.isActive();
+            if (couponDAO.updateCoupon(selected.getId(), selected.getMaxUses(), newStatus)) {
+                String status = newStatus ? "activated" : "deactivated";
+                couponStatusLabel.setText("✅ Coupon " + status + "!");
+                couponStatusLabel.setStyle("-fx-text-fill: green;");
+                loadCoupons();
+            }
+        } catch (SQLException e) {
+            couponStatusLabel.setText("Status change failed!");
+            couponStatusLabel.setStyle("-fx-text-fill: red;");
+        }
+    }
+
+    @FXML
+    public void handleDeleteCoupon() {
+        com.greengrocer.models.Coupon selected = couponTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            couponStatusLabel.setText("Select a coupon!");
+            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Delete Coupon");
+        confirm.setHeaderText("Are you sure you want to delete this coupon?");
+        confirm.setContentText("Coupon: " + selected.getCode() + "\nThis action cannot be undone!");
+
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                if (couponDAO.deleteCoupon(selected.getId())) {
+                    couponStatusLabel.setText("✅ Coupon deleted!");
+                    couponStatusLabel.setStyle("-fx-text-fill: green;");
+                    loadCoupons();
+                    loadCouponHistory();
+                }
+            } catch (SQLException e) {
+                couponStatusLabel.setText("Delete error!");
+                couponStatusLabel.setStyle("-fx-text-fill: red;");
+            }
+        }
+    }
+
+    private void loadCoupons() {
+        if (couponTable == null)
+            return;
+
+        try {
+            // Setup columns
+            colCouponCode.setCellValueFactory(new PropertyValueFactory<>("code"));
+            colCouponDiscount.setCellValueFactory(new PropertyValueFactory<>("discountPercent"));
+            colCouponMaxUses.setCellValueFactory(new PropertyValueFactory<>("maxUses"));
+            colCouponCurrentUses.setCellValueFactory(new PropertyValueFactory<>("currentUses"));
+            colCouponActive.setCellValueFactory(new PropertyValueFactory<>("active"));
+
+            java.util.List<com.greengrocer.models.Coupon> coupons = couponDAO.getAllCoupons();
+            couponTable.setItems(FXCollections.observableArrayList(coupons));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadCouponHistory() {
+        if (couponHistoryTable == null)
+            return;
+
+        try {
+            // Setup columns
+            colHistoryCode.setCellValueFactory(
+                    data -> new javafx.beans.property.SimpleStringProperty((String) data.getValue()[0]));
+            colHistoryDate.setCellValueFactory(
+                    data -> new javafx.beans.property.SimpleStringProperty(data.getValue()[1].toString()));
+            colHistoryUser.setCellValueFactory(
+                    data -> new javafx.beans.property.SimpleStringProperty((String) data.getValue()[2]));
+            colHistoryAmount.setCellValueFactory(
+                    data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[3]).asObject());
+
+            java.util.List<Object[]> history = couponDAO.getAllCouponUsageHistory();
+            couponHistoryTable.setItems(FXCollections.observableArrayList(history));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void clearCouponForm() {
+        couponCodeField.clear();
+        couponDiscountField.clear();
+        couponMaxUsesField.clear();
     }
 }

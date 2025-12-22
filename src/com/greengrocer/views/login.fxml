@@ -5,22 +5,81 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.greengrocer.controllers.LoginController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
-    <children>
-        <Label text="Greengrocer Login">
-         <font>
-            <Font size="24.0" />
-         </font></Label>
-      <TextField fx:id="usernameField" promptText="Username" />
-      <PasswordField fx:id="passwordField" promptText="Password" />
-      <Label fx:id="errorLabel" textFill="RED" />
-        <Button fx:id="loginButton" onAction="#handleLogin" text="Login" />
-      <Button fx:id="registerButton" onAction="#handleOpenRegister" text="Register as Customer" />
-    </children>
-</VBox>
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="com.greengrocer.controllers.LoginController"
+           styleClass="login-container" prefWidth="960" prefHeight="540">
+    
+    <!-- Background with gradient -->
+    <VBox alignment="CENTER" spacing="0">
+        
+        <!-- Login Card (Glassmorphism) -->
+        <VBox alignment="CENTER" spacing="20" styleClass="glass-card" maxWidth="400" maxHeight="500">
+            <padding>
+                <Insets bottom="40" left="40" right="40" top="40" />
+            </padding>
+            
+            <!-- Logo Icon -->
+            <Label text="🥬" styleClass="logo-icon">
+                <font>
+                    <Font size="64" />
+                </font>
+            </Label>
+            
+            <!-- Title -->
+            <Label text="Greengrocer" styleClass="title-label">
+                <font>
+                    <Font size="32" />
+                </font>
+            </Label>
+            
+            <!-- Subtitle -->
+            <Label text="Fresh Produce Management System" styleClass="text-secondary">
+                <font>
+                    <Font size="13" />
+                </font>
+            </Label>
+            
+            <!-- Spacer -->
+            <VBox prefHeight="10" />
+            
+            <!-- Username Field -->
+            <VBox spacing="8" alignment="CENTER_LEFT" maxWidth="280">
+                <Label text="👤  Username" styleClass="text-label" />
+                <TextField fx:id="usernameField" promptText="Enter your username" prefWidth="280" styleClass="text-field" />
+            </VBox>
+            
+            <!-- Password Field -->
+            <VBox spacing="8" alignment="CENTER_LEFT" maxWidth="280">
+                <Label text="🔒  Password" styleClass="text-label" />
+                <PasswordField fx:id="passwordField" promptText="Enter your password" prefWidth="280" styleClass="password-field" />
+            </VBox>
+            
+            <!-- Error Label -->
+            <Label fx:id="errorLabel" styleClass="status-error" wrapText="true" maxWidth="280" />
+            
+            <!-- Login Button -->
+            <Button fx:id="loginButton" onAction="#handleLogin" text="🚀  Login" 
+                    styleClass="button-primary" prefWidth="280" prefHeight="45">
+                <font>
+                    <Font size="15" />
+                </font>
+            </Button>
+            
+            <!-- Register Button -->
+            <Button fx:id="registerButton" onAction="#handleOpenRegister" text="📝  Register as Customer" 
+                    styleClass="button-secondary" prefWidth="280">
+                <font>
+                    <Font size="13" />
+                </font>
+            </Button>
+            
+            <!-- Forgot Password Link -->
+            <javafx.scene.control.Hyperlink onAction="#handleForgotPassword" text="Forgot Password?" 
+                                           styleClass="hyperlink" />
+        </VBox>
+    </VBox>
+</StackPane>

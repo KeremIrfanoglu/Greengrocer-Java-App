@@ -1,6 +1,7 @@
 package com.greengrocer.dao;
 
 import com.greengrocer.models.User;
+import com.greengrocer.util.PasswordUtils;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,24 +10,34 @@ import java.sql.SQLException;
 public class UserDAO {
 
     public User authenticate(String username, String password) throws SQLException {
-        String query = "SELECT * FROM UserInfo WHERE username = ? AND password = ?";
+        String query = "SELECT * FROM UserInfo WHERE username = ?";
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, username);
-            stmt.setString(2, password);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return new User(
-                            rs.getInt("id"),
-                            rs.getString("username"),
-                            rs.getString("password"),
-                            rs.getString("role"),
-                            rs.getString("first_name"),
-                            rs.getString("last_name"),
-                            rs.getString("address"),
-                            rs.getString("phone"));
+                    String storedPassword = rs.getString("password");
+                    // Check both hashed and plain text (for backward compatibility)
+                    if (PasswordUtils.verifyPassword(password, storedPassword) || password.equals(storedPassword)) {
+                        double gPoints = 0.0;
+                        try {
+                            gPoints = rs.getDouble("g_points");
+                        } catch (SQLException e) {
+                            // Column may not exist yet, default to 0
+                        }
+                        return new User(
+                                rs.getInt("id"),
+                                rs.getString("username"),
+                                storedPassword,
+                                rs.getString("role"),
+                                rs.getString("first_name"),
+                                rs.getString("last_name"),
+                                rs.getString("address"),
+                                rs.getString("phone"),
+                                gPoints);
+                    }
                 }
             }
         }
@@ -35,14 +46,13 @@ public class UserDAO {
 
     public boolean register(String username, String password, String role, String firstName, String lastName,
             String address, String phone) throws SQLException {
-        // Validation check for duplicate username should be done before calling this or
-        // handled via exception
+        String hashedPassword = PasswordUtils.hashPassword(password);
         String query = "INSERT INTO UserInfo (username, password, role, first_name, last_name, address, phone) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, username);
-            stmt.setString(2, password);
+            stmt.setString(2, hashedPassword);
             stmt.setString(3, role);
             stmt.setString(4, firstName);
             stmt.setString(5, lastName);
@@ -83,5 +93,106 @@ public class UserDAO {
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         }
+    }
+
+    public User getUserByUsername(String username) throws SQLException {
+        String query = "SELECT * FROM UserInfo WHERE username = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new User(
+                            rs.getInt("id"),
+                            rs.getString("username"),
+                            rs.getString("password"),
+                            rs.getString("role"),
+                            rs.getString("first_name"),
+                            rs.getString("last_name"),
+                            rs.getString("address"),
+                            rs.getString("phone"));
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean updatePassword(int userId, String newPassword) throws SQLException {
+        String hashedPassword = PasswordUtils.hashPassword(newPassword);
+        String query = "UPDATE UserInfo SET password = ? WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, hashedPassword);
+            stmt.setInt(2, userId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public boolean verifyOldPassword(int userId, String oldPassword) throws SQLException {
+        String query = "SELECT password FROM UserInfo WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String storedPassword = rs.getString("password");
+                    return PasswordUtils.verifyPassword(oldPassword, storedPassword)
+                            || oldPassword.equals(storedPassword);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get user's current G Points balance
+     */
+    public double getGPoints(int userId) throws SQLException {
+        String query = "SELECT g_points FROM UserInfo WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("g_points");
+                }
+            }
+        }
+        return 0.0;
+    }
+
+    /**
+     * Update user's G Points balance
+     */
+    public boolean updateGPoints(int userId, double newBalance) throws SQLException {
+        String query = "UPDATE UserInfo SET g_points = ? WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setDouble(1, newBalance);
+            stmt.setInt(2, userId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Add G Points to user's balance (for earning after purchase)
+     * Earns 1/5 of the order total as G Points
+     */
+    public boolean addGPoints(int userId, double orderTotal) throws SQLException {
+        double pointsToAdd = orderTotal / 5.0;
+        double currentPoints = getGPoints(userId);
+        return updateGPoints(userId, currentPoints + pointsToAdd);
+    }
+
+    /**
+     * Use G Points for discount (1 G Point = 1 TL)
+     * Returns true if successful, false if insufficient balance
+     */
+    public boolean useGPoints(int userId, double pointsToUse) throws SQLException {
+        double currentPoints = getGPoints(userId);
+        if (pointsToUse > currentPoints) {
+            return false; // Insufficient balance
+        }
+        return updateGPoints(userId, currentPoints - pointsToUse);
     }
 }

@@ -1,4 +1,4 @@
-package com.greengrocer.main;
+package com.greengrocer;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -9,19 +9,25 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.net.URL;
 
+/**
+ * Main entry point for the Greengrocer JavaFX application.
+ */
 public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         // Load the Login FXML
-        // Note: Using file path for simplicity in non-modular/resource-tricky setup, or
-        // use standard resource loading.
-        // Trying standard resource loading first.
         URL url = new File("src/com/greengrocer/views/login.fxml").toURI().toURL();
         Parent root = FXMLLoader.load(url);
 
         primaryStage.setTitle("Greengrocer Login");
-        primaryStage.setScene(new Scene(root, 960, 540));
+        Scene scene = new Scene(root, 960, 540);
+
+        // Load CSS stylesheet
+        URL cssUrl = new File("src/com/greengrocer/views/styles.css").toURI().toURL();
+        scene.getStylesheets().add(cssUrl.toExternalForm());
+
+        primaryStage.setScene(scene);
         primaryStage.show();
     }
 

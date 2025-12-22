@@ -251,4 +251,39 @@ public class ReportDAO {
         }
         return data;
     }
+
+    /**
+     * Get carrier leaderboard - carriers ranked by completed deliveries
+     * Returns: Rank, Carrier Name, Completed Deliveries, Total Earnings
+     */
+    public java.util.List<Object[]> getCarrierLeaderboard() throws SQLException {
+        java.util.List<Object[]> data = new java.util.ArrayList<>();
+        String query = """
+                SELECT u.id,
+                       CONCAT(u.first_name, ' ', u.last_name) as carrier_name,
+                       COUNT(o.id) as completed_deliveries,
+                       COALESCE(SUM(o.total_amount), 0) as total_value
+                FROM UserInfo u
+                LEFT JOIN OrderInfo o ON u.id = o.carrier_id AND o.status = 'Delivered'
+                WHERE u.role = 'carrier'
+                GROUP BY u.id, u.first_name, u.last_name
+                ORDER BY completed_deliveries DESC, total_value DESC
+                """;
+
+        try (Connection conn = DatabaseAdapter.getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+
+            int rank = 1;
+            while (rs.next()) {
+                data.add(new Object[] {
+                        rank++,
+                        rs.getString("carrier_name"),
+                        rs.getInt("completed_deliveries"),
+                        rs.getDouble("total_value")
+                });
+            }
+        }
+        return data;
+    }
 }

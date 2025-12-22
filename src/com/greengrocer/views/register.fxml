@@ -6,41 +6,83 @@
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.greengrocer.controllers.RegisterController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
-    <children>
-        <Label text="Customer Registration">
-         <font>
-            <Font size="22.0" />
-         </font></Label>
-      <GridPane hgap="10.0" vgap="10.0">
-         <children>
-            <Label text="Username:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-            <TextField fx:id="usernameField" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="com.greengrocer.controllers.RegisterController"
+           styleClass="login-container" prefWidth="960" prefHeight="540">
+    
+    <VBox alignment="CENTER" spacing="0">
+        
+        <!-- Registration Card -->
+        <VBox alignment="CENTER" spacing="20" styleClass="glass-card" maxWidth="480" maxHeight="600">
+            <padding>
+                <Insets bottom="35" left="40" right="40" top="35" />
+            </padding>
             
-            <Label text="Password:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-            <PasswordField fx:id="passwordField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <!-- Logo -->
+            <Label text="📋" styleClass="logo-icon">
+                <font>
+                    <Font size="48" />
+                </font>
+            </Label>
             
-            <Label text="First Name:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-            <TextField fx:id="firstNameField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <!-- Title -->
+            <Label text="Create Account" styleClass="title-label">
+                <font>
+                    <Font size="28" />
+                </font>
+            </Label>
             
-            <Label text="Last Name:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-            <TextField fx:id="lastNameField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <Label text="Join our fresh produce community" styleClass="text-secondary" />
             
-            <Label text="Address:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-            <TextField fx:id="addressField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+            <!-- Form Grid -->
+            <GridPane hgap="15" vgap="12" alignment="CENTER">
+                <!-- Username -->
+                <Label text="👤  Username" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                <TextField fx:id="usernameField" promptText="Choose a username" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                
+                <!-- Password -->
+                <Label text="🔒  Password" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                <PasswordField fx:id="passwordField" promptText="Create a password" prefWidth="200" styleClass="password-field" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                
+                <!-- First Name -->
+                <Label text="📛  First Name" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                <TextField fx:id="firstNameField" promptText="Your first name" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                
+                <!-- Last Name -->
+                <Label text="📛  Last Name" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                <TextField fx:id="lastNameField" promptText="Your last name" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                
+                <!-- Address -->
+                <Label text="📍  Address" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                <TextField fx:id="addressField" promptText="Your delivery address" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                
+                <!-- Phone -->
+                <Label text="📱  Phone" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                <TextField fx:id="phoneField" promptText="Your phone number" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+            </GridPane>
             
-            <Label text="Phone:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
-            <TextField fx:id="phoneField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-         </children>
-      </GridPane>
-      <Label fx:id="statusLabel" textFill="RED" />
-      <Button fx:id="registerButton" onAction="#handleRegister" text="Register" />
-      <Button fx:id="backButton" onAction="#handleBack" text="Back to Login" />
-    </children>
-</VBox>
+            <!-- Status Label -->
+            <Label fx:id="statusLabel" styleClass="status-error" wrapText="true" maxWidth="350" />
+            
+            <!-- Register Button -->
+            <Button fx:id="registerButton" onAction="#handleRegister" text="✨  Create Account" 
+                    styleClass="button-primary" prefWidth="300" prefHeight="42">
+                <font>
+                    <Font size="14" />
+                </font>
+            </Button>
+            
+            <!-- Back Button -->
+            <Button fx:id="backButton" onAction="#handleBack" text="← Back to Login" 
+                    styleClass="button-secondary" prefWidth="200">
+                <font>
+                    <Font size="12" />
+                </font>
+            </Button>
+        </VBox>
+    </VBox>
+</StackPane>

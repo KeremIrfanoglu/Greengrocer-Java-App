@@ -9,6 +9,7 @@ public class User {
     private String lastName;
     private String address;
     private String phone;
+    private double gPoints; // G Point loyalty points
 
     public User(int id, String username, String password, String role, String firstName, String lastName,
             String address, String phone) {
@@ -20,6 +21,20 @@ public class User {
         this.lastName = lastName;
         this.address = address;
         this.phone = phone;
+        this.gPoints = 0.0;
+    }
+
+    public User(int id, String username, String password, String role, String firstName, String lastName,
+            String address, String phone, double gPoints) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.address = address;
+        this.phone = phone;
+        this.gPoints = gPoints;
     }
 
     // Getters and Setters
@@ -85,5 +100,13 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public double getGPoints() {
+        return gPoints;
+    }
+
+    public void setGPoints(double gPoints) {
+        this.gPoints = gPoints;
     }
 }

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
@@ -10,223 +14,311 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.ScrollPane?>
 
-<VBox prefHeight="540.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.greengrocer.controllers.OwnerController">
+<VBox prefHeight="540.0" prefWidth="960.0" styleClass="dashboard-container"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.greengrocer.controllers.OwnerController">
    <children>
-      <HBox style="-fx-background-color: #ddd; -fx-padding: 10;" alignment="CENTER_LEFT" spacing="20.0">
+      <!-- Header Bar -->
+      <HBox alignment="CENTER_LEFT" spacing="20" styleClass="header-bar">
          <children>
-            <Label text="Owner Dashboard" style="-fx-font-weight: bold; -fx-font-size: 16;" />
-            <Label fx:id="welcomeLabel" text="Welcome!" style="-fx-font-style: italic;" HBox.hgrow="ALWAYS" />
-            <javafx.scene.layout.Region HBox.hgrow="ALWAYS" />
-            <Button onAction="#handleLogout" text="🚪 Logout" style="-fx-background-color: #f44336; -fx-text-fill: white;" />
+            <Label text="👑" style="-fx-font-size: 28px;" />
+            <VBox spacing="2">
+               <Label text="Owner Dashboard" styleClass="header-title" />
+               <Label fx:id="welcomeLabel" text="Welcome!" styleClass="header-subtitle" />
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#handleLogout" text="🚪 Logout" styleClass="button-danger" />
          </children>
       </HBox>
-      <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+      
+      <!-- Tab Pane -->
+      <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <tabs>
-          <Tab text="Products">
+        
+          <!-- PRODUCTS TAB -->
+          <Tab text="📦 Products">
             <content>
-              <VBox spacing="10.0">
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
-                     <children>
-                        <HBox alignment="CENTER_LEFT" spacing="10.0">
-                           <children>
-                              <TextField fx:id="prodNameField" promptText="Name" prefWidth="120.0" />
-                              <ComboBox fx:id="prodTypeCombo" prefWidth="100.0" promptText="Type" />
-                              <TextField fx:id="prodPriceField" prefWidth="70.0" promptText="Price" />
-                              <TextField fx:id="prodCostField" prefWidth="70.0" promptText="Cost" />
-                              <TextField fx:id="prodStockField" prefWidth="70.0" promptText="Stock" />
-                              <TextField fx:id="prodThresholdField" prefWidth="70.0" promptText="Threshold" />
-                              <Button fx:id="browseImageBtn" onAction="#handleBrowseImage" text="Image..." />
-                              <Button fx:id="addProdBtn" onAction="#handleAddProduct" text="Add" />
-                              <Button onAction="#handleUpdateProduct" text="Update" style="-fx-background-color: #2196F3; -fx-text-fill: white;" />
-                              <Button fx:id="refreshProdBtn" onAction="#handleRefreshProducts" text="Refresh" />
-                           </children>
-                        </HBox>
-                        <Label fx:id="statusLabel" textFill="BLUE" />
-                        <TableView fx:id="productTable" VBox.vgrow="ALWAYS">
-                          <columns>
-                            <TableColumn fx:id="colId" prefWidth="40.0" text="ID" />
-                            <TableColumn fx:id="colImage" prefWidth="50.0" text="Image" />
-                            <TableColumn fx:id="colName" prefWidth="120.0" text="Name" />
-                              <TableColumn fx:id="colType" prefWidth="80.0" text="Type" />
-                              <TableColumn fx:id="colPrice" prefWidth="70.0" text="Price" />
-                              <TableColumn fx:id="colCost" prefWidth="70.0" text="Cost" />
-                              <TableColumn fx:id="colStock" prefWidth="60.0" text="Stock" />
-                              <TableColumn fx:id="colThreshold" prefWidth="60.0" text="Threshold" />
-                          </columns>
-                        </TableView>
-                        <HBox spacing="10.0">
-                           <children>
-                              <Button onAction="#handleDeleteProduct" text="Delete Selected" style="-fx-background-color: #f44336; -fx-text-fill: white;" />
-                              <Button onAction="#handleLoadProductToForm" text="Load to Form" />
-                           </children>
-                        </HBox>
-                     </children>
+              <VBox spacing="15" style="-fx-padding: 20;">
+                 <children>
+                    <!-- Product Form -->
+                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="glass-card-small">
+                       <children>
+                          <TextField fx:id="prodNameField" promptText="Name" prefWidth="100" styleClass="text-field" />
+                          <ComboBox fx:id="prodTypeCombo" prefWidth="100" promptText="Type" styleClass="combo-box" />
+                          <TextField fx:id="prodPriceField" prefWidth="70" promptText="Price" styleClass="text-field" />
+                          <TextField fx:id="prodCostField" prefWidth="70" promptText="Cost" styleClass="text-field" />
+                          <TextField fx:id="prodStockField" prefWidth="60" promptText="Stock" styleClass="text-field" />
+                          <TextField fx:id="prodThresholdField" prefWidth="70" promptText="Threshold" styleClass="text-field" />
+                          <Button fx:id="browseImageBtn" onAction="#handleBrowseImage" text="📷" styleClass="button-secondary" />
+                          <Button fx:id="addProdBtn" onAction="#handleAddProduct" text="➕ Add" styleClass="button-primary" />
+                          <Button onAction="#handleUpdateProduct" text="✏️ Update" styleClass="button" />
+                       </children>
+                    </HBox>
+                    
+                    <Label fx:id="statusLabel" styleClass="status-success" />
+                    
+                    <TableView fx:id="productTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                      <columns>
+                        <TableColumn fx:id="colId" prefWidth="50" text="ID" />
+                        <TableColumn fx:id="colImage" prefWidth="60" text="📷" />
+                        <TableColumn fx:id="colName" prefWidth="130" text="Name" />
+                        <TableColumn fx:id="colType" prefWidth="90" text="Type" />
+                        <TableColumn fx:id="colPrice" prefWidth="80" text="Price" />
+                        <TableColumn fx:id="colCost" prefWidth="80" text="Cost" />
+                        <TableColumn fx:id="colStock" prefWidth="70" text="Stock" />
+                        <TableColumn fx:id="colThreshold" prefWidth="70" text="Threshold" />
+                      </columns>
+                    </TableView>
+                    
+                    <HBox spacing="10">
+                       <children>
+                          <Button onAction="#handleDeleteProduct" text="🗑️ Delete" styleClass="button-danger" />
+                          <Button onAction="#handleLoadProductToForm" text="📋 Load to Form" styleClass="button-secondary" />
+                       </children>
+                    </HBox>
+                 </children>
               </VBox>
             </content>
           </Tab>
-          <Tab text="Carriers">
+          
+          <!-- CARRIERS TAB -->
+          <Tab text="🚚 Carriers">
             <content>
-              <VBox spacing="10.0">
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
-                     <children>
-                        <HBox alignment="CENTER_LEFT" spacing="10.0">
-                           <children>
-                              <TextField fx:id="carrUsernameField" promptText="Username" />
-                              <TextField fx:id="carrPasswordField" promptText="Password" />
-                              <TextField fx:id="carrNameField" promptText="Name" />
-                              <TextField fx:id="carrSurnameField" promptText="Surname" />
-                              <TextField fx:id="carrPhoneField" promptText="Phone" />
-                              <Button onAction="#handleAddCarrier" text="Recruit" />
-                           </children>
-                        </HBox>
-                        <TableView fx:id="carrierTable" VBox.vgrow="ALWAYS">
-                           <columns>
-                              <TableColumn fx:id="colCarrId" prefWidth="50.0" text="ID" />
-                              <TableColumn fx:id="colCarrUsername" prefWidth="100.0" text="Username" />
-                              <TableColumn fx:id="colCarrName" prefWidth="100.0" text="Name" />
-                              <TableColumn fx:id="colCarrSurname" prefWidth="100.0" text="Surname" />
-                              <TableColumn fx:id="colCarrPhone" prefWidth="100.0" text="Phone" />
-                           </columns>
-                        </TableView>
-                        <Button onAction="#handleFireCarrier" text="Fire Selected" />
-                     </children>
+              <VBox spacing="15" style="-fx-padding: 20;">
+                 <children>
+                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="glass-card-small">
+                       <children>
+                          <TextField fx:id="carrUsernameField" promptText="Username" prefWidth="100" styleClass="text-field" />
+                          <TextField fx:id="carrPasswordField" promptText="Password" prefWidth="100" styleClass="text-field" />
+                          <TextField fx:id="carrNameField" promptText="Name" prefWidth="100" styleClass="text-field" />
+                          <TextField fx:id="carrSurnameField" promptText="Surname" prefWidth="100" styleClass="text-field" />
+                          <TextField fx:id="carrPhoneField" promptText="Phone" prefWidth="100" styleClass="text-field" />
+                          <Button onAction="#handleAddCarrier" text="➕ Recruit" styleClass="button-primary" />
+                       </children>
+                    </HBox>
+                    
+                    <TableView fx:id="carrierTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                       <columns>
+                          <TableColumn fx:id="colCarrId" prefWidth="60" text="ID" />
+                          <TableColumn fx:id="colCarrUsername" prefWidth="120" text="Username" />
+                          <TableColumn fx:id="colCarrName" prefWidth="120" text="Name" />
+                          <TableColumn fx:id="colCarrSurname" prefWidth="120" text="Surname" />
+                          <TableColumn fx:id="colCarrPhone" prefWidth="120" text="Phone" />
+                       </columns>
+                    </TableView>
+                    
+                    <Button onAction="#handleFireCarrier" text="🔥 Fire Selected" styleClass="button-danger" />
+                 </children>
               </VBox>
             </content>
           </Tab>
-            <Tab text="Reports">
-               <content>
-                  <VBox spacing="20.0">
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
-                     <children>
-                        <HBox spacing="20.0">
-                           <children>
-                              <Button onAction="#handleRefreshReports" text="Refresh Reports" />
-                              <javafx.scene.control.ComboBox fx:id="revenueViewCombo" prefWidth="150.0" promptText="View" onAction="#handleRevenueViewChange" />
-                              <Label fx:id="reportStatusLabel" textFill="BLUE" />
-                           </children>
-                        </HBox>
-                        
-                        <!-- Charts Row -->
-                        <HBox spacing="20.0">
-                           <children>
-                              <VBox HBox.hgrow="ALWAYS">
-                                 <children>
-                                    <Label style="-fx-font-weight: bold;" text="Sales by Product Type" />
-                                    <javafx.scene.chart.PieChart fx:id="productTypeChart" prefHeight="200.0" />
-                                 </children>
-                              </VBox>
-                              <VBox HBox.hgrow="ALWAYS">
-                                 <children>
-                                    <Label style="-fx-font-weight: bold;" text="Revenue Over Time" />
-                                    <javafx.scene.chart.BarChart fx:id="revenueChart" prefHeight="200.0">
-                                       <xAxis>
-                                          <javafx.scene.chart.CategoryAxis label="Period" />
-                                       </xAxis>
-                                       <yAxis>
-                                          <javafx.scene.chart.NumberAxis label="Revenue ($)" />
-                                       </yAxis>
-                                    </javafx.scene.chart.BarChart>
-                                 </children>
-                              </VBox>
-                           </children>
-                        </HBox>
-                        
-                        <!-- Summary Stats -->
-                        <HBox spacing="40.0" style="-fx-background-color: #f5f5f5; -fx-padding: 10;">
-                           <children>
-                              <VBox spacing="5.0">
-                                 <children>
-                                    <Label style="-fx-font-weight: bold; -fx-font-size: 14;" text="💰 Revenue Summary" />
-                                    <Label fx:id="totalRevenueLabel" text="Total Revenue: $0.00" />
-                                    <Label fx:id="totalOrdersLabel" text="Total Orders: 0" />
-                                    <Label fx:id="totalProductsLabel" text="Total Products: 0" />
-                                 </children>
-                              </VBox>
-                              <VBox spacing="5.0">
-                                 <children>
-                                    <Label style="-fx-font-weight: bold; -fx-font-size: 14;" text="📊 Profit/Loss Summary" />
-                                    <Label fx:id="totalProfitLabel" text="Total Profit: $0.00" style="-fx-text-fill: green;" />
-                                    <Label fx:id="inventoryCostLabel" text="Inventory Cost: $0.00" />
-                                 </children>
-                              </VBox>
-                           </children>
-                        </HBox>
-                        
-                        <!-- Profit/Loss Table -->
-                        <VBox spacing="5.0" VBox.vgrow="ALWAYS">
-                           <children>
-                              <Label style="-fx-font-weight: bold; -fx-font-size: 14;" text="📈 Profit/Loss by Product" />
-                              <TableView fx:id="profitLossTable" prefHeight="150.0">
-                                 <columns>
-                                    <TableColumn fx:id="colPLProduct" prefWidth="150.0" text="Product" />
-                                    <TableColumn fx:id="colPLRevenue" prefWidth="100.0" text="Revenue" />
-                                    <TableColumn fx:id="colPLCost" prefWidth="100.0" text="Cost" />
-                                    <TableColumn fx:id="colPLProfit" prefWidth="100.0" text="Profit" />
-                                 </columns>
-                              </TableView>
-                           </children>
-                        </VBox>
-                        
-                        <!-- Cost Analysis Table -->
-                        <VBox spacing="5.0">
-                           <children>
-                              <Label style="-fx-font-weight: bold; -fx-font-size: 14;" text="💵 Cost Analysis (Price vs Cost)" />
-                              <TableView fx:id="costAnalysisTable" prefHeight="150.0">
-                                 <columns>
-                                    <TableColumn fx:id="colCAProduct" prefWidth="150.0" text="Product" />
-                                    <TableColumn fx:id="colCAPrice" prefWidth="100.0" text="Sell Price" />
-                                    <TableColumn fx:id="colCACost" prefWidth="100.0" text="Cost" />
-                                    <TableColumn fx:id="colCAMargin" prefWidth="100.0" text="Margin %" />
-                                 </columns>
-                              </TableView>
-                           </children>
-                        </VBox>
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-            <Tab text="Orders">
-               <content>
-                  <VBox spacing="10.0">
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
-                     <children>
-                        <HBox alignment="CENTER_LEFT" spacing="10.0">
-                           <children>
-                              <Button onAction="#handleRefreshAllOrders" text="Refresh Orders" />
-                              <javafx.scene.control.ComboBox fx:id="orderStatusFilter" prefWidth="150.0" promptText="All Statuses" onAction="#handleFilterOrders" />
-                              <Label fx:id="orderManagementStatus" textFill="BLUE" />
-                           </children>
-                        </HBox>
-                        <TableView fx:id="allOrdersTable" VBox.vgrow="ALWAYS">
-                          <columns>
-                            <TableColumn fx:id="colAllOrderId" prefWidth="80.0" text="Order ID" />
-                            <TableColumn fx:id="colAllOrderCustomer" prefWidth="100.0" text="Customer ID" />
-                            <TableColumn fx:id="colAllOrderCarrier" prefWidth="100.0" text="Carrier ID" />
-                            <TableColumn fx:id="colAllOrderDate" prefWidth="150.0" text="Date" />
-                            <TableColumn fx:id="colAllOrderTotal" prefWidth="100.0" text="Total" />
-                            <TableColumn fx:id="colAllOrderStatus" prefWidth="100.0" text="Status" />
-                          </columns>
-                        </TableView>
-                        <HBox spacing="10.0">
-                           <children>
-                              <Button onAction="#handleCancelOrder" style="-fx-background-color: #f44336; -fx-text-fill: white;" text="Cancel Selected Order" />
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-        </tabs>
-      </TabPane>
-   </children>
+          
+          <!-- REPORTS TAB -->
+          <Tab text="📊 Reports">
+             <content>
+                <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent;">
+                <VBox spacing="15" style="-fx-padding: 20;">
+                   <children>
+                      <HBox spacing="15" alignment="CENTER_LEFT">
+                         <children>
+                            <ComboBox fx:id="revenueViewCombo" prefWidth="150" promptText="View" onAction="#handleRevenueViewChange" styleClass="combo-box" />
+                            <Label fx:id="reportStatusLabel" styleClass="status-success" />
+                         </children>
+                      </HBox>
+                      
+                      <!-- Charts -->
+                      <HBox spacing="20">
+                         <children>
+                            <VBox HBox.hgrow="ALWAYS" spacing="5">
+                               <children>
+                                  <Label text="📈 Sales by Category" styleClass="section-title" />
+                                  <PieChart fx:id="productTypeChart" prefHeight="250" />
+                               </children>
+                            </VBox>
+                            <VBox HBox.hgrow="ALWAYS" spacing="5">
+                               <children>
+                                  <Label text="💰 Revenue Over Time" styleClass="section-title" />
+                                  <BarChart fx:id="revenueChart" prefHeight="250">
+                                     <xAxis><CategoryAxis label="Period" /></xAxis>
+                                     <yAxis><NumberAxis label="Revenue ($)" /></yAxis>
+                                  </BarChart>
+                               </children>
+                            </VBox>
+                         </children>
+                      </HBox>
+                      
+                      <!-- Stats Cards -->
+                      <HBox spacing="20" styleClass="glass-card-small">
+                         <children>
+                            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                               <Label text="💰 Revenue Summary" styleClass="section-title" />
+                               <Label fx:id="totalRevenueLabel" text="Total Revenue: $0.00" styleClass="text-label" />
+                               <Label fx:id="totalOrdersLabel" text="Total Orders: 0" styleClass="text-label" />
+                               <Label fx:id="totalProductsLabel" text="Total Products: 0" styleClass="text-label" />
+                            </VBox>
+                            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                               <Label text="📊 Profit Summary" styleClass="section-title" />
+                               <Label fx:id="totalProfitLabel" text="Total Profit: $0.00" styleClass="status-success" />
+                               <Label fx:id="inventoryCostLabel" text="Inventory Cost: $0.00" styleClass="text-label" />
+                            </VBox>
+                         </children>
+                      </HBox>
+                      
+                      <!-- Tables -->
+                      <HBox spacing="15">
+                         <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Profit by Product" styleClass="section-title" />
+                            <TableView fx:id="profitLossTable" prefHeight="400" styleClass="table-view">
+                               <columns>
+                                  <TableColumn fx:id="colPLProduct" prefWidth="120" text="Product" />
+                                  <TableColumn fx:id="colPLRevenue" prefWidth="80" text="Revenue" />
+                                  <TableColumn fx:id="colPLCost" prefWidth="80" text="Cost" />
+                                  <TableColumn fx:id="colPLProfit" prefWidth="80" text="Profit" />
+                               </columns>
+                            </TableView>
+                         </VBox>
+                         <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Cost Analysis" styleClass="section-title" />
+                            <TableView fx:id="costAnalysisTable" prefHeight="400" styleClass="table-view">
+                               <columns>
+                                  <TableColumn fx:id="colCAProduct" prefWidth="120" text="Product" />
+                                  <TableColumn fx:id="colCAPrice" prefWidth="80" text="Price" />
+                                  <TableColumn fx:id="colCACost" prefWidth="80" text="Cost" />
+                                  <TableColumn fx:id="colCAMargin" prefWidth="80" text="Margin" />
+                               </columns>
+                            </TableView>
+                         </VBox>
+                      </HBox>
+                   </children>
+                </VBox>
+                </ScrollPane>
+             </content>
+          </Tab>
+          
+          <!-- ORDERS TAB -->
+          <Tab text="📋 Orders">
+             <content>
+                <VBox spacing="15" style="-fx-padding: 20;">
+                   <children>
+                      <HBox spacing="15" alignment="CENTER_LEFT">
+                         <children>
+                            <ComboBox fx:id="orderStatusFilter" prefWidth="150" promptText="All Statuses" onAction="#handleFilterOrders" styleClass="combo-box" />
+                            <Label fx:id="orderManagementStatus" styleClass="status-success" />
+                         </children>
+                      </HBox>
+                      
+                      <TableView fx:id="allOrdersTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                        <columns>
+                          <TableColumn fx:id="colAllOrderId" prefWidth="80" text="Order #" />
+                          <TableColumn fx:id="colAllOrderCustomer" prefWidth="100" text="Customer" />
+                          <TableColumn fx:id="colAllOrderCarrier" prefWidth="100" text="Carrier" />
+                          <TableColumn fx:id="colAllOrderDate" prefWidth="150" text="Date" />
+                          <TableColumn fx:id="colAllOrderTotal" prefWidth="100" text="Total" />
+                          <TableColumn fx:id="colAllOrderStatus" prefWidth="100" text="Status" />
+                        </columns>
+                      </TableView>
+                      
+                      <Button onAction="#handleCancelOrder" text="❌ Cancel Order" styleClass="button-danger" />
+                   </children>
+                </VBox>
+             </content>
+          </Tab>
+          
+          <!-- STOCK ALERTS TAB -->
+          <Tab text="⚠️ Stock Alerts">
+             <content>
+                <VBox spacing="15" style="-fx-padding: 20;">
+                   <children>
+                      <HBox spacing="15" alignment="CENTER_LEFT">
+                         <children>
+                            <Label text="Products Below Threshold" styleClass="section-title" />
+                            <Label fx:id="alertCountLabel" styleClass="status-error" />
+                         </children>
+                      </HBox>
+                      
+                      <TableView fx:id="alertsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                         <columns>
+                            <TableColumn fx:id="colAlertId" prefWidth="60" text="ID" />
+                            <TableColumn fx:id="colAlertName" prefWidth="180" text="Product" />
+                            <TableColumn fx:id="colAlertType" prefWidth="100" text="Type" />
+                            <TableColumn fx:id="colAlertStock" prefWidth="100" text="Stock" />
+                            <TableColumn fx:id="colAlertThreshold" prefWidth="100" text="Threshold" />
+                            <TableColumn fx:id="colAlertDiff" prefWidth="100" text="Shortage" />
+                         </columns>
+                      </TableView>
+                   </children>
+                </VBox>
+              </content>
+           </Tab>
+           
+           <!-- COUPONS TAB -->
+           <Tab text="🎟️ Coupons">
+              <content>
+                 <VBox spacing="15" style="-fx-padding: 20;">
+                    <children>
+                       <!-- Create Coupon Form -->
+                       <HBox spacing="15" alignment="CENTER_LEFT" styleClass="glass-card-small">
+                          <children>
+                             <Label text="New Coupon:" styleClass="section-title" />
+                             <TextField fx:id="couponCodeField" prefWidth="120" promptText="Code (e.g. SAVE20)" styleClass="text-field" />
+                             <TextField fx:id="couponDiscountField" prefWidth="80" promptText="Discount (%)" styleClass="text-field" />
+                             <TextField fx:id="couponMaxUsesField" prefWidth="80" promptText="Max Uses" styleClass="text-field" />
+                             <Button onAction="#handleCreateCoupon" text="➕ Create" styleClass="button-primary" />
+                             <Label fx:id="couponStatusLabel" styleClass="status-success" />
+                          </children>
+                       </HBox>
+                       
+                       <HBox spacing="15" VBox.vgrow="ALWAYS">
+                          <children>
+                             <!-- Active Coupons Table -->
+                             <VBox spacing="10" HBox.hgrow="ALWAYS">
+                                <children>
+                                   <Label text="📋 Active Coupons" styleClass="section-title" />
+                                   <TableView fx:id="couponTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                                      <columns>
+                                         <TableColumn fx:id="colCouponCode" prefWidth="100" text="Code" />
+                                         <TableColumn fx:id="colCouponDiscount" prefWidth="80" text="Discount" />
+                                         <TableColumn fx:id="colCouponMaxUses" prefWidth="80" text="Max" />
+                                         <TableColumn fx:id="colCouponCurrentUses" prefWidth="80" text="Uses" />
+                                         <TableColumn fx:id="colCouponActive" prefWidth="60" text="Active" />
+                                      </columns>
+                                   </TableView>
+                                   <HBox spacing="10">
+                                      <children>
+                                         <Button onAction="#handleUpdateCoupon" text="✏️ Update" styleClass="button" />
+                                         <Button onAction="#handleToggleCouponActive" text="🔄 Toggle" styleClass="button-secondary" />
+                                         <Button onAction="#handleDeleteCoupon" text="🗑️ Delete" styleClass="button-danger" />
+                                      </children>
+                                   </HBox>
+                                </children>
+                             </VBox>
+                             
+                             <!-- Usage History Table -->
+                             <VBox spacing="10" HBox.hgrow="ALWAYS">
+                                <children>
+                                   <Label text="📊 Usage History" styleClass="section-title" />
+                                   <TableView fx:id="couponHistoryTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                                      <columns>
+                                         <TableColumn fx:id="colHistoryCode" prefWidth="80" text="Coupon" />
+                                         <TableColumn fx:id="colHistoryDate" prefWidth="130" text="Date" />
+                                         <TableColumn fx:id="colHistoryUser" prefWidth="100" text="User" />
+                                         <TableColumn fx:id="colHistoryAmount" prefWidth="80" text="Discount" />
+                                      </columns>
+                                   </TableView>
+                                </children>
+                             </VBox>
+                          </children>
+                       </HBox>
+                    </children>
+                 </VBox>
+              </content>
+           </Tab>
+           
+         </tabs>
+       </TabPane>
+    </children>
 </VBox>

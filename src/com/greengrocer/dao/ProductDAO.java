@@ -17,7 +17,7 @@ public class ProductDAO {
                 ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
-                byte[] imageData = rs.getBytes("imagelocation");
+                byte[] imageData = rs.getBytes("image");
                 double costPrice = 0;
                 try {
                     costPrice = rs.getDouble("cost_price");
@@ -41,7 +41,7 @@ public class ProductDAO {
     public boolean addProduct(String name, String type, double price, double costPrice, double stock, double threshold,
             InputStream image)
             throws SQLException {
-        String query = "INSERT INTO ProductInfo (name, type, price, cost_price, stock, threshold, imagelocation) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO ProductInfo (name, type, price, cost_price, stock, threshold, image) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
 
