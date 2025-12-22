@@ -13,9 +13,15 @@ public class Product {
     private double stock;
     private double threshold;
     private byte[] imageData; // Store image as byte array for display
+    private String unitType; // "kg" for kilograms (decimal), "pcs" for pieces (integer)
 
     public Product(int id, String name, String type, double price, double costPrice, double stock, double threshold,
             byte[] imageData) {
+        this(id, name, type, price, costPrice, stock, threshold, imageData, "kg"); // Default to kg
+    }
+
+    public Product(int id, String name, String type, double price, double costPrice, double stock, double threshold,
+            byte[] imageData, String unitType) {
         this.id = id;
         this.name = name;
         this.type = type;
@@ -24,6 +30,7 @@ public class Product {
         this.stock = stock;
         this.threshold = threshold;
         this.imageData = imageData;
+        this.unitType = unitType != null ? unitType : "kg";
     }
 
     public int getId() {
@@ -99,5 +106,34 @@ public class Product {
             return new Image(new ByteArrayInputStream(imageData), 50, 50, true, true);
         }
         return null;
+    }
+
+    public String getUnitType() {
+        return unitType;
+    }
+
+    public void setUnitType(String unitType) {
+        this.unitType = unitType;
+    }
+
+    /**
+     * Check if product is sold by kilogram (allows decimal quantities)
+     */
+    public boolean isSoldByKg() {
+        return "kg".equalsIgnoreCase(unitType);
+    }
+
+    /**
+     * Check if product is sold by piece (integer quantities only)
+     */
+    public boolean isSoldByPiece() {
+        return "pcs".equalsIgnoreCase(unitType);
+    }
+
+    /**
+     * Get display unit label
+     */
+    public String getUnitLabel() {
+        return isSoldByPiece() ? "pcs" : "kg";
     }
 }

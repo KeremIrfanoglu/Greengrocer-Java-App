@@ -61,6 +61,8 @@ public class CustomerController {
 
     @FXML
     private TextField quantityField;
+    @FXML
+    private Label quantityLabel;
 
     private ObservableList<Product> allProducts; // Keep original list for filtering
     private com.greengrocer.dao.FavoritesDAO favoritesDAO;
@@ -129,6 +131,28 @@ public class CustomerController {
     private com.greengrocer.models.Coupon appliedCoupon = null;
     private double couponDiscount = 0.0;
 
+    // Profile Tab fields
+    @FXML
+    private Label profileUsernameLabel;
+    @FXML
+    private TextField profileFirstNameField;
+    @FXML
+    private TextField profileLastNameField;
+    @FXML
+    private TextField profileAddressField;
+    @FXML
+    private TextField profilePhoneField;
+    @FXML
+    private Label profileStatusLabel;
+    @FXML
+    private javafx.scene.control.PasswordField currentPasswordField;
+    @FXML
+    private javafx.scene.control.PasswordField newPasswordField;
+    @FXML
+    private javafx.scene.control.PasswordField confirmNewPasswordField;
+    @FXML
+    private Label passwordStatusLabel;
+
     private com.greengrocer.util.NotificationService notificationService;
 
     public CustomerController() {
@@ -168,6 +192,8 @@ public class CustomerController {
                         handleRefreshOrders();
                     } else if (tabText.contains("Favorites")) {
                         handleRefreshFavorites();
+                    } else if (tabText.contains("Profile")) {
+                        loadProfileData();
                     }
                 }
             });
@@ -240,9 +266,10 @@ public class CustomerController {
 
         loadProducts();
 
-        // Update favorite button when selection changes
+        // Update favorite button and quantity label when selection changes
         shopTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             updateFavButton();
+            updateQuantityLabelForProduct(newSelection);
         });
 
         // Cart Setup
@@ -267,6 +294,8 @@ public class CustomerController {
     private void loadProducts() {
         try {
             allProducts = FXCollections.observableArrayList(productDAO.getAllProducts());
+            // Sort products by name alphabetically (A-Z)
+            allProducts.sort((p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName()));
             productList = FXCollections.observableArrayList(allProducts);
             shopTable.setItems(productList);
         } catch (SQLException e) {
@@ -306,8 +335,21 @@ public class CustomerController {
                 statusLabel.setText("Quantity must be positive.");
                 return;
             }
+
+            // Validate quantity based on unit type
+            if (selected.isSoldByPiece()) {
+                // For piece-based products, only allow whole numbers
+                if (qty != Math.floor(qty)) {
+                    statusLabel.setText("This product is sold by piece. Enter a whole number (e.g., 1, 2, 3).");
+                    statusLabel.setStyle("-fx-text-fill: red;");
+                    return;
+                }
+            }
+
             if (qty > selected.getStock()) {
-                statusLabel.setText("Not enough stock.");
+                statusLabel.setText("Not enough stock. Available: " +
+                        String.format(selected.isSoldByPiece() ? "%.0f" : "%.2f", selected.getStock()) +
+                        " " + selected.getUnitLabel());
                 return;
             }
 
@@ -372,15 +414,106 @@ public class CustomerController {
         }
 
         double subtotal = getCartTotal();
-        double finalTotal = subtotal - gPointsToUse;
-        if (finalTotal < 0)
-            finalTotal = 0;
+        double couponDiscountAmount = appliedCoupon != null ? subtotal * (appliedCoupon.getDiscountPercent() / 100.0)
+                : 0;
+        double afterDiscounts = subtotal - gPointsToUse - couponDiscountAmount;
+        if (afterDiscounts < 0)
+            afterDiscounts = 0;
+
+        // Calculate VAT
+        double vatAmount = afterDiscounts * 0.20;
+        double finalTotal = afterDiscounts + vatAmount;
+
+        // Show delivery date/time selection dialog
+        javafx.scene.control.Dialog<java.time.LocalDateTime> dialog = new javafx.scene.control.Dialog<>();
+        dialog.setTitle("Select Delivery Date & Time");
+        dialog.setHeaderText("Choose when you want your order delivered\n(Within 48 hours from now)");
+
+        // Create date/time pickers
+        javafx.scene.control.DatePicker datePicker = new javafx.scene.control.DatePicker();
+        datePicker.setValue(java.time.LocalDate.now().plusDays(1));
+
+        // Restrict to next 48 hours
+        java.time.LocalDate minDate = java.time.LocalDate.now();
+        java.time.LocalDate maxDate = java.time.LocalDate.now().plusDays(2);
+        datePicker.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+            @Override
+            public void updateItem(java.time.LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                setDisable(empty || date.isBefore(minDate) || date.isAfter(maxDate));
+            }
+        });
+
+        // Time slot selection
+        javafx.scene.control.ComboBox<String> timeCombo = new javafx.scene.control.ComboBox<>();
+        timeCombo.getItems().addAll(
+                "09:00 - 11:00", "11:00 - 13:00", "13:00 - 15:00",
+                "15:00 - 17:00", "17:00 - 19:00", "19:00 - 21:00");
+        timeCombo.setValue("11:00 - 13:00");
+
+        // Layout
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(10);
+        grid.setVgap(15);
+        grid.setPadding(new javafx.geometry.Insets(20));
+        grid.add(new javafx.scene.control.Label("📅 Delivery Date:"), 0, 0);
+        grid.add(datePicker, 1, 0);
+        grid.add(new javafx.scene.control.Label("🕐 Time Slot:"), 0, 1);
+        grid.add(timeCombo, 1, 1);
+
+        // Order summary
+        StringBuilder summary = new StringBuilder();
+        summary.append("\n━━━━━━━━ ORDER SUMMARY ━━━━━━━━\n");
+        for (CartItem item : cartList) {
+            summary.append(String.format("• %s x%.2f kg = ₺%.2f\n",
+                    item.getProductName(), item.getQuantity(), item.getTotal()));
+        }
+        summary.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+        summary.append(String.format("Subtotal: ₺%.2f\n", subtotal));
+        if (gPointsToUse > 0)
+            summary.append(String.format("G Points: -₺%.2f\n", gPointsToUse));
+        if (couponDiscountAmount > 0)
+            summary.append(String.format("Coupon: -₺%.2f\n", couponDiscountAmount));
+        summary.append(String.format("VAT (20%%): +₺%.2f\n", vatAmount));
+        summary.append(String.format("TOTAL: ₺%.2f", finalTotal));
+
+        javafx.scene.control.TextArea summaryArea = new javafx.scene.control.TextArea(summary.toString());
+        summaryArea.setEditable(false);
+        summaryArea.setPrefHeight(180);
+        summaryArea.setStyle("-fx-font-family: 'Consolas', monospace; -fx-font-size: 11px;");
+        grid.add(summaryArea, 0, 2, 2, 1);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(
+                javafx.scene.control.ButtonType.OK,
+                javafx.scene.control.ButtonType.CANCEL);
+
+        // Convert result
+        final double finalTotalForLambda = finalTotal;
+        dialog.setResultConverter(button -> {
+            if (button == javafx.scene.control.ButtonType.OK) {
+                java.time.LocalDate date = datePicker.getValue();
+                String timeSlot = timeCombo.getValue();
+                int hour = Integer.parseInt(timeSlot.split(":")[0]);
+                return java.time.LocalDateTime.of(date, java.time.LocalTime.of(hour, 0));
+            }
+            return null;
+        });
+
+        java.util.Optional<java.time.LocalDateTime> result = dialog.showAndWait();
+
+        if (!result.isPresent()) {
+            statusLabel.setText("Checkout cancelled.");
+            return;
+        }
+
+        java.time.LocalDateTime deliveryDateTime = result.get();
 
         try {
             // Use G Points if any
             if (gPointsToUse > 0) {
                 if (!userDAO.useGPoints(currentUser.getId(), gPointsToUse)) {
-                    statusLabel.setText("G Points kullanılamadı!");
+                    statusLabel.setText("G Points could not be used!");
                     statusLabel.setStyle("-fx-text-fill: red;");
                     return;
                 }
@@ -394,11 +527,13 @@ public class CustomerController {
 
                 // Build success message
                 StringBuilder msg = new StringBuilder();
-                msg.append("✅ Sipariş başarılı! ");
+                msg.append("✅ Order placed successfully! ");
+                msg.append("Delivery: ").append(deliveryDateTime.toLocalDate()).append(" ");
+                msg.append(deliveryDateTime.getHour()).append(":00. ");
                 if (gPointsToUse > 0) {
-                    msg.append(String.format("%.0f G Point kullanıldı. ", gPointsToUse));
+                    msg.append(String.format("%.0f G Points used. ", gPointsToUse));
                 }
-                msg.append(String.format("%.0f G Point kazandınız!", pointsEarned));
+                msg.append(String.format("Earned %.0f G Points!", pointsEarned));
 
                 statusLabel.setText(msg.toString());
                 statusLabel.setStyle("-fx-text-fill: green;");
@@ -406,19 +541,25 @@ public class CustomerController {
                 // Reset
                 cartList.clear();
                 gPointsToUse = 0;
+                appliedCoupon = null;
+                couponDiscount = 0;
                 if (gPointsField != null)
                     gPointsField.clear();
+                if (couponCodeField != null)
+                    couponCodeField.clear();
+                if (couponStatusLabel != null)
+                    couponStatusLabel.setText("");
                 updateCartTotal();
                 updateGPointsDisplay();
                 loadOrders();
                 loadProducts();
             } else {
-                statusLabel.setText("Sipariş başarısız.");
+                statusLabel.setText("Order failed.");
                 statusLabel.setStyle("-fx-text-fill: red;");
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            statusLabel.setText("Veritabanı hatası!");
+            statusLabel.setText("Database error!");
             statusLabel.setStyle("-fx-text-fill: red;");
         }
     }
@@ -504,6 +645,28 @@ public class CustomerController {
 
         productList = FXCollections.observableArrayList(filtered);
         shopTable.setItems(productList);
+    }
+
+    /**
+     * Update quantity label and promptText based on product unit type
+     */
+    private void updateQuantityLabelForProduct(Product product) {
+        if (quantityLabel == null || quantityField == null)
+            return;
+
+        if (product == null) {
+            quantityLabel.setText("Quantity:");
+            quantityField.setPromptText("e.g. 1, 2.5");
+            return;
+        }
+
+        if (product.isSoldByPiece()) {
+            quantityLabel.setText("Pieces:");
+            quantityField.setPromptText("e.g. 1, 2, 3");
+        } else {
+            quantityLabel.setText("Kilograms:");
+            quantityField.setPromptText("e.g. 0.5, 1, 2.3");
+        }
     }
 
     @FXML
@@ -747,20 +910,25 @@ public class CustomerController {
     }
 
     private void updateCartTotalWithDiscount() {
-        double total = getCartTotal();
+        double subtotal = getCartTotal();
         double couponDiscountAmount = 0;
 
         // Calculate coupon discount if applied
         if (appliedCoupon != null) {
-            couponDiscountAmount = total * (appliedCoupon.getDiscountPercent() / 100.0);
+            couponDiscountAmount = subtotal * (appliedCoupon.getDiscountPercent() / 100.0);
             couponDiscount = couponDiscountAmount;
         }
 
-        double finalTotal = total - gPointsToUse - couponDiscountAmount;
-        if (finalTotal < 0)
-            finalTotal = 0;
+        double afterDiscounts = subtotal - gPointsToUse - couponDiscountAmount;
+        if (afterDiscounts < 0)
+            afterDiscounts = 0;
 
-        cartTotalLabel.setText("Subtotal: ₺" + String.format("%.2f", total));
+        // Add 20% VAT
+        double vatRate = 0.20;
+        double vatAmount = afterDiscounts * vatRate;
+        double finalTotal = afterDiscounts + vatAmount;
+
+        cartTotalLabel.setText("Subtotal: ₺" + String.format("%.2f", subtotal));
 
         if (discountLabel != null) {
             StringBuilder discText = new StringBuilder();
@@ -770,14 +938,19 @@ public class CustomerController {
             if (couponDiscountAmount > 0) {
                 if (discText.length() > 0)
                     discText.append(" | ");
-                discText.append("Coupon: -$").append(String.format("%.2f", couponDiscountAmount));
+                discText.append("Coupon: -₺").append(String.format("%.2f", couponDiscountAmount));
             }
+            // Add VAT info
+            if (discText.length() > 0)
+                discText.append(" | ");
+            discText.append("VAT (20%): +₺").append(String.format("%.2f", vatAmount));
+
             discountLabel.setText(discText.toString());
             discountLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold;");
         }
 
         if (finalTotalLabel != null) {
-            finalTotalLabel.setText("Final: ₺" + String.format("%.2f", finalTotal));
+            finalTotalLabel.setText("Total (incl. VAT): ₺" + String.format("%.2f", finalTotal));
             finalTotalLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
         }
     }
@@ -982,5 +1155,161 @@ public class CustomerController {
             couponStatusLabel.setText("Error: " + e.getMessage());
             couponStatusLabel.setStyle("-fx-text-fill: red;");
         }
+    }
+
+    // ==================== PROFILE MANAGEMENT ====================
+
+    /**
+     * Load profile data into fields
+     */
+    private void loadProfileData() {
+        if (currentUser == null)
+            return;
+
+        if (profileUsernameLabel != null) {
+            profileUsernameLabel.setText(currentUser.getUsername());
+        }
+        if (profileFirstNameField != null) {
+            profileFirstNameField.setText(currentUser.getFirstName() != null ? currentUser.getFirstName() : "");
+        }
+        if (profileLastNameField != null) {
+            profileLastNameField.setText(currentUser.getLastName() != null ? currentUser.getLastName() : "");
+        }
+        if (profileAddressField != null) {
+            profileAddressField.setText(currentUser.getAddress() != null ? currentUser.getAddress() : "");
+        }
+        if (profilePhoneField != null) {
+            profilePhoneField.setText(currentUser.getPhone() != null ? currentUser.getPhone() : "");
+        }
+    }
+
+    /**
+     * Save profile changes
+     */
+    @FXML
+    public void handleSaveProfile() {
+        if (currentUser == null)
+            return;
+
+        String firstName = profileFirstNameField.getText().trim();
+        String lastName = profileLastNameField.getText().trim();
+        String address = profileAddressField.getText().trim();
+        String phone = profilePhoneField.getText().trim();
+
+        if (firstName.isEmpty() || lastName.isEmpty()) {
+            profileStatusLabel.setText("❌ First and last name are required.");
+            profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        try {
+            boolean success = userDAO.updateUserProfile(currentUser.getId(), firstName, lastName, address, phone);
+            if (success) {
+                // Update local user object
+                currentUser.setFirstName(firstName);
+                currentUser.setLastName(lastName);
+                currentUser.setAddress(address);
+                currentUser.setPhone(phone);
+
+                profileStatusLabel.setText("✅ Profile saved successfully!");
+                profileStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
+
+                // Update welcome label
+                welcomeLabel.setText("Welcome, " + firstName);
+            } else {
+                profileStatusLabel.setText("❌ Failed to save profile.");
+                profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            }
+        } catch (java.sql.SQLException e) {
+            profileStatusLabel.setText("❌ Error: " + e.getMessage());
+            profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
+        }
+    }
+
+    /**
+     * Handle password change
+     */
+    @FXML
+    public void handleChangePassword() {
+        if (currentUser == null)
+            return;
+
+        String currentPassword = currentPasswordField.getText();
+        String newPassword = newPasswordField.getText();
+        String confirmPassword = confirmNewPasswordField.getText();
+
+        // Validation
+        if (currentPassword.isEmpty()) {
+            passwordStatusLabel.setText("❌ Current password is required.");
+            passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        if (newPassword.isEmpty()) {
+            passwordStatusLabel.setText("❌ New password is required.");
+            passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        // Strong password validation
+        String passwordError = validatePasswordStrength(newPassword);
+        if (passwordError != null) {
+            passwordStatusLabel.setText("❌ " + passwordError);
+            passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            passwordStatusLabel.setText("❌ New passwords do not match.");
+            passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        try {
+            boolean success = userDAO.changePassword(currentUser.getId(), currentPassword, newPassword);
+            if (success) {
+                passwordStatusLabel.setText("✅ Password changed successfully!");
+                passwordStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
+                // Clear fields
+                currentPasswordField.clear();
+                newPasswordField.clear();
+                confirmNewPasswordField.clear();
+            } else {
+                passwordStatusLabel.setText("❌ Current password is incorrect.");
+                passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            }
+        } catch (java.sql.SQLException e) {
+            passwordStatusLabel.setText("❌ Error: " + e.getMessage());
+            passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
+        }
+    }
+
+    /**
+     * Validate password strength
+     */
+    private String validatePasswordStrength(String password) {
+        if (password.length() < 6) {
+            return "Password must be at least 6 characters.";
+        }
+
+        boolean hasUppercase = false;
+        boolean hasNumber = false;
+
+        for (char c : password.toCharArray()) {
+            if (Character.isUpperCase(c))
+                hasUppercase = true;
+            if (Character.isDigit(c))
+                hasNumber = true;
+        }
+
+        if (!hasUppercase) {
+            return "Password must contain at least 1 uppercase letter.";
+        }
+
+        if (!hasNumber) {
+            return "Password must contain at least 1 number.";
+        }
+
+        return null;
     }
 }

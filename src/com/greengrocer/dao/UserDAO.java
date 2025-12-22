@@ -195,4 +195,55 @@ public class UserDAO {
         }
         return updateGPoints(userId, currentPoints - pointsToUse);
     }
+
+    /**
+     * Update user profile information
+     */
+    public boolean updateUserProfile(int userId, String firstName, String lastName, String address, String phone)
+            throws SQLException {
+        String query = "UPDATE UserInfo SET first_name = ?, last_name = ?, address = ?, phone = ? WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, firstName);
+            stmt.setString(2, lastName);
+            stmt.setString(3, address);
+            stmt.setString(4, phone);
+            stmt.setInt(5, userId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Change user password
+     * Verifies old password before updating to new password
+     */
+    public boolean changePassword(int userId, String oldPassword, String newPassword) throws SQLException {
+        // First verify old password
+        String verifyQuery = "SELECT password FROM UserInfo WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement verifyStmt = conn.prepareStatement(verifyQuery)) {
+            verifyStmt.setInt(1, userId);
+            try (var rs = verifyStmt.executeQuery()) {
+                if (rs.next()) {
+                    String storedPassword = rs.getString("password");
+                    // Check both plain text and hashed password
+                    String hashedOld = PasswordUtils.hashPassword(oldPassword);
+                    if (!storedPassword.equals(oldPassword) && !storedPassword.equals(hashedOld)) {
+                        return false; // Old password doesn't match
+                    }
+                } else {
+                    return false; // User not found
+                }
+            }
+        }
+
+        // Update to new password (hashed)
+        String updateQuery = "UPDATE UserInfo SET password = ? WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
+            updateStmt.setString(1, PasswordUtils.hashPassword(newPassword));
+            updateStmt.setInt(2, userId);
+            return updateStmt.executeUpdate() > 0;
+        }
+    }
 }

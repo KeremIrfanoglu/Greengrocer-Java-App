@@ -81,7 +81,7 @@ public class LoginController {
                     }
 
                     Stage stage = (Stage) usernameField.getScene().getWindow();
-                    stage.setTitle(
+                    stage.setTitle("Group10 GreenGrocer - " +
                             user.getRole().substring(0, 1).toUpperCase() + user.getRole().substring(1) + " Dashboard");
                     stage.setScene(StyleHelper.createStyledScene(root, 960, 540));
 

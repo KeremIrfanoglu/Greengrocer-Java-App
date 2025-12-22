@@ -24,6 +24,14 @@ public class ProductDAO {
                 } catch (SQLException e) {
                     // cost_price column might not exist in old databases
                 }
+                String unitType = "kg"; // Default to kg
+                try {
+                    unitType = rs.getString("unit_type");
+                    if (unitType == null)
+                        unitType = "kg";
+                } catch (SQLException e) {
+                    // unit_type column might not exist in old databases
+                }
                 products.add(new Product(
                         rs.getInt("id"),
                         rs.getString("name"),
@@ -32,7 +40,8 @@ public class ProductDAO {
                         costPrice,
                         rs.getDouble("stock"),
                         rs.getDouble("threshold"),
-                        imageData));
+                        imageData,
+                        unitType));
             }
         }
         return products;

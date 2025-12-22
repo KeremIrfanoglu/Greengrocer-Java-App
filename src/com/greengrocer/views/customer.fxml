@@ -4,6 +4,8 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
@@ -11,6 +13,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
@@ -78,8 +81,8 @@
                                 <!-- Add to Cart Bar -->
                                 <HBox spacing="15" alignment="CENTER_LEFT" styleClass="glass-card-small">
                                    <children>
-                                      <Label text="Quantity:" styleClass="text-label" />
-                                      <TextField fx:id="quantityField" prefWidth="80" promptText="1" styleClass="text-field" />
+                                      <Label fx:id="quantityLabel" text="Quantity:" styleClass="text-label" />
+                                      <TextField fx:id="quantityField" prefWidth="100" promptText="e.g. 1, 2.5" styleClass="text-field" />
                                       <Button onAction="#handleAddToCart" text="🛒 Add to Cart" styleClass="button-primary" />
                                    </children>
                                 </HBox>
@@ -209,6 +212,83 @@
                             </HBox>
                          </children>
                       </VBox>
+                   </content>
+                </Tab>
+                
+                <!-- PROFILE TAB -->
+                <Tab text="👤 Profile">
+                   <content>
+                      <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+                         <content>
+                            <VBox spacing="20" style="-fx-padding: 30;">
+                               <children>
+                                  <Label text="My Profile" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                                  
+                                  <!-- Profile Info Card -->
+                                  <VBox spacing="15" styleClass="glass-card" maxWidth="500" style="-fx-padding: 20;">
+                                     <children>
+                                        <Label text="📋 Account Information" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: white;" />
+                                        
+                                        <GridPane hgap="15" vgap="12">
+                                           <!-- Username (readonly) -->
+                                           <Label text="Username:" style="-fx-font-weight: bold; -fx-text-fill: #ddd;" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                           <Label fx:id="profileUsernameLabel" text="username" style="-fx-text-fill: #aaa; -fx-font-style: italic;" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                           
+                                           <!-- First Name -->
+                                           <Label text="First Name:" style="-fx-text-fill: #ddd;" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                           <TextField fx:id="profileFirstNameField" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                           
+                                           <!-- Last Name -->
+                                           <Label text="Last Name:" style="-fx-text-fill: #ddd;" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                           <TextField fx:id="profileLastNameField" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                           
+                                           <!-- Address -->
+                                           <Label text="Address:" style="-fx-text-fill: #ddd;" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                           <TextField fx:id="profileAddressField" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                           
+                                           <!-- Phone -->
+                                           <Label text="Phone:" style="-fx-text-fill: #ddd;" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                           <TextField fx:id="profilePhoneField" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                        </GridPane>
+                                        
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                           <Button onAction="#handleSaveProfile" text="💾 Save Changes" styleClass="button-primary" />
+                                           <Label fx:id="profileStatusLabel" text="" />
+                                        </HBox>
+                                     </children>
+                                  </VBox>
+                                  
+                                  <!-- Change Password Card -->
+                                  <VBox spacing="15" styleClass="glass-card" maxWidth="500" style="-fx-padding: 20;">
+                                     <children>
+                                        <Label text="🔒 Change Password" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: white;" />
+                                        
+                                        <GridPane hgap="15" vgap="12">
+                                           <!-- Current Password -->
+                                           <Label text="Current Password:" style="-fx-text-fill: #ddd;" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                           <PasswordField fx:id="currentPasswordField" prefWidth="200" styleClass="password-field" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                           
+                                           <!-- New Password -->
+                                           <Label text="New Password:" style="-fx-text-fill: #ddd;" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                           <PasswordField fx:id="newPasswordField" prefWidth="200" styleClass="password-field" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                           
+                                           <!-- Confirm New Password -->
+                                           <Label text="Confirm New:" style="-fx-text-fill: #ddd;" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                           <PasswordField fx:id="confirmNewPasswordField" prefWidth="200" styleClass="password-field" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                        </GridPane>
+                                        
+                                        <Label text="Min 6 chars, 1 uppercase, 1 number" style="-fx-font-size: 10px; -fx-text-fill: #aaa;" />
+                                        
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                           <Button onAction="#handleChangePassword" text="🔑 Change Password" styleClass="button-warning" />
+                                           <Label fx:id="passwordStatusLabel" text="" />
+                                        </HBox>
+                                     </children>
+                                  </VBox>
+                               </children>
+                            </VBox>
+                         </content>
+                      </ScrollPane>
                    </content>
                 </Tab>
                 

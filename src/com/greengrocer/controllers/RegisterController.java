@@ -21,6 +21,8 @@ public class RegisterController {
     @FXML
     private PasswordField passwordField;
     @FXML
+    private PasswordField confirmPasswordField;
+    @FXML
     private TextField firstNameField;
     @FXML
     private TextField lastNameField;
@@ -39,34 +41,136 @@ public class RegisterController {
 
     @FXML
     public void handleRegister() {
-        String username = usernameField.getText();
+        String username = usernameField.getText().trim();
         String password = passwordField.getText();
-        String firstName = firstNameField.getText();
-        String lastName = lastNameField.getText();
-        String address = addressField.getText();
-        String phone = phoneField.getText();
+        String confirmPassword = confirmPasswordField.getText();
+        String firstName = firstNameField.getText().trim();
+        String lastName = lastNameField.getText().trim();
+        String address = addressField.getText().trim();
+        String phone = phoneField.getText().trim();
 
-        if (username.isEmpty() || password.isEmpty()) {
-            statusLabel.setText("Username and Password are required.");
+        // Required fields validation
+        if (username.isEmpty()) {
+            showError("Username is required.");
             return;
         }
 
-        // Basic validation could go here (e.g. strong password check)
+        if (username.length() < 3) {
+            showError("Username must be at least 3 characters.");
+            return;
+        }
+
+        // Username must be lowercase only
+        if (!username.equals(username.toLowerCase())) {
+            showError("Username must be lowercase only (no capital letters).");
+            return;
+        }
+
+        if (password.isEmpty()) {
+            showError("Password is required.");
+            return;
+        }
+
+        // Strong password validation
+        String passwordError = validatePassword(password);
+        if (passwordError != null) {
+            showError(passwordError);
+            return;
+        }
+
+        // Confirm password check
+        if (!password.equals(confirmPassword)) {
+            showError("Passwords do not match.");
+            return;
+        }
+
+        if (firstName.isEmpty() || lastName.isEmpty()) {
+            showError("First name and last name are required.");
+            return;
+        }
+
+        // Phone validation (optional but if provided must be valid)
+        if (!phone.isEmpty()) {
+            String phoneError = validatePhone(phone);
+            if (phoneError != null) {
+                showError(phoneError);
+                return;
+            }
+        }
 
         try {
             boolean success = userDAO.register(username, password, "customer", firstName, lastName, address, phone);
             if (success) {
-                statusLabel.setText("Registration successful! Please go back to login.");
-                statusLabel.setStyle("-fx-text-fill: green;");
+                statusLabel.setText("✅ Registration successful! Please go back to login.");
+                statusLabel.setStyle("-fx-text-fill: #4CAF50;");
+                // Clear fields
+                usernameField.clear();
+                passwordField.clear();
+                confirmPasswordField.clear();
+                firstNameField.clear();
+                lastNameField.clear();
+                addressField.clear();
+                phoneField.clear();
             } else {
-                statusLabel.setText("Registration failed. Username might be taken.");
-                statusLabel.setStyle("-fx-text-fill: red;");
+                showError("Username already taken. Please choose another.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            statusLabel.setText("Database Error: " + e.getMessage());
-            statusLabel.setStyle("-fx-text-fill: red;");
+            showError("Database Error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Validate password strength
+     * 
+     * @return error message or null if valid
+     */
+    private String validatePassword(String password) {
+        if (password.length() < 6) {
+            return "Password must be at least 6 characters.";
+        }
+
+        boolean hasUppercase = false;
+        boolean hasNumber = false;
+
+        for (char c : password.toCharArray()) {
+            if (Character.isUpperCase(c))
+                hasUppercase = true;
+            if (Character.isDigit(c))
+                hasNumber = true;
+        }
+
+        if (!hasUppercase) {
+            return "Password must contain at least 1 uppercase letter.";
+        }
+
+        if (!hasNumber) {
+            return "Password must contain at least 1 number.";
+        }
+
+        return null; // Password is valid
+    }
+
+    private void showError(String message) {
+        statusLabel.setText("❌ " + message);
+        statusLabel.setStyle("-fx-text-fill: #f44336;");
+    }
+
+    /**
+     * Validate phone number format
+     * 
+     * @return error message or null if valid
+     */
+    private String validatePhone(String phone) {
+        // Remove spaces, dashes, and parentheses for validation
+        String cleanPhone = phone.replaceAll("[\\s\\-\\(\\)]", "");
+
+        // Must be only digits (with optional + at start)
+        if (!cleanPhone.matches("^\\+?[0-9]{10,15}$")) {
+            return "Phone number must be 10-15 digits (e.g., 5551234567).";
+        }
+
+        return null; // Phone is valid
     }
 
     @FXML
