@@ -124,8 +124,16 @@ public class StyledAlert {
 
         DialogPane dialogPane = alert.getDialogPane();
         applyBaseStyle(dialogPane);
+        applyIcon(alert);
 
         return alert;
+    }
+
+    /**
+     * Apply application icon to alert stage
+     */
+    private static void applyIcon(Alert alert) {
+        StyleHelper.applyAppIcon(alert);
     }
 
     /**

@@ -1,8 +1,12 @@
 package com.greengrocer.util;
 
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.stage.Stage;
+import javafx.scene.control.Dialog;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * Utility class for applying the application's CSS stylesheet to scenes.
@@ -10,6 +14,7 @@ import java.net.MalformedURLException;
 public class StyleHelper {
 
     private static final String CSS_PATH = "src/com/greengrocer/views/styles.css";
+    private static final String ICON_PATH = "src/com/greengrocer/assets/icon.png";
 
     /**
      * Applies the application's CSS stylesheet to the given scene.
@@ -38,5 +43,29 @@ public class StyleHelper {
         Scene scene = new Scene(root, width, height);
         applyStyles(scene);
         return scene;
+    }
+
+    /**
+     * Applies the application icon to the given stage.
+     */
+    public static void applyAppIcon(Stage stage) {
+        try {
+            URL iconUrl = new File(ICON_PATH).toURI().toURL();
+            stage.getIcons().add(new Image(iconUrl.toExternalForm()));
+        } catch (Exception e) {
+            // Silently fail if icon can't be loaded
+        }
+    }
+
+    /**
+     * Applies the application icon to the given dialog.
+     */
+    public static void applyAppIcon(Dialog<?> dialog) {
+        try {
+            Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
+            applyAppIcon(stage);
+        } catch (Exception e) {
+            // Silently fail
+        }
     }
 }

@@ -304,6 +304,7 @@ public class InvoiceGenerator {
         public static void showInvoiceDialog(byte[] invoiceBytes) {
                 javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
                                 javafx.scene.control.Alert.AlertType.INFORMATION);
+                com.greengrocer.util.StyleHelper.applyAppIcon(alert);
                 alert.setTitle("Invoice Generated");
                 alert.setHeaderText("Your order has been placed successfully!");
 

@@ -3,6 +3,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
 <AnchorPane prefHeight="600.0" prefWidth="960.0" styleClass="dashboard-container"
             xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
@@ -13,7 +15,11 @@
             <!-- Header Bar -->
             <HBox alignment="CENTER_LEFT" spacing="20" styleClass="header-bar">
                <children>
-                  <Label text="🚚" style="-fx-font-size: 28px;" />
+                  <ImageView fitHeight="45" fitWidth="45" preserveRatio="true">
+                     <image>
+                        <Image url="@../assets/icon.png" />
+                     </image>
+                  </ImageView>
                   <VBox spacing="2">
                      <Label fx:id="welcomeLabel" text="Carrier Dashboard" styleClass="header-title" />
                      <Label fx:id="avgRatingLabel" text="⭐ Rating: N/A" styleClass="header-subtitle" />

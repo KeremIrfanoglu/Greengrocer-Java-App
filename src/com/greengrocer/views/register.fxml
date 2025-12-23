@@ -9,6 +9,8 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
 <StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
            fx:controller="com.greengrocer.controllers.RegisterController"
@@ -23,11 +25,11 @@
             </padding>
             
             <!-- Logo -->
-            <Label text="" styleClass="logo-icon">
-                <font>
-                    <Font size="48" />
-                </font>
-            </Label>
+            <ImageView fitHeight="60" fitWidth="60" preserveRatio="true">
+                <image>
+                    <Image url="@../assets/icon.png" />
+                </image>
+            </ImageView>
             
             <!-- Title -->
             <Label text="Create Account" styleClass="title-label">

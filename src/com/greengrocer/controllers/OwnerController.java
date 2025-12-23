@@ -20,6 +20,8 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import com.greengrocer.util.FormatHelper;
+import com.greengrocer.util.StyledAlert;
+import javafx.geometry.Side;
 
 public class OwnerController {
 
@@ -299,7 +301,7 @@ public class OwnerController {
                 if (item == null || empty) {
                     setStyle("");
                 } else if (item.getStock() <= item.getThreshold()) {
-                    setStyle("-fx-background-color: #ffcdd2;"); // Light red for alert
+                    setStyle("-fx-background-color: #800000; -fx-text-fill: white;"); // Bordeaux for alert
                 } else {
                     setStyle("");
                 }
@@ -433,13 +435,10 @@ public class OwnerController {
             return;
         }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Delete Product");
-        alert.setHeaderText(null);
-        alert.setContentText("Are you sure you want to delete " + selected.getName() + "?");
+        boolean confirm = StyledAlert.showConfirmation("Delete Product", null,
+                "Are you sure you want to delete " + selected.getName() + "?");
 
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
+        if (confirm) {
             try {
                 if (productDAO.deleteProduct(selected.getId())) {
                     statusLabel.setText("Product deleted.");
@@ -575,6 +574,8 @@ public class OwnerController {
             }
             productTypeChart.setData(pieData);
             productTypeChart.setLabelsVisible(true);
+            productTypeChart.setLegendSide(Side.RIGHT); // Move legend to side to prevent overlapping with labels
+            productTypeChart.setStartAngle(90); // Adjust start angle for better label distribution
 
             // Bar Chart - Revenue based on selected view
             loadRevenueChart();
@@ -729,13 +730,10 @@ public class OwnerController {
             return;
         }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Cancel Order");
-        alert.setHeaderText(null);
-        alert.setContentText("Are you sure you want to cancel Order #" + selected.getId() + "?");
+        boolean confirm = StyledAlert.showConfirmation("Cancel Order", null,
+                "Are you sure you want to cancel Order #" + selected.getId() + "?");
 
-        java.util.Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
+        if (confirm) {
             try {
                 if (orderDAO.cancelOrder(selected.getId())) {
                     orderManagementStatus.setText("Order #" + selected.getId() + " cancelled.");

@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 import com.greengrocer.util.StyleHelper;
+import com.greengrocer.util.StyledAlert;
 
 public class LoginController {
 
@@ -130,11 +131,7 @@ public class LoginController {
     }
 
     private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+        StyledAlert.showError(title, null, content);
     }
 
     @FXML
@@ -151,6 +148,7 @@ public class LoginController {
             if (user != null) {
                 // Create password change dialog
                 javafx.scene.control.Dialog<String[]> dialog = new javafx.scene.control.Dialog<>();
+                StyleHelper.applyAppIcon(dialog);
                 dialog.setTitle("Change Password");
                 dialog.setHeaderText("Change password for: " + username);
 

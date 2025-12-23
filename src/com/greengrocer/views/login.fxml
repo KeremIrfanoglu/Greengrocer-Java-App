@@ -8,6 +8,8 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
 <StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
            fx:controller="com.greengrocer.controllers.LoginController"
@@ -23,11 +25,11 @@
             </padding>
             
             <!-- Logo Icon -->
-            <Label text="" styleClass="logo-icon">
-                <font>
-                    <Font size="64" />
-                </font>
-            </Label>
+            <ImageView fitHeight="80" fitWidth="80" preserveRatio="true">
+                <image>
+                    <Image url="@../assets/icon.png" />
+                </image>
+            </ImageView>
             
             <!-- Title -->
             <Label text="Greengrocer" styleClass="title-label">

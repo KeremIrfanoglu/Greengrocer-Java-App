@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import com.greengrocer.util.StyleHelper;
 
 import java.io.File;
 import java.net.URL;
@@ -28,6 +29,7 @@ public class Main extends Application {
         scene.getStylesheets().add(cssUrl.toExternalForm());
 
         primaryStage.setScene(scene);
+        StyleHelper.applyAppIcon(primaryStage);
         primaryStage.show();
     }
 

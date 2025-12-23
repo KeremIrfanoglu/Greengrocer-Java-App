@@ -17,6 +17,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.sql.SQLException;
 import com.greengrocer.util.FormatHelper;
+import com.greengrocer.util.StyledAlert;
 
 public class CustomerController {
     private User currentUser;
@@ -649,6 +650,7 @@ public class CustomerController {
 
         // Show delivery date/time selection dialog
         javafx.scene.control.Dialog<java.time.LocalDateTime> dialog = new javafx.scene.control.Dialog<>();
+        com.greengrocer.util.StyleHelper.applyAppIcon(dialog);
         dialog.setTitle("Select Delivery Date & Time");
         dialog.setHeaderText("Choose when you want your order delivered\n(Within 48 hours from now)");
 
@@ -1460,12 +1462,12 @@ public class CustomerController {
         }
 
         // Confirm with user
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Cancel Order");
-        confirm.setHeaderText("Are you sure you want to cancel Order #" + selected.getId() + "?");
-        confirm.setContentText("Stock will be restored. Time remaining: " + (30 - diffInMinutes) + " minutes.");
+        boolean confirmed = StyledAlert.showConfirmation(
+                "Cancel Order",
+                "Are you sure you want to cancel Order #" + selected.getId() + "?",
+                "Stock will be restored. Time remaining: " + (30 - diffInMinutes) + " minutes.");
 
-        if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+        if (confirmed) {
             try {
                 if (orderDAO.cancelOrder(selected.getId())) {
                     statusLabel.setText("Order #" + selected.getId() + " cancelled successfully!");

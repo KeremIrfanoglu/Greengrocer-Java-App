@@ -19,6 +19,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
 <VBox prefHeight="540.0" prefWidth="960.0" styleClass="dashboard-container"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
@@ -27,7 +28,11 @@
       <!-- Header Bar -->
       <HBox alignment="CENTER_LEFT" spacing="20" styleClass="header-bar">
          <children>
-            <Label text="" style="-fx-font-size: 28px;" />
+            <ImageView fitHeight="45" fitWidth="45" preserveRatio="true">
+               <image>
+                  <Image url="@../assets/icon.png" />
+               </image>
+            </ImageView>
             <VBox spacing="2">
                <Label text="Owner Dashboard" styleClass="header-title" />
                <Label fx:id="welcomeLabel" text="Welcome!" styleClass="header-subtitle" />
@@ -139,13 +144,13 @@
                             <VBox HBox.hgrow="ALWAYS" spacing="5">
                                <children>
                                   <Label text="Sales by Category" styleClass="section-title" />
-                                  <PieChart fx:id="productTypeChart" prefHeight="250" />
+                                  <PieChart fx:id="productTypeChart" prefHeight="420" />
                                </children>
                             </VBox>
                             <VBox HBox.hgrow="ALWAYS" spacing="5">
                                <children>
                                   <Label text="Revenue Over Time" styleClass="section-title" />
-                                  <BarChart fx:id="revenueChart" prefHeight="250">
+                                  <BarChart fx:id="revenueChart" prefHeight="320">
                                      <xAxis><CategoryAxis label="Period" /></xAxis>
                                      <yAxis><NumberAxis label="Revenue (TL)" /></yAxis>
                                   </BarChart>
