@@ -48,9 +48,9 @@ public class ProductDAO {
     }
 
     public boolean addProduct(String name, String type, double price, double costPrice, double stock, double threshold,
-            InputStream image)
+            InputStream image, String unitType)
             throws SQLException {
-        String query = "INSERT INTO ProductInfo (name, type, price, cost_price, stock, threshold, image) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO ProductInfo (name, type, price, cost_price, stock, threshold, image, unit_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -66,13 +66,20 @@ public class ProductDAO {
             } else {
                 stmt.setNull(7, Types.BLOB);
             }
+            stmt.setString(8, unitType != null ? unitType : "kg");
 
             return stmt.executeUpdate() > 0;
         }
     }
 
     public boolean updateProduct(Product product) throws SQLException {
-        String query = "UPDATE ProductInfo SET name=?, type=?, price=?, cost_price=?, stock=?, threshold=? WHERE id=?";
+        boolean hasNewImage = product.getImageData() != null && product.getImageData().length > 0;
+        String query;
+        if (hasNewImage) {
+            query = "UPDATE ProductInfo SET name=?, type=?, price=?, cost_price=?, stock=?, threshold=?, image=?, unit_type=? WHERE id=?";
+        } else {
+            query = "UPDATE ProductInfo SET name=?, type=?, price=?, cost_price=?, stock=?, threshold=?, unit_type=? WHERE id=?";
+        }
 
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -83,13 +90,28 @@ public class ProductDAO {
             stmt.setDouble(4, product.getCostPrice());
             stmt.setDouble(5, product.getStock());
             stmt.setDouble(6, product.getThreshold());
-            stmt.setInt(7, product.getId());
+
+            if (hasNewImage) {
+                stmt.setBytes(7, product.getImageData());
+                stmt.setString(8, product.getUnitType());
+                stmt.setInt(9, product.getId());
+            } else {
+                stmt.setString(7, product.getUnitType());
+                stmt.setInt(8, product.getId());
+            }
 
             return stmt.executeUpdate() > 0;
         }
     }
 
     public boolean deleteProduct(int id) throws SQLException {
+        // First check if product is used in orders
+        String checkQuery = "SELECT COUNT(*) FROM OrderItems WHERE product_name = (SELECT name FROM ProductInfo WHERE id = ?)";
+        // Note: The schema seems to link by product_name in some places, or maybe
+        // product_id.
+        // Let's stick to a direct delete and let the exception handle it, but maybe add
+        // a more descriptive error.
+
         String query = "DELETE FROM ProductInfo WHERE id=?";
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {

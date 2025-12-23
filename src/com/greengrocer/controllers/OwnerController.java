@@ -402,7 +402,7 @@ public class OwnerController {
                 fis = new FileInputStream(selectedImageFile);
             }
 
-            boolean success = productDAO.addProduct(name, type, price, costPrice, stock, threshold, fis);
+            boolean success = productDAO.addProduct(name, type, price, costPrice, stock, threshold, fis, "kg");
             if (success) {
                 statusLabel.setText("Product added successfully!");
                 statusLabel.setStyle("-fx-text-fill: green;");
@@ -450,7 +450,13 @@ public class OwnerController {
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
-                statusLabel.setText("Database error.");
+                // Check if it's a foreign key constraint error
+                String msg = e.getMessage().toLowerCase();
+                if (msg.contains("foreign key") || msg.contains("constraint")) {
+                    statusLabel.setText("Cannot delete: Product has order history.");
+                } else {
+                    statusLabel.setText("Database error: " + e.getMessage());
+                }
                 statusLabel.setStyle("-fx-text-fill: red;");
             }
         }
@@ -799,8 +805,14 @@ public class OwnerController {
             double stock = Double.parseDouble(stockStr);
             double threshold = Double.parseDouble(thresholdStr);
 
+            byte[] imageData = null;
+            if (selectedImageFile != null) {
+                java.nio.file.Path path = selectedImageFile.toPath();
+                imageData = java.nio.file.Files.readAllBytes(path);
+            }
+
             Product updatedProduct = new Product(selectedProductId, name, type, price, costPrice, stock, threshold,
-                    null);
+                    imageData);
 
             if (productDAO.updateProduct(updatedProduct)) {
                 statusLabel.setText("Product #" + selectedProductId + " updated successfully!");
@@ -808,12 +820,18 @@ public class OwnerController {
                 loadProducts();
                 clearFields();
                 selectedProductId = -1;
+                selectedImageFile = null;
+                if (previewImageView != null)
+                    previewImageView.setImage(null);
             } else {
                 statusLabel.setText("Failed to update product.");
                 statusLabel.setStyle("-fx-text-fill: red;");
             }
         } catch (NumberFormatException e) {
             statusLabel.setText("Invalid number format.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+        } catch (java.io.IOException e) {
+            statusLabel.setText("Error reading image file.");
             statusLabel.setStyle("-fx-text-fill: red;");
         } catch (SQLException e) {
             e.printStackTrace();

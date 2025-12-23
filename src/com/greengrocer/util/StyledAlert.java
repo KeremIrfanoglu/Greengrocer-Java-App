@@ -5,6 +5,8 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.DialogPane;
 import javafx.scene.layout.Region;
+import javafx.scene.Node;
+import javafx.geometry.Side;
 import java.util.Optional;
 
 /**
@@ -144,13 +146,16 @@ public class StyledAlert {
         dialogPane.setPrefWidth(420);
         dialogPane.setMinHeight(Region.USE_PREF_SIZE);
 
-        // Style the header
-        dialogPane.lookup(".header-panel").setStyle(
-                "-fx-background-color: transparent;");
+        // Style the header - add null checks to prevent NPE
+        Node headerPanel = dialogPane.lookup(".header-panel");
+        if (headerPanel != null) {
+            headerPanel.setStyle("-fx-background-color: transparent;");
+        }
 
         // Style content
-        if (dialogPane.lookup(".content") != null) {
-            dialogPane.lookup(".content").setStyle(CONTENT_STYLE);
+        Node content = dialogPane.lookup(".content");
+        if (content != null) {
+            content.setStyle(CONTENT_STYLE);
         }
     }
 
