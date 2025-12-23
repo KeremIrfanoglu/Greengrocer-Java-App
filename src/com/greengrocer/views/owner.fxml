@@ -25,13 +25,13 @@
       <!-- Header Bar -->
       <HBox alignment="CENTER_LEFT" spacing="20" styleClass="header-bar">
          <children>
-            <Label text="👑" style="-fx-font-size: 28px;" />
+            <Label text="" style="-fx-font-size: 28px;" />
             <VBox spacing="2">
                <Label text="Owner Dashboard" styleClass="header-title" />
                <Label fx:id="welcomeLabel" text="Welcome!" styleClass="header-subtitle" />
             </VBox>
             <Region HBox.hgrow="ALWAYS" />
-            <Button onAction="#handleLogout" text="🚪 Logout" styleClass="button-danger" />
+            <Button onAction="#handleLogout" text="Logout" styleClass="button-danger" />
          </children>
       </HBox>
       
@@ -40,7 +40,7 @@
         <tabs>
         
           <!-- PRODUCTS TAB -->
-          <Tab text="📦 Products">
+          <Tab text="Products">
             <content>
               <VBox spacing="15" style="-fx-padding: 20;">
                  <children>
@@ -53,9 +53,9 @@
                           <TextField fx:id="prodCostField" prefWidth="70" promptText="Cost" styleClass="text-field" />
                           <TextField fx:id="prodStockField" prefWidth="60" promptText="Stock" styleClass="text-field" />
                           <TextField fx:id="prodThresholdField" prefWidth="70" promptText="Threshold" styleClass="text-field" />
-                          <Button fx:id="browseImageBtn" onAction="#handleBrowseImage" text="📷" styleClass="button-secondary" />
-                          <Button fx:id="addProdBtn" onAction="#handleAddProduct" text="➕ Add" styleClass="button-primary" />
-                          <Button onAction="#handleUpdateProduct" text="✏️ Update" styleClass="button" />
+                          <Button fx:id="browseImageBtn" onAction="#handleBrowseImage" text="Img" styleClass="button-secondary" />
+                          <Button fx:id="addProdBtn" onAction="#handleAddProduct" text="Add" styleClass="button-primary" />
+                          <Button onAction="#handleUpdateProduct" text="Update" styleClass="button" />
                        </children>
                     </HBox>
                     
@@ -64,7 +64,7 @@
                     <TableView fx:id="productTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                       <columns>
                         <TableColumn fx:id="colId" prefWidth="50" text="ID" />
-                        <TableColumn fx:id="colImage" prefWidth="60" text="📷" />
+                        <TableColumn fx:id="colImage" prefWidth="60" text="Img" />
                         <TableColumn fx:id="colName" prefWidth="130" text="Name" />
                         <TableColumn fx:id="colType" prefWidth="90" text="Type" />
                         <TableColumn fx:id="colPrice" prefWidth="80" text="Price" />
@@ -76,8 +76,8 @@
                     
                     <HBox spacing="10">
                        <children>
-                          <Button onAction="#handleDeleteProduct" text="🗑️ Delete" styleClass="button-danger" />
-                          <Button onAction="#handleLoadProductToForm" text="📋 Load to Form" styleClass="button-secondary" />
+                          <Button onAction="#handleDeleteProduct" text="Delete" styleClass="button-danger" />
+                          <Button onAction="#handleLoadProductToForm" text="Load to Form" styleClass="button-secondary" />
                        </children>
                     </HBox>
                  </children>
@@ -86,7 +86,7 @@
           </Tab>
           
           <!-- CARRIERS TAB -->
-          <Tab text="🚚 Carriers">
+          <Tab text="Carriers">
             <content>
               <VBox spacing="15" style="-fx-padding: 20;">
                  <children>
@@ -97,7 +97,7 @@
                           <TextField fx:id="carrNameField" promptText="Name" prefWidth="100" styleClass="text-field" />
                           <TextField fx:id="carrSurnameField" promptText="Surname" prefWidth="100" styleClass="text-field" />
                           <TextField fx:id="carrPhoneField" promptText="Phone" prefWidth="100" styleClass="text-field" />
-                          <Button onAction="#handleAddCarrier" text="➕ Recruit" styleClass="button-primary" />
+                          <Button onAction="#handleAddCarrier" text="Recruit" styleClass="button-primary" />
                        </children>
                     </HBox>
                     
@@ -111,14 +111,14 @@
                        </columns>
                     </TableView>
                     
-                    <Button onAction="#handleFireCarrier" text="🔥 Fire Selected" styleClass="button-danger" />
+                    <Button onAction="#handleFireCarrier" text="Fire Selected" styleClass="button-danger" />
                  </children>
               </VBox>
             </content>
           </Tab>
           
           <!-- REPORTS TAB -->
-          <Tab text="📊 Reports">
+          <Tab text="Reports">
              <content>
                 <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent;">
                 <VBox spacing="15" style="-fx-padding: 20;">
@@ -135,13 +135,13 @@
                          <children>
                             <VBox HBox.hgrow="ALWAYS" spacing="5">
                                <children>
-                                  <Label text="📈 Sales by Category" styleClass="section-title" />
+                                  <Label text="Sales by Category" styleClass="section-title" />
                                   <PieChart fx:id="productTypeChart" prefHeight="250" />
                                </children>
                             </VBox>
                             <VBox HBox.hgrow="ALWAYS" spacing="5">
                                <children>
-                                  <Label text="💰 Revenue Over Time" styleClass="section-title" />
+                                  <Label text="Revenue Over Time" styleClass="section-title" />
                                   <BarChart fx:id="revenueChart" prefHeight="250">
                                      <xAxis><CategoryAxis label="Period" /></xAxis>
                                      <yAxis><NumberAxis label="Revenue ($)" /></yAxis>
@@ -155,13 +155,13 @@
                       <HBox spacing="20" styleClass="glass-card-small">
                          <children>
                             <VBox spacing="5" HBox.hgrow="ALWAYS">
-                               <Label text="💰 Revenue Summary" styleClass="section-title" />
+                               <Label text="Revenue Summary" styleClass="section-title" />
                                <Label fx:id="totalRevenueLabel" text="Total Revenue: $0.00" styleClass="text-label" />
                                <Label fx:id="totalOrdersLabel" text="Total Orders: 0" styleClass="text-label" />
                                <Label fx:id="totalProductsLabel" text="Total Products: 0" styleClass="text-label" />
                             </VBox>
                             <VBox spacing="5" HBox.hgrow="ALWAYS">
-                               <Label text="📊 Profit Summary" styleClass="section-title" />
+                               <Label text="Profit Summary" styleClass="section-title" />
                                <Label fx:id="totalProfitLabel" text="Total Profit: $0.00" styleClass="status-success" />
                                <Label fx:id="inventoryCostLabel" text="Inventory Cost: $0.00" styleClass="text-label" />
                             </VBox>
@@ -200,7 +200,7 @@
           </Tab>
           
           <!-- ORDERS TAB -->
-          <Tab text="📋 Orders">
+          <Tab text="Orders">
              <content>
                 <VBox spacing="15" style="-fx-padding: 20;">
                    <children>
@@ -222,14 +222,14 @@
                         </columns>
                       </TableView>
                       
-                      <Button onAction="#handleCancelOrder" text="❌ Cancel Order" styleClass="button-danger" />
+                      <Button onAction="#handleCancelOrder" text="Cancel Order" styleClass="button-danger" />
                    </children>
                 </VBox>
              </content>
           </Tab>
           
           <!-- STOCK ALERTS TAB -->
-          <Tab text="⚠️ Stock Alerts">
+          <Tab text="Stock Alerts">
              <content>
                 <VBox spacing="15" style="-fx-padding: 20;">
                    <children>
@@ -256,7 +256,7 @@
            </Tab>
            
            <!-- COUPONS TAB -->
-           <Tab text="🎟️ Coupons">
+           <Tab text="Coupons">
               <content>
                  <VBox spacing="15" style="-fx-padding: 20;">
                     <children>
@@ -267,7 +267,7 @@
                              <TextField fx:id="couponCodeField" prefWidth="120" promptText="Code (e.g. SAVE20)" styleClass="text-field" />
                              <TextField fx:id="couponDiscountField" prefWidth="80" promptText="Discount (%)" styleClass="text-field" />
                              <TextField fx:id="couponMaxUsesField" prefWidth="80" promptText="Max Uses" styleClass="text-field" />
-                             <Button onAction="#handleCreateCoupon" text="➕ Create" styleClass="button-primary" />
+                             <Button onAction="#handleCreateCoupon" text="Create" styleClass="button-primary" />
                              <Label fx:id="couponStatusLabel" styleClass="status-success" />
                           </children>
                        </HBox>
@@ -277,7 +277,7 @@
                              <!-- Active Coupons Table -->
                              <VBox spacing="10" HBox.hgrow="ALWAYS">
                                 <children>
-                                   <Label text="📋 Active Coupons" styleClass="section-title" />
+                                   <Label text="Active Coupons" styleClass="section-title" />
                                    <TableView fx:id="couponTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                                       <columns>
                                          <TableColumn fx:id="colCouponCode" prefWidth="100" text="Code" />
@@ -289,9 +289,9 @@
                                    </TableView>
                                    <HBox spacing="10">
                                       <children>
-                                         <Button onAction="#handleUpdateCoupon" text="✏️ Update" styleClass="button" />
-                                         <Button onAction="#handleToggleCouponActive" text="🔄 Toggle" styleClass="button-secondary" />
-                                         <Button onAction="#handleDeleteCoupon" text="🗑️ Delete" styleClass="button-danger" />
+                                         <Button onAction="#handleUpdateCoupon" text="Update" styleClass="button" />
+                                         <Button onAction="#handleToggleCouponActive" text="Toggle" styleClass="button-secondary" />
+                                         <Button onAction="#handleDeleteCoupon" text="Delete" styleClass="button-danger" />
                                       </children>
                                    </HBox>
                                 </children>
@@ -300,7 +300,7 @@
                              <!-- Usage History Table -->
                              <VBox spacing="10" HBox.hgrow="ALWAYS">
                                 <children>
-                                   <Label text="📊 Usage History" styleClass="section-title" />
+                                   <Label text="Usage History" styleClass="section-title" />
                                    <TableView fx:id="couponHistoryTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                                       <columns>
                                          <TableColumn fx:id="colHistoryCode" prefWidth="80" text="Coupon" />

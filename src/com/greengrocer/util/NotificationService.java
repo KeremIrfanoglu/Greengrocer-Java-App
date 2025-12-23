@@ -112,7 +112,7 @@ public class NotificationService {
             return;
 
         StringBuilder message = new StringBuilder();
-        message.append("⚠️ Low stock on your favorite products!\n\n");
+        message.append("Low stock on your favorite products!\n\n");
 
         for (Product p : products) {
             message.append("• ").append(p.getName())
@@ -120,7 +120,7 @@ public class NotificationService {
                     .append(" left!\n");
         }
 
-        StyledAlert.showWarning("📦 Low Stock Alert!", "Your favorite products are running low!", message.toString());
+        StyledAlert.showWarning("Low Stock Alert!", "Your favorite products are running low!", message.toString());
     }
 
     /**

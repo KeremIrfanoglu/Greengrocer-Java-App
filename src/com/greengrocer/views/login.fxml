@@ -23,7 +23,7 @@
             </padding>
             
             <!-- Logo Icon -->
-            <Label text="🥬" styleClass="logo-icon">
+            <Label text="" styleClass="logo-icon">
                 <font>
                     <Font size="64" />
                 </font>
@@ -48,13 +48,13 @@
             
             <!-- Username Field -->
             <VBox spacing="8" alignment="CENTER_LEFT" maxWidth="280">
-                <Label text="👤  Username" styleClass="text-label" />
+                <Label text="Username" styleClass="text-label" />
                 <TextField fx:id="usernameField" promptText="Enter your username" prefWidth="280" styleClass="text-field" />
             </VBox>
             
             <!-- Password Field -->
             <VBox spacing="8" alignment="CENTER_LEFT" maxWidth="280">
-                <Label text="🔒  Password" styleClass="text-label" />
+                <Label text="Password" styleClass="text-label" />
                 <PasswordField fx:id="passwordField" promptText="Enter your password" prefWidth="280" styleClass="password-field" />
             </VBox>
             
@@ -62,7 +62,7 @@
             <Label fx:id="errorLabel" styleClass="status-error" wrapText="true" maxWidth="280" />
             
             <!-- Login Button -->
-            <Button fx:id="loginButton" onAction="#handleLogin" text="🚀  Login" 
+            <Button fx:id="loginButton" onAction="#handleLogin" text="Login" 
                     styleClass="button-primary" prefWidth="280" prefHeight="45">
                 <font>
                     <Font size="15" />
@@ -70,7 +70,7 @@
             </Button>
             
             <!-- Register Button -->
-            <Button fx:id="registerButton" onAction="#handleOpenRegister" text="📝  Register as Customer" 
+            <Button fx:id="registerButton" onAction="#handleOpenRegister" text="Register as Customer" 
                     styleClass="button-secondary" prefWidth="280">
                 <font>
                     <Font size="13" />

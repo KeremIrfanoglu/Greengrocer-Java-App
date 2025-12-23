@@ -40,8 +40,8 @@ public class SeedData {
             System.out.println("Adding coupons...");
             seedCoupons(conn);
 
-            System.out.println("\n✅ Database seeded successfully!");
-            System.out.println("\n🔐 Login credentials:");
+            System.out.println("\nDatabase seeded successfully!");
+            System.out.println("\nLogin credentials:");
             System.out.println("Customer: cust / cust");
             System.out.println("Carrier: carr / carr");
             System.out.println("Owner: own / own");

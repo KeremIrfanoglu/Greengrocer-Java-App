@@ -842,10 +842,10 @@ public class OwnerController {
 
             // Update count label
             if (lowStock.isEmpty()) {
-                alertCountLabel.setText("✅ All stock levels OK");
+                alertCountLabel.setText("All stock levels OK");
                 alertCountLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
             } else {
-                alertCountLabel.setText("⚠️ " + lowStock.size() + " products need restocking!");
+                alertCountLabel.setText(lowStock.size() + " products need restocking!");
                 alertCountLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
             }
         } catch (SQLException e) {
@@ -878,7 +878,7 @@ public class OwnerController {
             }
 
             if (couponDAO.createCoupon(code, discount, maxUses)) {
-                couponStatusLabel.setText("✅ Coupon created: " + code.toUpperCase());
+                couponStatusLabel.setText("Coupon created: " + code.toUpperCase());
                 couponStatusLabel.setStyle("-fx-text-fill: green;");
                 clearCouponForm();
                 loadCoupons();
@@ -921,7 +921,7 @@ public class OwnerController {
             try {
                 int newMaxUses = Integer.parseInt(maxUsesStr);
                 if (couponDAO.updateCoupon(selected.getId(), newMaxUses, selected.isActive())) {
-                    couponStatusLabel.setText("✅ Coupon updated!");
+                    couponStatusLabel.setText("Coupon updated!");
                     couponStatusLabel.setStyle("-fx-text-fill: green;");
                     loadCoupons();
                 }
@@ -948,7 +948,7 @@ public class OwnerController {
             boolean newStatus = !selected.isActive();
             if (couponDAO.updateCoupon(selected.getId(), selected.getMaxUses(), newStatus)) {
                 String status = newStatus ? "activated" : "deactivated";
-                couponStatusLabel.setText("✅ Coupon " + status + "!");
+                couponStatusLabel.setText("Coupon " + status + "!");
                 couponStatusLabel.setStyle("-fx-text-fill: green;");
                 loadCoupons();
             }
@@ -976,7 +976,7 @@ public class OwnerController {
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
                 if (couponDAO.deleteCoupon(selected.getId())) {
-                    couponStatusLabel.setText("✅ Coupon deleted!");
+                    couponStatusLabel.setText("Coupon deleted!");
                     couponStatusLabel.setStyle("-fx-text-fill: green;");
                     loadCoupons();
                     loadCouponHistory();

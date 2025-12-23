@@ -222,7 +222,7 @@ public class CarrierController {
                 if (myName.equals(row[1])) {
                     int rank = (Integer) row[0];
                     int deliveries = (Integer) row[2];
-                    String medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : "#" + rank;
+                    String medal = rank == 1 ? "1st" : rank == 2 ? "2nd" : rank == 3 ? "3rd" : "#" + rank;
                     myRankLabel.setText(medal + " Your Rank: " + rank + ". (" + deliveries + " deliveries)");
                     if (rank <= 3) {
                         myRankLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #FF9800;");

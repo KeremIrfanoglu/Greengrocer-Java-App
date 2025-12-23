@@ -23,7 +23,7 @@
             </padding>
             
             <!-- Logo -->
-            <Label text="📋" styleClass="logo-icon">
+            <Label text="" styleClass="logo-icon">
                 <font>
                     <Font size="48" />
                 </font>
@@ -41,34 +41,34 @@
             <!-- Form Grid -->
             <GridPane hgap="15" vgap="12" alignment="CENTER">
                 <!-- Username -->
-                <Label text="👤  Username" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                <Label text="Username" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                 <TextField fx:id="usernameField" promptText="Choose a username" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                 
                 <!-- Password -->
-                <Label text="🔒  Password" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                <Label text="Password" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                 <PasswordField fx:id="passwordField" promptText="Create a password" prefWidth="200" styleClass="password-field" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                 
                 <!-- Confirm Password -->
-                <Label text="🔒  Confirm" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                <Label text="Confirm" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="2" />
                 <PasswordField fx:id="confirmPasswordField" promptText="Confirm password" prefWidth="200" styleClass="password-field" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                 
                 <!-- Password Hint -->
                 <Label text="Min 6 chars, 1 uppercase, 1 number" style="-fx-font-size: 10px; -fx-text-fill: #888;" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                 
                 <!-- First Name -->
-                <Label text="📛  First Name" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                <Label text="First Name" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="4" />
                 <TextField fx:id="firstNameField" promptText="Your first name" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                 
                 <!-- Last Name -->
-                <Label text="📛  Last Name" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                <Label text="Last Name" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="5" />
                 <TextField fx:id="lastNameField" promptText="Your last name" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                 
                 <!-- Address -->
-                <Label text="📍  Address" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                <Label text="Address" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="6" />
                 <TextField fx:id="addressField" promptText="Your delivery address" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="6" />
                 
                 <!-- Phone -->
-                <Label text="📱  Phone" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                <Label text="Phone" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="7" />
                 <TextField fx:id="phoneField" promptText="Your phone number" prefWidth="200" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="7" />
             </GridPane>
             
@@ -76,7 +76,7 @@
             <Label fx:id="statusLabel" styleClass="status-error" wrapText="true" maxWidth="350" />
             
             <!-- Register Button -->
-            <Button fx:id="registerButton" onAction="#handleRegister" text="✨  Create Account" 
+            <Button fx:id="registerButton" onAction="#handleRegister" text="Create Account" 
                     styleClass="button-primary" prefWidth="300" prefHeight="42">
                 <font>
                     <Font size="14" />
@@ -84,7 +84,7 @@
             </Button>
             
             <!-- Back Button -->
-            <Button fx:id="backButton" onAction="#handleBack" text="← Back to Login" 
+            <Button fx:id="backButton" onAction="#handleBack" text="Back to Login" 
                     styleClass="button-secondary" prefWidth="200">
                 <font>
                     <Font size="12" />

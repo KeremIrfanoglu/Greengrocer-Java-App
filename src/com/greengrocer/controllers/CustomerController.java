@@ -255,7 +255,7 @@ public class CustomerController {
                     Product product = getTableRow().getItem();
                     try {
                         if (favoritesDAO.isFavorite(currentUser.getId(), product.getId())) {
-                            setText("⭐");
+                            setText("*");
                             setStyle("-fx-font-size: 16px; -fx-alignment: CENTER;");
                         } else {
                             setText("");
@@ -270,7 +270,7 @@ public class CustomerController {
 
         // Setup Filter/Sort ComboBoxes
         filterTypeCombo.setItems(FXCollections.observableArrayList("All", "Vegetable", "Fruit", "Dairy", "Bakery",
-                "Meat", "Beverages", "Snacks", "⭐ Favorites"));
+                "Meat", "Beverages", "Snacks", "Favorites"));
         filterTypeCombo.setValue("All");
         sortCombo.setItems(FXCollections.observableArrayList("Default", "Name (A-Z)", "Name (Z-A)", "Price (Low-High)",
                 "Price (High-Low)"));
@@ -418,9 +418,9 @@ public class CustomerController {
                 }
             }
             if (addedItem != null && addedItem.isDiscounted()) {
-                setLocalStatus(addToCartStatusLabel, "✅ Added +10% OFF!", "#4CAF50");
+                setLocalStatus(addToCartStatusLabel, "Added +10% OFF!", "#4CAF50");
             } else {
-                setLocalStatus(addToCartStatusLabel, "✅ Added!", "#4CAF50");
+                setLocalStatus(addToCartStatusLabel, "Added!", "#4CAF50");
             }
             quantityField.clear();
 
@@ -441,7 +441,7 @@ public class CustomerController {
             }
             cartList.remove(selected);
             updateCartTotal();
-            setLocalStatus(updateCartStatusLabel, "🗑️ Removed!", "#F44336");
+            setLocalStatus(updateCartStatusLabel, "Removed!", "#F44336");
         }
     }
 
@@ -493,7 +493,7 @@ public class CustomerController {
             cartTable.refresh();
             updateCartTotal();
             updateQtyField.clear();
-            setLocalStatus(updateCartStatusLabel, "✅ Updated!", "#4CAF50");
+            setLocalStatus(updateCartStatusLabel, "Updated!", "#4CAF50");
 
         } catch (NumberFormatException e) {
             setLocalStatus(updateCartStatusLabel, "Invalid qty!", "red");
@@ -513,7 +513,7 @@ public class CustomerController {
         double MINIMUM_CART_VALUE = 20.0;
         if (subtotal < MINIMUM_CART_VALUE) {
             statusLabel.setText(
-                    String.format("⚠️ Minimum order is ₺%.2f. Your cart: ₺%.2f", MINIMUM_CART_VALUE, subtotal));
+                    String.format("Minimum order is TL%.2f. Your cart: TL%.2f", MINIMUM_CART_VALUE, subtotal));
             statusLabel.setStyle("-fx-text-fill: #FF9800;");
             return;
         }
@@ -560,9 +560,9 @@ public class CustomerController {
         grid.setHgap(10);
         grid.setVgap(15);
         grid.setPadding(new javafx.geometry.Insets(20));
-        grid.add(new javafx.scene.control.Label("📅 Delivery Date:"), 0, 0);
+        grid.add(new javafx.scene.control.Label("Delivery Date:"), 0, 0);
         grid.add(datePicker, 1, 0);
-        grid.add(new javafx.scene.control.Label("🕐 Time Slot:"), 0, 1);
+        grid.add(new javafx.scene.control.Label("Time Slot:"), 0, 1);
         grid.add(timeCombo, 1, 1);
 
         // Order summary
@@ -641,9 +641,18 @@ public class CustomerController {
                 // Show invoice to customer
                 com.greengrocer.util.InvoiceGenerator.showInvoiceDialog(invoiceData);
 
+                // Open invoice in browser for PDF printing
+                if (savedPath != null) {
+                    try {
+                        java.awt.Desktop.getDesktop().browse(new java.io.File(savedPath).toURI());
+                    } catch (Exception ex) {
+                        // Ignore if can't open browser
+                    }
+                }
+
                 // Build success message
                 StringBuilder msg = new StringBuilder();
-                msg.append("✅ Order placed successfully! ");
+                msg.append("Order placed successfully! ");
                 msg.append("Delivery: ").append(deliveryDateTime.toLocalDate()).append(" ");
                 msg.append(deliveryDateTime.getHour()).append(":00. ");
                 if (gPointsToUse > 0) {
@@ -651,7 +660,7 @@ public class CustomerController {
                 }
                 msg.append(String.format("Earned %.0f G Points!", pointsEarned));
                 if (savedPath != null) {
-                    msg.append(" Invoice saved!");
+                    msg.append(" Invoice opened in browser!");
                 }
 
                 statusLabel.setText(msg.toString());
@@ -723,7 +732,7 @@ public class CustomerController {
 
         // Get favorites list if needed
         java.util.List<Integer> favoriteIds = new java.util.ArrayList<>();
-        if ("⭐ Favorites".equals(filterType)) {
+        if ("Favorites".equals(filterType)) {
             try {
                 favoriteIds = favoritesDAO.getFavoriteProductIds(currentUser.getId());
             } catch (java.sql.SQLException e) {
@@ -734,7 +743,7 @@ public class CustomerController {
         for (Product p : allProducts) {
             if ("All".equals(filterType)) {
                 filtered.add(p);
-            } else if ("⭐ Favorites".equals(filterType)) {
+            } else if ("Favorites".equals(filterType)) {
                 if (favoriteIds.contains(p.getId())) {
                     filtered.add(p);
                 }
@@ -847,7 +856,7 @@ public class CustomerController {
             } else {
                 // Add to favorites
                 favoritesDAO.addFavorite(currentUser.getId(), selected.getId());
-                statusLabel.setText(selected.getName() + " added to favorites! ⭐");
+                statusLabel.setText(selected.getName() + " added to favorites!");
                 statusLabel.setStyle("-fx-text-fill: green;");
             }
         } catch (java.sql.SQLException e) {
@@ -877,10 +886,10 @@ public class CustomerController {
 
         try {
             if (favoritesDAO.isFavorite(currentUser.getId(), selected.getId())) {
-                favButton.setText("❌ Remove Favorite");
+                favButton.setText("Remove Favorite");
                 favButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
             } else {
-                favButton.setText("⭐ Add Favorite");
+                favButton.setText("Add Favorite");
                 favButton.setStyle("-fx-background-color: #FFC107;");
             }
         } catch (java.sql.SQLException e) {
@@ -976,11 +985,11 @@ public class CustomerController {
             try {
                 double points = userDAO.getGPoints(currentUser.getId());
                 currentUser.setGPoints(points);
-                gPointsLabel.setText("🔥 G Points: " + String.format("%.0f", points));
+                gPointsLabel.setText("G Points: " + String.format("%.0f", points));
                 gPointsLabel.setStyle(
                         "-fx-font-weight: bold; -fx-text-fill: #FF4500; -fx-font-size: 18px; -fx-background-color: linear-gradient(to right, rgba(255,215,0,0.3), rgba(255,69,0,0.3)); -fx-padding: 8 15; -fx-background-radius: 20;");
             } catch (java.sql.SQLException e) {
-                gPointsLabel.setText("🔥 G Points: 0");
+                gPointsLabel.setText("G Points: 0");
             }
         }
     }
@@ -1137,42 +1146,42 @@ public class CustomerController {
         StringBuilder details = new StringBuilder();
 
         // Order header
-        details.append("🛒 ORDER #").append(selected.getId()).append("\n");
+        details.append("ORDER #").append(selected.getId()).append("\n");
         details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
 
         // Order date and status
-        details.append("📅 Date: ").append(selected.getOrderDate()).append("\n");
-        details.append("📊 Status: ").append(selected.getStatus()).append("\n\n");
+        details.append("Date: ").append(selected.getOrderDate()).append("\n");
+        details.append("Status: ").append(selected.getStatus()).append("\n\n");
 
         // Status timeline - 3 steps: Order Placed, Shipping, Delivered
         String status = selected.getStatus().toLowerCase();
 
         // Determine icons based on status
-        String orderPlacedIcon = "✅"; // Always completed once order exists
+        String orderPlacedIcon = "[OK]"; // Always completed once order exists
         String shippingIcon;
         String deliveredIcon;
 
         if (status.equals("pending")) {
-            shippingIcon = "⚪";
-            deliveredIcon = "⚪";
+            shippingIcon = "[ ]";
+            deliveredIcon = "[ ]";
         } else if (status.equals("delivering") || status.equals("shipped") || status.equals("shipping")) {
-            shippingIcon = "🔵"; // Currently in progress
-            deliveredIcon = "⚪";
+            shippingIcon = "[>>]"; // Currently in progress
+            deliveredIcon = "[ ]";
         } else if (status.equals("delivered")) {
-            shippingIcon = "✅";
-            deliveredIcon = "✅";
+            shippingIcon = "[OK]";
+            deliveredIcon = "[OK]";
         } else {
-            shippingIcon = "⚪";
-            deliveredIcon = "⚪";
+            shippingIcon = "[ ]";
+            deliveredIcon = "[ ]";
         }
 
-        details.append("📋 STATUS TIMELINE:\n");
+        details.append("STATUS TIMELINE:\n");
         details.append("   ").append(orderPlacedIcon).append(" Order Placed\n");
         details.append("   ").append(shippingIcon).append(" Shipping\n");
         details.append("   ").append(deliveredIcon).append(" Delivered\n\n");
 
         details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-        details.append("📦 PRODUCTS:\n\n");
+        details.append("PRODUCTS:\n\n");
 
         // Get order items
         try {
@@ -1199,7 +1208,7 @@ public class CustomerController {
             stmt.close();
 
             details.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-            details.append("💵 PAYMENT DETAILS:\n\n");
+            details.append("PAYMENT DETAILS:\n\n");
             details.append("   Subtotal: ₺").append(String.format("%.2f", subtotal)).append("\n");
 
             // Get coupon info
@@ -1212,8 +1221,8 @@ public class CustomerController {
             if (couponRs.next()) {
                 String couponCode = couponRs.getString("code");
                 double discountAmount = couponRs.getDouble("discount_amount");
-                details.append("   🎟️ Coupon Used: ").append(couponCode).append("\n");
-                details.append("   🎟️ Coupon Discount: -₺").append(String.format("%.2f", discountAmount)).append("\n");
+                details.append("   Coupon Used: ").append(couponCode).append("\n");
+                details.append("   Coupon Discount: -TL").append(String.format("%.2f", discountAmount)).append("\n");
             }
             couponRs.close();
             couponStmt.close();
@@ -1221,10 +1230,10 @@ public class CustomerController {
             // Calculate G Points (estimated - 5% of order total)
             double totalAmount = selected.getTotalAmount();
             double gPointsEarned = totalAmount * 0.05;
-            details.append("   🔥 G Points Earned: +").append(String.format("%.0f", gPointsEarned)).append(" points\n");
+            details.append("   G Points Earned: +").append(String.format("%.0f", gPointsEarned)).append(" points\n");
 
             details.append("\n   ━━━━━━━━━━━━━━━━━━━━━━━━\n");
-            details.append("   💰 TOTAL PAID: ₺").append(String.format("%.2f", totalAmount)).append("\n");
+            details.append("   TOTAL PAID: TL").append(String.format("%.2f", totalAmount)).append("\n");
 
             conn.close();
         } catch (java.sql.SQLException e) {
@@ -1245,7 +1254,7 @@ public class CustomerController {
         textArea.setPrefWidth(500);
         textArea.setPrefHeight(400);
 
-        javafx.scene.control.ButtonType downloadBtn = new javafx.scene.control.ButtonType("📥 Download Invoice",
+        javafx.scene.control.ButtonType downloadBtn = new javafx.scene.control.ButtonType("Download Invoice",
                 javafx.scene.control.ButtonBar.ButtonData.LEFT);
         javafx.scene.control.ButtonType closeBtn = new javafx.scene.control.ButtonType("Close",
                 javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
@@ -1257,23 +1266,49 @@ public class CustomerController {
         java.util.Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
 
         if (result.isPresent() && result.get() == downloadBtn) {
-            // Save invoice to Downloads folder
-            String fileName = "invoice_order_" + selected.getId() + ".txt";
+            // Create styled HTML invoice
+            String fileName = "invoice_order_" + selected.getId() + ".html";
             String filePath = System.getProperty("user.home") + "/Downloads/" + fileName;
 
+            // Generate styled HTML from the details
+            StringBuilder html = new StringBuilder();
+            html.append("<!DOCTYPE html><html><head><meta charset=\"UTF-8\">");
+            html.append("<title>Invoice - Order #").append(selected.getId()).append("</title>");
+            html.append("<style>");
+            html.append(
+                    "body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 40px; min-height: 100vh; }");
+            html.append(
+                    ".invoice { max-width: 700px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 40px; }");
+            html.append(
+                    ".header { text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }");
+            html.append(".header h1 { color: #667eea; font-size: 2em; margin-bottom: 5px; }");
+            html.append(".header p { color: #888; }");
+            html.append(".content { white-space: pre-wrap; font-family: 'Consolas', monospace; line-height: 1.8; }");
+            html.append(
+                    ".footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; color: #888; }");
+            html.append("@media print { body { background: white; padding: 0; } .invoice { box-shadow: none; } }");
+            html.append("</style></head><body>");
+            html.append("<div class=\"invoice\">");
+            html.append("<div class=\"header\"><h1>GROUP10 GREENGROCER</h1><p>Order Invoice</p></div>");
+            html.append("<div class=\"content\">").append(details.toString().replace("\n", "<br>")).append("</div>");
+            html.append(
+                    "<div class=\"footer\"><p>Thank you for shopping with us!</p><p>Press Ctrl+P to save as PDF</p></div>");
+            html.append("</div></body></html>");
+
             try (java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath)) {
-                fos.write(details.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                statusLabel.setText("✅ Invoice saved to Downloads: " + fileName);
+                fos.write(html.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                statusLabel.setText("Invoice opened in browser! Press Ctrl+P to save as PDF.");
                 statusLabel.setStyle("-fx-text-fill: green;");
 
-                // Try to open the file
+                // Open in browser
                 try {
-                    java.awt.Desktop.getDesktop().open(new java.io.File(filePath));
+                    java.awt.Desktop.getDesktop().browse(new java.io.File(filePath).toURI());
                 } catch (Exception ex) {
-                    // Ignore if can't open
+                    // Fallback to open
+                    java.awt.Desktop.getDesktop().open(new java.io.File(filePath));
                 }
             } catch (java.io.IOException ex) {
-                statusLabel.setText("❌ Failed to save invoice.");
+                statusLabel.setText("Failed to save invoice.");
                 statusLabel.setStyle("-fx-text-fill: red;");
             }
         }
@@ -1304,17 +1339,17 @@ public class CustomerController {
             com.greengrocer.models.Coupon coupon = couponDAO.getCouponByCode(code);
 
             if (coupon == null) {
-                couponStatusLabel.setText("❌ Coupon not found!");
+                couponStatusLabel.setText("Coupon not found!");
                 couponStatusLabel.setStyle("-fx-text-fill: red;");
                 appliedCoupon = null;
                 couponDiscount = 0;
             } else if (!coupon.canBeUsed()) {
-                couponStatusLabel.setText("❌ Coupon invalid or expired!");
+                couponStatusLabel.setText("Coupon invalid or expired!");
                 couponStatusLabel.setStyle("-fx-text-fill: red;");
                 appliedCoupon = null;
                 couponDiscount = 0;
             } else if (couponDAO.hasUserUsedCoupon(currentUser.getId(), coupon.getId())) {
-                couponStatusLabel.setText("❌ You already used this coupon!");
+                couponStatusLabel.setText("You already used this coupon!");
                 couponStatusLabel.setStyle("-fx-text-fill: red;");
                 appliedCoupon = null;
                 couponDiscount = 0;
@@ -1324,7 +1359,7 @@ public class CustomerController {
                 double cartTotal = getCartTotal();
                 couponDiscount = cartTotal * (coupon.getDiscountPercent() / 100.0);
 
-                couponStatusLabel.setText("✅ " + String.format("%.0f", coupon.getDiscountPercent()) +
+                couponStatusLabel.setText(String.format("%.0f", coupon.getDiscountPercent()) +
                         "% off! (-$" + String.format("%.2f", couponDiscount) + ")");
                 couponStatusLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
             }
@@ -1376,7 +1411,7 @@ public class CustomerController {
         String phone = profilePhoneField.getText().trim();
 
         if (firstName.isEmpty() || lastName.isEmpty()) {
-            profileStatusLabel.setText("❌ First and last name are required.");
+            profileStatusLabel.setText("First and last name are required.");
             profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
             return;
         }
@@ -1390,17 +1425,17 @@ public class CustomerController {
                 currentUser.setAddress(address);
                 currentUser.setPhone(phone);
 
-                profileStatusLabel.setText("✅ Profile saved successfully!");
+                profileStatusLabel.setText("Profile saved successfully!");
                 profileStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
 
                 // Update welcome label
                 welcomeLabel.setText("Welcome, " + firstName);
             } else {
-                profileStatusLabel.setText("❌ Failed to save profile.");
+                profileStatusLabel.setText("Failed to save profile.");
                 profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
             }
         } catch (java.sql.SQLException e) {
-            profileStatusLabel.setText("❌ Error: " + e.getMessage());
+            profileStatusLabel.setText("Error: " + e.getMessage());
             profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
         }
     }
@@ -1419,13 +1454,13 @@ public class CustomerController {
 
         // Validation
         if (currentPassword.isEmpty()) {
-            passwordStatusLabel.setText("❌ Current password is required.");
+            passwordStatusLabel.setText("Current password is required.");
             passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
             return;
         }
 
         if (newPassword.isEmpty()) {
-            passwordStatusLabel.setText("❌ New password is required.");
+            passwordStatusLabel.setText("New password is required.");
             passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
             return;
         }
@@ -1433,13 +1468,13 @@ public class CustomerController {
         // Strong password validation
         String passwordError = validatePasswordStrength(newPassword);
         if (passwordError != null) {
-            passwordStatusLabel.setText("❌ " + passwordError);
+            passwordStatusLabel.setText(passwordError);
             passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
             return;
         }
 
         if (!newPassword.equals(confirmPassword)) {
-            passwordStatusLabel.setText("❌ New passwords do not match.");
+            passwordStatusLabel.setText("New passwords do not match.");
             passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
             return;
         }
@@ -1447,18 +1482,18 @@ public class CustomerController {
         try {
             boolean success = userDAO.changePassword(currentUser.getId(), currentPassword, newPassword);
             if (success) {
-                passwordStatusLabel.setText("✅ Password changed successfully!");
+                passwordStatusLabel.setText("Password changed successfully!");
                 passwordStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
                 // Clear fields
                 currentPasswordField.clear();
                 newPasswordField.clear();
                 confirmNewPasswordField.clear();
             } else {
-                passwordStatusLabel.setText("❌ Current password is incorrect.");
+                passwordStatusLabel.setText("Current password is incorrect.");
                 passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
             }
         } catch (java.sql.SQLException e) {
-            passwordStatusLabel.setText("❌ Error: " + e.getMessage());
+            passwordStatusLabel.setText("Error: " + e.getMessage());
             passwordStatusLabel.setStyle("-fx-text-fill: #f44336;");
         }
     }

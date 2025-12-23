@@ -101,7 +101,7 @@ public class RegisterController {
         try {
             boolean success = userDAO.register(username, password, "customer", firstName, lastName, address, phone);
             if (success) {
-                statusLabel.setText("✅ Registration successful! Please go back to login.");
+                statusLabel.setText("Registration successful! Please go back to login.");
                 statusLabel.setStyle("-fx-text-fill: #4CAF50;");
                 // Clear fields
                 usernameField.clear();
@@ -152,7 +152,7 @@ public class RegisterController {
     }
 
     private void showError(String message) {
-        statusLabel.setText("❌ " + message);
+        statusLabel.setText(message);
         statusLabel.setStyle("-fx-text-fill: #f44336;");
     }
 
