@@ -64,7 +64,7 @@
                                 <Label text="Products:" style="-fx-font-weight: bold; -fx-text-fill: white;" />
                                 <Label fx:id="detailProductList" text="-" wrapText="true" style="-fx-padding: 5; -fx-background-color: transparent; -fx-text-fill: white;" />
                                 <Separator />
-                                <Label fx:id="detailTotal" text="Total: TL 0.00" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #FFD700;" />
+                                <Label fx:id="detailTotal" text="Total: 0.00 TL" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #FFD700;" />
                              </children>
                           </VBox>
                        </children>

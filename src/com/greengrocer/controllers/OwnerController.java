@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
+import com.greengrocer.util.FormatHelper;
 
 public class OwnerController {
 
@@ -44,6 +45,8 @@ public class OwnerController {
     private TextField prodCostField;
     @FXML
     private Label statusLabel;
+    @FXML
+    private javafx.scene.image.ImageView previewImageView;
 
     private int selectedProductId = -1; // For update functionality
 
@@ -70,7 +73,7 @@ public class OwnerController {
     @FXML
     private TextField carrUsernameField;
     @FXML
-    private TextField carrPasswordField;
+    private PasswordField carrPasswordField;
     @FXML
     private TextField carrNameField;
     @FXML
@@ -288,6 +291,21 @@ public class OwnerController {
             }
         });
 
+        // Highlight low stock rows
+        productTable.setRowFactory(tv -> new TableRow<Product>() {
+            @Override
+            protected void updateItem(Product item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setStyle("");
+                } else if (item.getStock() <= item.getThreshold()) {
+                    setStyle("-fx-background-color: #ffcdd2;"); // Light red for alert
+                } else {
+                    setStyle("");
+                }
+            }
+        });
+
         loadProducts();
 
         // Setup Carrier Table
@@ -340,6 +358,13 @@ public class OwnerController {
         if (selectedImageFile != null) {
             statusLabel.setText("Image selected: " + selectedImageFile.getName());
             statusLabel.setStyle("-fx-text-fill: blue;");
+
+            // Show preview
+            try {
+                previewImageView.setImage(new javafx.scene.image.Image(new FileInputStream(selectedImageFile)));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -439,6 +464,9 @@ public class OwnerController {
         prodStockField.clear();
         prodThresholdField.clear();
         selectedImageFile = null;
+        if (previewImageView != null) {
+            previewImageView.setImage(null);
+        }
     }
 
     // Carrier Management Methods
@@ -558,18 +586,18 @@ public class OwnerController {
             double totalProfit = reportDAO.getTotalProfit();
             double inventoryCost = reportDAO.getTotalInventoryCost();
 
-            totalRevenueLabel.setText("Total Revenue: $" + String.format("%.2f", totalRevenue));
+            totalRevenueLabel.setText("Total Revenue: " + FormatHelper.formatCurrency(totalRevenue));
             totalOrdersLabel.setText("Total Orders: " + totalOrders);
             totalProductsLabel.setText("Total Products: " + totalProducts);
 
             // Profit/Loss Summary
-            totalProfitLabel.setText("Total Profit: $" + String.format("%.2f", totalProfit));
+            totalProfitLabel.setText("Total Profit: " + FormatHelper.formatCurrency(totalProfit));
             if (totalProfit >= 0) {
                 totalProfitLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
             } else {
                 totalProfitLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
             }
-            inventoryCostLabel.setText("Inventory Cost: $" + String.format("%.2f", inventoryCost));
+            inventoryCostLabel.setText("Inventory Cost: " + FormatHelper.formatCurrency(inventoryCost));
 
             // Profit/Loss Table
             loadProfitLossTable();

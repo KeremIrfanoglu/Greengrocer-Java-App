@@ -7,6 +7,7 @@ import com.greengrocer.models.Product;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import com.greengrocer.util.FormatHelper;
 
 /**
  * Service for checking price drops and low stock on favorite products
@@ -97,8 +98,8 @@ public class NotificationService {
             double newPrice = p.getPrice();
             double discount = oldPrice != null ? oldPrice - newPrice : 0;
             message.append("• ").append(p.getName())
-                    .append(": $").append(String.format("%.2f", newPrice))
-                    .append(" ($").append(String.format("%.2f", discount)).append(" off)\n");
+                    .append(": ").append(FormatHelper.formatCurrency(newPrice))
+                    .append(" (").append(FormatHelper.formatCurrency(discount)).append(" off)\n");
         }
 
         StyledAlert.showSuccess("💰 Price Drop!", "Your favorite products are on sale!", message.toString());

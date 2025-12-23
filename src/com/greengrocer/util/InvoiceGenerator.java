@@ -10,6 +10,7 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import com.greengrocer.util.FormatHelper;
 
 /**
  * Generates PDF invoices using OpenPDF library.
@@ -153,9 +154,9 @@ public class InvoiceGenerator {
                                 productTable.addCell(createCell(item.getProduct().getUnitLabel(), normalFont));
                                 productTable.addCell(createCell(String.format("%.2f", item.getQuantity()), normalFont));
                                 productTable.addCell(
-                                                createCell("TL" + String.format("%.2f", item.getPrice()), normalFont));
+                                                createCell(FormatHelper.formatCurrency(item.getPrice()), normalFont));
                                 productTable.addCell(
-                                                createCell("TL" + String.format("%.2f", item.getTotal()), boldFont));
+                                                createCell(FormatHelper.formatCurrency(item.getTotal()), boldFont));
                         }
 
                         document.add(productTable);
@@ -168,26 +169,27 @@ public class InvoiceGenerator {
                         totalsTable.setSpacingBefore(10);
 
                         // Subtotal
-                        addTotalRow(totalsTable, "Subtotal:", "TL" + String.format("%.2f", subtotal), normalFont,
+                        addTotalRow(totalsTable, "Subtotal:", FormatHelper.formatCurrency(subtotal), normalFont,
                                         normalFont);
 
                         // G Points
                         if (gPointsUsed > 0) {
                                 addTotalRow(totalsTable, "G Points Discount:",
-                                                "-TL" + String.format("%.2f", gPointsUsed),
+                                                FormatHelper.formatCurrencyWithPrefix(gPointsUsed, "-"),
                                                 normalFont, discountFont);
                         }
 
                         // Coupon
                         if (couponDiscount > 0) {
                                 addTotalRow(totalsTable, "Coupon Discount:",
-                                                "-TL" + String.format("%.2f", couponDiscount),
+                                                FormatHelper.formatCurrencyWithPrefix(couponDiscount, "-"),
                                                 normalFont, discountFont);
                         }
 
                         // VAT
                         Font vatFont = new Font(Font.HELVETICA, 10, Font.NORMAL, new Color(255, 152, 0));
-                        addTotalRow(totalsTable, "VAT (20%):", "+TL" + String.format("%.2f", vatAmount), normalFont,
+                        addTotalRow(totalsTable, "VAT (20%):", FormatHelper.formatCurrencyWithPrefix(vatAmount, "+"),
+                                        normalFont,
                                         vatFont);
 
                         // Separator line
@@ -200,7 +202,7 @@ public class InvoiceGenerator {
                         totalsTable.addCell(sepCell);
 
                         // Final Total
-                        addTotalRow(totalsTable, "TOTAL:", "TL" + String.format("%.2f", finalTotal), totalFont,
+                        addTotalRow(totalsTable, "TOTAL:", FormatHelper.formatCurrency(finalTotal), totalFont,
                                         totalFont);
 
                         document.add(totalsTable);

@@ -14,6 +14,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import com.greengrocer.util.FormatHelper;
 
 /**
  * Controller for the Carrier dashboard with tabs:
@@ -235,7 +236,7 @@ public class CarrierController {
     private void showOrderDetails(Order order) {
         detailCustomerName.setText(order.getCustomerName() != null ? order.getCustomerName() : "N/A");
         detailAddress.setText(order.getCustomerAddress() != null ? order.getCustomerAddress() : "N/A");
-        detailTotal.setText(String.format("Total: TL %.2f", order.getTotalAmount()));
+        detailTotal.setText(String.format("Total: %s", FormatHelper.formatCurrency(order.getTotalAmount())));
 
         // Show scheduled delivery date
         if (detailScheduledDate != null) {
@@ -261,7 +262,7 @@ public class CarrierController {
         if (detailScheduledDate != null)
             detailScheduledDate.setText("-");
         detailProductList.setText("-");
-        detailTotal.setText("Total: TL 0.00");
+        detailTotal.setText("Total: " + FormatHelper.formatCurrency(0));
     }
 
     @FXML
@@ -477,7 +478,7 @@ public class CarrierController {
                     if (empty || value == null) {
                         setText(null);
                     } else {
-                        setText(String.format("₺%.2f", value));
+                        setText(FormatHelper.formatCurrency(value));
                     }
                 }
             });

@@ -16,6 +16,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.sql.SQLException;
+import com.greengrocer.util.FormatHelper;
 
 public class CustomerController {
     private User currentUser;
@@ -351,6 +352,20 @@ public class CustomerController {
             updateQuantityLabelForProduct(newSelection);
         });
 
+        // Double-click to add 1 unit to cart
+        shopTable.setRowFactory(tv -> {
+            TableRow<Product> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && (!row.isEmpty())) {
+                    if (quantityField != null) {
+                        quantityField.setText("1");
+                        handleAddToCart();
+                    }
+                }
+            });
+            return row;
+        });
+
         // Cart Setup
         colCartName.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductName()));
         colCartPrice
@@ -673,17 +688,18 @@ public class CustomerController {
         StringBuilder summary = new StringBuilder();
         summary.append("\n━━━━━━━━ ORDER SUMMARY ━━━━━━━━\n");
         for (CartItem item : cartList) {
-            summary.append(String.format("• %s x%.2f kg = ₺%.2f\n",
-                    item.getProductName(), item.getQuantity(), item.getTotal()));
+            summary.append(String.format("• %s x%.2f kg = %s\n",
+                    item.getProductName(), item.getQuantity(), FormatHelper.formatCurrency(item.getTotal())));
         }
         summary.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-        summary.append(String.format("Subtotal: ₺%.2f\n", subtotal));
+        summary.append("Subtotal: ").append(FormatHelper.formatCurrency(subtotal)).append("\n");
         if (gPointsToUse > 0)
-            summary.append(String.format("G Points: -₺%.2f\n", gPointsToUse));
+            summary.append("G Points: ").append(FormatHelper.formatCurrencyWithPrefix(gPointsToUse, "-")).append("\n");
         if (couponDiscountAmount > 0)
-            summary.append(String.format("Coupon: -₺%.2f\n", couponDiscountAmount));
-        summary.append(String.format("VAT (20%%): +₺%.2f\n", vatAmount));
-        summary.append(String.format("TOTAL: ₺%.2f", finalTotal));
+            summary.append("Coupon: ").append(FormatHelper.formatCurrencyWithPrefix(couponDiscountAmount, "-"))
+                    .append("\n");
+        summary.append("VAT (20%): ").append(FormatHelper.formatCurrencyWithPrefix(vatAmount, "+")).append("\n");
+        summary.append("TOTAL: ").append(FormatHelper.formatCurrency(finalTotal));
 
         javafx.scene.control.TextArea summaryArea = new javafx.scene.control.TextArea(summary.toString());
         summaryArea.setEditable(false);
@@ -1184,21 +1200,21 @@ public class CustomerController {
 
         if (discountLabel != null) {
             StringBuilder discText = new StringBuilder();
-            discText.append("Subtotal: ₺").append(String.format("%.2f", subtotal));
+            discText.append("Subtotal: ").append(FormatHelper.formatCurrency(subtotal));
             if (gPointsToUse > 0) {
-                discText.append(" | G Point: -₺").append(String.format("%.2f", gPointsToUse));
+                discText.append(" | G Point: ").append(FormatHelper.formatCurrencyWithPrefix(gPointsToUse, "-"));
             }
             if (couponDiscountAmount > 0) {
-                discText.append(" | Coupon: -₺").append(String.format("%.2f", couponDiscountAmount));
+                discText.append(" | Coupon: ").append(FormatHelper.formatCurrencyWithPrefix(couponDiscountAmount, "-"));
             }
-            discText.append(" | VAT: +₺").append(String.format("%.2f", vatAmount));
+            discText.append(" | VAT: ").append(FormatHelper.formatCurrencyWithPrefix(vatAmount, "+"));
 
             discountLabel.setText(discText.toString());
             discountLabel.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11px;");
         }
 
         if (finalTotalLabel != null) {
-            finalTotalLabel.setText("Total: ₺" + String.format("%.2f", finalTotal));
+            finalTotalLabel.setText("Total: " + FormatHelper.formatCurrency(finalTotal));
             finalTotalLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FFD700;");
         }
     }
@@ -1220,7 +1236,7 @@ public class CustomerController {
                 items.add("No recommendations yet");
             } else {
                 for (Product p : recommendations) {
-                    items.add("• " + p.getName() + " (₺" + String.format("%.2f", p.getPrice()) + ")");
+                    items.add("• " + p.getName() + " (" + FormatHelper.formatCurrency(p.getPrice()) + ")");
                 }
             }
 
@@ -1314,15 +1330,15 @@ public class CustomerController {
                 subtotal += lineTotal;
                 details.append("   • ").append(productName)
                         .append(" x").append(String.format("%.0f", quantity))
-                        .append(" @ ₺").append(String.format("%.2f", unitPrice))
-                        .append(" = ₺").append(String.format("%.2f", lineTotal)).append("\n");
+                        .append(" @ ").append(FormatHelper.formatCurrency(unitPrice))
+                        .append(" = ").append(FormatHelper.formatCurrency(lineTotal)).append("\n");
             }
             rs.close();
             stmt.close();
 
             details.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
             details.append("PAYMENT DETAILS:\n\n");
-            details.append("   Subtotal: ₺").append(String.format("%.2f", subtotal)).append("\n");
+            details.append("   Subtotal: ").append(FormatHelper.formatCurrency(subtotal)).append("\n");
 
             // Get coupon info
             String couponSql = "SELECT c.code, cu.discount_amount FROM CouponUsage cu " +
@@ -1335,7 +1351,8 @@ public class CustomerController {
                 String couponCode = couponRs.getString("code");
                 double discountAmount = couponRs.getDouble("discount_amount");
                 details.append("   Coupon Used: ").append(couponCode).append("\n");
-                details.append("   Coupon Discount: -TL").append(String.format("%.2f", discountAmount)).append("\n");
+                details.append("   Coupon Discount: ")
+                        .append(FormatHelper.formatCurrencyWithPrefix(discountAmount, "-")).append("\n");
             }
             couponRs.close();
             couponStmt.close();
@@ -1346,7 +1363,7 @@ public class CustomerController {
             details.append("   G Points Earned: +").append(String.format("%.0f", gPointsEarned)).append(" points\n");
 
             details.append("\n   ━━━━━━━━━━━━━━━━━━━━━━━━\n");
-            details.append("   TOTAL PAID: TL").append(String.format("%.2f", totalAmount)).append("\n");
+            details.append("   TOTAL PAID: ").append(FormatHelper.formatCurrency(totalAmount)).append("\n");
 
             conn.close();
         } catch (java.sql.SQLException e) {
@@ -1569,7 +1586,7 @@ public class CustomerController {
                 couponDiscount = cartTotal * (coupon.getDiscountPercent() / 100.0);
 
                 couponStatusLabel.setText(String.format("%.0f", coupon.getDiscountPercent()) +
-                        "% off! (-$" + String.format("%.2f", couponDiscount) + ")");
+                        "% off! (" + FormatHelper.formatCurrencyWithPrefix(couponDiscount, "-") + ")");
                 couponStatusLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
             }
 

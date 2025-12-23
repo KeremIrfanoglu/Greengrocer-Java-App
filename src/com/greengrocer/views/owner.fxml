@@ -17,6 +17,8 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.image.ImageView?>
 
 <VBox prefHeight="540.0" prefWidth="960.0" styleClass="dashboard-container"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
@@ -54,6 +56,7 @@
                           <TextField fx:id="prodStockField" prefWidth="60" promptText="Stock" styleClass="text-field" />
                           <TextField fx:id="prodThresholdField" prefWidth="70" promptText="Threshold" styleClass="text-field" />
                           <Button fx:id="browseImageBtn" onAction="#handleBrowseImage" text="Img" styleClass="button-secondary" />
+                           <ImageView fx:id="previewImageView" fitHeight="40" fitWidth="40" preserveRatio="true" />
                           <Button fx:id="addProdBtn" onAction="#handleAddProduct" text="Add" styleClass="button-primary" />
                           <Button onAction="#handleUpdateProduct" text="Update" styleClass="button" />
                        </children>
@@ -93,7 +96,7 @@
                     <HBox spacing="10" alignment="CENTER_LEFT" styleClass="glass-card-small">
                        <children>
                           <TextField fx:id="carrUsernameField" promptText="Username" prefWidth="100" styleClass="text-field" />
-                          <TextField fx:id="carrPasswordField" promptText="Password" prefWidth="100" styleClass="text-field" />
+                          <PasswordField fx:id="carrPasswordField" promptText="Password" prefWidth="100" styleClass="text-field" />
                           <TextField fx:id="carrNameField" promptText="Name" prefWidth="100" styleClass="text-field" />
                           <TextField fx:id="carrSurnameField" promptText="Surname" prefWidth="100" styleClass="text-field" />
                           <TextField fx:id="carrPhoneField" promptText="Phone" prefWidth="100" styleClass="text-field" />
@@ -144,7 +147,7 @@
                                   <Label text="Revenue Over Time" styleClass="section-title" />
                                   <BarChart fx:id="revenueChart" prefHeight="250">
                                      <xAxis><CategoryAxis label="Period" /></xAxis>
-                                     <yAxis><NumberAxis label="Revenue ($)" /></yAxis>
+                                     <yAxis><NumberAxis label="Revenue (TL)" /></yAxis>
                                   </BarChart>
                                </children>
                             </VBox>
@@ -156,14 +159,14 @@
                          <children>
                             <VBox spacing="5" HBox.hgrow="ALWAYS">
                                <Label text="Revenue Summary" styleClass="section-title" />
-                               <Label fx:id="totalRevenueLabel" text="Total Revenue: $0.00" styleClass="text-label" />
+                               <Label fx:id="totalRevenueLabel" text="Total Revenue: 0.00 TL" styleClass="text-label" />
                                <Label fx:id="totalOrdersLabel" text="Total Orders: 0" styleClass="text-label" />
                                <Label fx:id="totalProductsLabel" text="Total Products: 0" styleClass="text-label" />
                             </VBox>
                             <VBox spacing="5" HBox.hgrow="ALWAYS">
                                <Label text="Profit Summary" styleClass="section-title" />
-                               <Label fx:id="totalProfitLabel" text="Total Profit: $0.00" styleClass="status-success" />
-                               <Label fx:id="inventoryCostLabel" text="Inventory Cost: $0.00" styleClass="text-label" />
+                               <Label fx:id="totalProfitLabel" text="Total Profit: 0.00 TL" styleClass="status-success" />
+                               <Label fx:id="inventoryCostLabel" text="Inventory Cost: 0.00 TL" styleClass="text-label" />
                             </VBox>
                          </children>
                       </HBox>

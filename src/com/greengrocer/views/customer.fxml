@@ -145,7 +145,7 @@
                                 <VBox spacing="8" alignment="CENTER_RIGHT">
                                    <children>
                                       <Label fx:id="discountLabel" text="" style="-fx-font-size: 12px; -fx-text-fill: #4CAF50;" />
-                                      <Label fx:id="finalTotalLabel" text="Total: ₺0.00" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FFD700; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3, 0, 0, 1);" />
+                                      <Label fx:id="finalTotalLabel" text="Total: 0.00 TL" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FFD700; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3, 0, 0, 1);" />
                                    </children>
                                 </VBox>
                                 <Button onAction="#handleCheckout" text="🛒 Checkout" styleClass="button-primary" style="-fx-pref-width: 150; -fx-pref-height: 45;" />
