@@ -624,7 +624,8 @@ public class CustomerController {
             }
 
             // Create order with the subtotal (full amount for records)
-            if (orderDAO.createOrder(currentUser.getId(), cartList, subtotal)) {
+            int orderId = orderDAO.createOrder(currentUser.getId(), cartList, subtotal);
+            if (orderId > 0) {
                 // Award G Points based on actual payment (1/5 of finalTotal)
                 double pointsEarned = finalTotal / 5.0;
                 userDAO.addGPoints(currentUser.getId(), finalTotal);
@@ -634,19 +635,25 @@ public class CustomerController {
                         currentUser, new java.util.ArrayList<>(cartList),
                         subtotal, gPointsToUse, couponDiscountAmount, vatAmount, finalTotal, deliveryDateTime);
 
+                // Save invoice to database
+                try {
+                    orderDAO.saveInvoice(orderId, invoiceData);
+                } catch (SQLException ex) {
+                    System.err.println("Failed to save invoice to database: " + ex.getMessage());
+                }
+
                 // Save invoice to file (Downloads folder)
-                String savedPath = com.greengrocer.util.InvoiceGenerator.saveInvoiceToFile(invoiceData,
-                        (int) (System.currentTimeMillis() % 100000));
+                String savedPath = com.greengrocer.util.InvoiceGenerator.saveInvoiceToFile(invoiceData, orderId);
 
                 // Show invoice to customer
                 com.greengrocer.util.InvoiceGenerator.showInvoiceDialog(invoiceData);
 
-                // Open invoice in browser for PDF printing
+                // Open PDF invoice with default application
                 if (savedPath != null) {
                     try {
-                        java.awt.Desktop.getDesktop().browse(new java.io.File(savedPath).toURI());
+                        java.awt.Desktop.getDesktop().open(new java.io.File(savedPath));
                     } catch (Exception ex) {
-                        // Ignore if can't open browser
+                        // Ignore if can't open PDF
                     }
                 }
 
@@ -1266,49 +1273,30 @@ public class CustomerController {
         java.util.Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
 
         if (result.isPresent() && result.get() == downloadBtn) {
-            // Create styled HTML invoice
-            String fileName = "invoice_order_" + selected.getId() + ".html";
-            String filePath = System.getProperty("user.home") + "/Downloads/" + fileName;
+            // Try to get PDF invoice from database
+            try {
+                byte[] pdfData = orderDAO.getInvoice(selected.getId());
 
-            // Generate styled HTML from the details
-            StringBuilder html = new StringBuilder();
-            html.append("<!DOCTYPE html><html><head><meta charset=\"UTF-8\">");
-            html.append("<title>Invoice - Order #").append(selected.getId()).append("</title>");
-            html.append("<style>");
-            html.append(
-                    "body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 40px; min-height: 100vh; }");
-            html.append(
-                    ".invoice { max-width: 700px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 40px; }");
-            html.append(
-                    ".header { text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }");
-            html.append(".header h1 { color: #667eea; font-size: 2em; margin-bottom: 5px; }");
-            html.append(".header p { color: #888; }");
-            html.append(".content { white-space: pre-wrap; font-family: 'Consolas', monospace; line-height: 1.8; }");
-            html.append(
-                    ".footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; color: #888; }");
-            html.append("@media print { body { background: white; padding: 0; } .invoice { box-shadow: none; } }");
-            html.append("</style></head><body>");
-            html.append("<div class=\"invoice\">");
-            html.append("<div class=\"header\"><h1>GROUP10 GREENGROCER</h1><p>Order Invoice</p></div>");
-            html.append("<div class=\"content\">").append(details.toString().replace("\n", "<br>")).append("</div>");
-            html.append(
-                    "<div class=\"footer\"><p>Thank you for shopping with us!</p><p>Press Ctrl+P to save as PDF</p></div>");
-            html.append("</div></body></html>");
+                if (pdfData != null && pdfData.length > 0) {
+                    // Save PDF to Downloads folder
+                    String fileName = "invoice_order_" + selected.getId() + ".pdf";
+                    String filePath = System.getProperty("user.home") + "/Downloads/" + fileName;
 
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath)) {
-                fos.write(html.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                statusLabel.setText("Invoice opened in browser! Press Ctrl+P to save as PDF.");
-                statusLabel.setStyle("-fx-text-fill: green;");
+                    try (java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath)) {
+                        fos.write(pdfData);
+                        statusLabel.setText("PDF Invoice saved to Downloads folder!");
+                        statusLabel.setStyle("-fx-text-fill: green;");
 
-                // Open in browser
-                try {
-                    java.awt.Desktop.getDesktop().browse(new java.io.File(filePath).toURI());
-                } catch (Exception ex) {
-                    // Fallback to open
-                    java.awt.Desktop.getDesktop().open(new java.io.File(filePath));
+                        // Open PDF with default application
+                        java.awt.Desktop.getDesktop().open(new java.io.File(filePath));
+                    }
+                } else {
+                    // No PDF in database - inform user
+                    statusLabel.setText("Invoice not available for this order.");
+                    statusLabel.setStyle("-fx-text-fill: orange;");
                 }
-            } catch (java.io.IOException ex) {
-                statusLabel.setText("Failed to save invoice.");
+            } catch (SQLException | java.io.IOException ex) {
+                statusLabel.setText("Failed to download invoice: " + ex.getMessage());
                 statusLabel.setStyle("-fx-text-fill: red;");
             }
         }

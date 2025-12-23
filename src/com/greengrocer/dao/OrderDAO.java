@@ -8,7 +8,7 @@ import java.util.List;
 
 public class OrderDAO {
 
-    public boolean createOrder(int customerId, List<CartItem> items, double totalAmount) throws SQLException {
+    public int createOrder(int customerId, List<CartItem> items, double totalAmount) throws SQLException {
         Connection conn = DatabaseAdapter.getConnection();
         PreparedStatement orderStmt = null;
         PreparedStatement itemStmt = null;
@@ -62,7 +62,7 @@ public class OrderDAO {
             stockStmt.executeBatch();
 
             conn.commit(); // Commit Transaction
-            return true;
+            return orderId;
 
         } catch (SQLException e) {
             if (conn != null) {
