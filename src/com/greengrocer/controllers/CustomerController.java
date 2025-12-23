@@ -1129,26 +1129,26 @@ public class CustomerController {
 
             // Can't use more points than available or more than cart total
             if (requestedPoints > availablePoints) {
-                statusLabel.setText("Yetersiz G Point! Mevcut: " + String.format("%.0f", availablePoints));
+                statusLabel.setText("Insufficient G Points! Available: " + String.format("%.0f", availablePoints));
                 statusLabel.setStyle("-fx-text-fill: red;");
                 gPointsToUse = 0;
             } else if (requestedPoints > cartTotal) {
-                statusLabel.setText("Sepet tutarından fazla puan kullanamazsınız!");
+                statusLabel.setText("Cannot use more points than the cart total!");
                 statusLabel.setStyle("-fx-text-fill: red;");
                 gPointsToUse = cartTotal;
                 gPointsField.setText(String.format("%.0f", cartTotal));
             } else if (requestedPoints < 0) {
-                statusLabel.setText("Geçersiz miktar!");
+                statusLabel.setText("Invalid amount!");
                 statusLabel.setStyle("-fx-text-fill: red;");
                 gPointsToUse = 0;
             } else {
                 gPointsToUse = requestedPoints;
-                statusLabel.setText(String.format("%.0f G Point uygulandı!", requestedPoints));
+                statusLabel.setText(String.format("%.0f G Points applied!", requestedPoints));
                 statusLabel.setStyle("-fx-text-fill: green;");
             }
             updateCartTotalWithDiscount();
         } catch (NumberFormatException e) {
-            statusLabel.setText("Geçersiz miktar!");
+            statusLabel.setText("Invalid amount!");
             statusLabel.setStyle("-fx-text-fill: red;");
             gPointsToUse = 0;
             updateCartTotalWithDiscount();
@@ -1217,7 +1217,7 @@ public class CustomerController {
             ObservableList<String> items = FXCollections.observableArrayList();
 
             if (recommendations.isEmpty()) {
-                items.add("Henüz öneri yok");
+                items.add("No recommendations yet");
             } else {
                 for (Product p : recommendations) {
                     items.add("• " + p.getName() + " (₺" + String.format("%.2f", p.getPrice()) + ")");

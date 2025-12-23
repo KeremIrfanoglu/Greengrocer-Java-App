@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO for product recommendations - "Bu ürünü alanlar şunları da aldı"
+ * DAO for product recommendations - "Customers who bought this also bought"
  * Analyzes past orders to find products frequently bought together
  */
 public class RecommendationDAO {

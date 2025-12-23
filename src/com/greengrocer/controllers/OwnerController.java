@@ -862,7 +862,7 @@ public class OwnerController {
         String maxUsesStr = couponMaxUsesField.getText().trim();
 
         if (code.isEmpty() || discountStr.isEmpty() || maxUsesStr.isEmpty()) {
-            couponStatusLabel.setText("Tüm alanları doldurun!");
+            couponStatusLabel.setText("Please fill all fields!");
             couponStatusLabel.setStyle("-fx-text-fill: red;");
             return;
         }

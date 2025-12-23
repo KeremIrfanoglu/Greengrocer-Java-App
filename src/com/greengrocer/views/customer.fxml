@@ -179,7 +179,7 @@
                             
                             <HBox spacing="15" alignment="CENTER" styleClass="glass-card-small">
                                <children>
-                                  <Label text="Sipariş durumunu takip etmek için seçin:" styleClass="text-secondary" />
+                                  <Label text="Select an order to track its status:" styleClass="text-secondary" />
                                   <Button onAction="#handleViewOrderDetails" text="View Details" styleClass="button-primary" style="-fx-pref-width: 150;" />
                                   <Button onAction="#handleCancelOrder" text="Cancel Order" styleClass="button-danger" style="-fx-pref-width: 150;" />
                                   <Button onAction="#handleRateCarrier" text="⭐ Rate Carrier" styleClass="button-secondary" style="-fx-pref-width: 150;" />
