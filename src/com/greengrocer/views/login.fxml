@@ -49,13 +49,13 @@
             <!-- Username Field -->
             <VBox spacing="8" alignment="CENTER_LEFT" maxWidth="280">
                 <Label text="Username" styleClass="text-label" />
-                <TextField fx:id="usernameField" promptText="Enter your username" prefWidth="280" styleClass="text-field" />
+                <TextField fx:id="usernameField" promptText="Enter your username" prefWidth="280" styleClass="text-field" onAction="#handleUsernameDone" />
             </VBox>
             
             <!-- Password Field -->
             <VBox spacing="8" alignment="CENTER_LEFT" maxWidth="280">
                 <Label text="Password" styleClass="text-label" />
-                <PasswordField fx:id="passwordField" promptText="Enter your password" prefWidth="280" styleClass="password-field" />
+                <PasswordField fx:id="passwordField" promptText="Enter your password" prefWidth="280" styleClass="password-field" onAction="#handleLogin" />
             </VBox>
             
             <!-- Error Label -->

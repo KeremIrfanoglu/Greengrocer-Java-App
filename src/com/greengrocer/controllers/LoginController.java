@@ -32,6 +32,14 @@ public class LoginController {
         this.userDAO = new UserDAO();
     }
 
+    /**
+     * Handle Enter key press in username field - moves focus to password field
+     */
+    @FXML
+    public void handleUsernameDone() {
+        passwordField.requestFocus();
+    }
+
     @FXML
     public void handleLogin() {
         String username = usernameField.getText();
