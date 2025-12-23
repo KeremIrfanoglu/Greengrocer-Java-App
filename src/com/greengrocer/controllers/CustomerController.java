@@ -629,6 +629,18 @@ public class CustomerController {
                 double pointsEarned = finalTotal / 5.0;
                 userDAO.addGPoints(currentUser.getId(), finalTotal);
 
+                // Generate and save invoice
+                byte[] invoiceData = com.greengrocer.util.InvoiceGenerator.generateInvoiceBytes(
+                        currentUser, new java.util.ArrayList<>(cartList),
+                        subtotal, gPointsToUse, couponDiscountAmount, vatAmount, finalTotal, deliveryDateTime);
+
+                // Save invoice to file (Downloads folder)
+                String savedPath = com.greengrocer.util.InvoiceGenerator.saveInvoiceToFile(invoiceData,
+                        (int) (System.currentTimeMillis() % 100000));
+
+                // Show invoice to customer
+                com.greengrocer.util.InvoiceGenerator.showInvoiceDialog(invoiceData);
+
                 // Build success message
                 StringBuilder msg = new StringBuilder();
                 msg.append("✅ Order placed successfully! ");
@@ -638,6 +650,9 @@ public class CustomerController {
                     msg.append(String.format("%.0f G Points used. ", gPointsToUse));
                 }
                 msg.append(String.format("Earned %.0f G Points!", pointsEarned));
+                if (savedPath != null) {
+                    msg.append(" Invoice saved!");
+                }
 
                 statusLabel.setText(msg.toString());
                 statusLabel.setStyle("-fx-text-fill: green;");
@@ -676,11 +691,7 @@ public class CustomerController {
     }
 
     private void updateCartTotal() {
-        double total = 0;
-        for (CartItem item : cartList) {
-            total += item.getTotal();
-        }
-        cartTotalLabel.setText("Total: $" + String.format("%.2f", total));
+        updateCartTotalWithDiscount();
     }
 
     // Filter and Sort Methods
@@ -1049,30 +1060,24 @@ public class CustomerController {
         double vatAmount = afterDiscounts * vatRate;
         double finalTotal = afterDiscounts + vatAmount;
 
-        cartTotalLabel.setText("Subtotal: ₺" + String.format("%.2f", subtotal));
-
         if (discountLabel != null) {
             StringBuilder discText = new StringBuilder();
+            discText.append("Subtotal: ₺").append(String.format("%.2f", subtotal));
             if (gPointsToUse > 0) {
-                discText.append("G Point: -₺").append(String.format("%.2f", gPointsToUse));
+                discText.append(" | G Point: -₺").append(String.format("%.2f", gPointsToUse));
             }
             if (couponDiscountAmount > 0) {
-                if (discText.length() > 0)
-                    discText.append(" | ");
-                discText.append("Coupon: -₺").append(String.format("%.2f", couponDiscountAmount));
+                discText.append(" | Coupon: -₺").append(String.format("%.2f", couponDiscountAmount));
             }
-            // Add VAT info
-            if (discText.length() > 0)
-                discText.append(" | ");
-            discText.append("VAT (20%): +₺").append(String.format("%.2f", vatAmount));
+            discText.append(" | VAT: +₺").append(String.format("%.2f", vatAmount));
 
             discountLabel.setText(discText.toString());
-            discountLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold;");
+            discountLabel.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11px;");
         }
 
         if (finalTotalLabel != null) {
-            finalTotalLabel.setText("Total (incl. VAT): ₺" + String.format("%.2f", finalTotal));
-            finalTotalLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+            finalTotalLabel.setText("Total: ₺" + String.format("%.2f", finalTotal));
+            finalTotalLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FFD700;");
         }
     }
 
@@ -1139,18 +1144,31 @@ public class CustomerController {
         details.append("📅 Date: ").append(selected.getOrderDate()).append("\n");
         details.append("📊 Status: ").append(selected.getStatus()).append("\n\n");
 
-        // Status timeline
-        String status = selected.getStatus();
-        String pendingIcon = !status.equals("pending") ? "✅" : "🔵";
-        String processingIcon = status.equals("processing") ? "🔵"
-                : (status.equals("shipped") || status.equals("delivered") ? "✅" : "⚪");
-        String shippedIcon = status.equals("shipped") ? "🔵" : (status.equals("delivered") ? "✅" : "⚪");
-        String deliveredIcon = status.equals("delivered") ? "✅" : "⚪";
+        // Status timeline - 3 steps: Order Placed, Shipping, Delivered
+        String status = selected.getStatus().toLowerCase();
+
+        // Determine icons based on status
+        String orderPlacedIcon = "✅"; // Always completed once order exists
+        String shippingIcon;
+        String deliveredIcon;
+
+        if (status.equals("pending")) {
+            shippingIcon = "⚪";
+            deliveredIcon = "⚪";
+        } else if (status.equals("delivering") || status.equals("shipped") || status.equals("shipping")) {
+            shippingIcon = "🔵"; // Currently in progress
+            deliveredIcon = "⚪";
+        } else if (status.equals("delivered")) {
+            shippingIcon = "✅";
+            deliveredIcon = "✅";
+        } else {
+            shippingIcon = "⚪";
+            deliveredIcon = "⚪";
+        }
 
         details.append("📋 STATUS TIMELINE:\n");
-        details.append("   ").append(pendingIcon).append(" Order Placed\n");
-        details.append("   ").append(processingIcon).append(" Processing\n");
-        details.append("   ").append(shippedIcon).append(" Shipped\n");
+        details.append("   ").append(orderPlacedIcon).append(" Order Placed\n");
+        details.append("   ").append(shippingIcon).append(" Shipping\n");
         details.append("   ").append(deliveredIcon).append(" Delivered\n\n");
 
         details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
@@ -1159,7 +1177,7 @@ public class CustomerController {
         // Get order items
         try {
             java.sql.Connection conn = com.greengrocer.dao.DatabaseAdapter.getConnection();
-            String sql = "SELECT p.name, oi.quantity, oi.unit_price FROM OrderItems oi " +
+            String sql = "SELECT p.name, oi.quantity, oi.price_at_purchase FROM OrderItems oi " +
                     "JOIN ProductInfo p ON oi.product_id = p.id WHERE oi.order_id = ?";
             java.sql.PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, selected.getId());
@@ -1169,20 +1187,20 @@ public class CustomerController {
             while (rs.next()) {
                 String productName = rs.getString("name");
                 double quantity = rs.getDouble("quantity");
-                double unitPrice = rs.getDouble("unit_price");
+                double unitPrice = rs.getDouble("price_at_purchase");
                 double lineTotal = quantity * unitPrice;
                 subtotal += lineTotal;
                 details.append("   • ").append(productName)
                         .append(" x").append(String.format("%.0f", quantity))
-                        .append(" @ $").append(String.format("%.2f", unitPrice))
-                        .append(" = $").append(String.format("%.2f", lineTotal)).append("\n");
+                        .append(" @ ₺").append(String.format("%.2f", unitPrice))
+                        .append(" = ₺").append(String.format("%.2f", lineTotal)).append("\n");
             }
             rs.close();
             stmt.close();
 
             details.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
             details.append("💵 PAYMENT DETAILS:\n\n");
-            details.append("   Subtotal: $").append(String.format("%.2f", subtotal)).append("\n");
+            details.append("   Subtotal: ₺").append(String.format("%.2f", subtotal)).append("\n");
 
             // Get coupon info
             String couponSql = "SELECT c.code, cu.discount_amount FROM CouponUsage cu " +
@@ -1195,7 +1213,7 @@ public class CustomerController {
                 String couponCode = couponRs.getString("code");
                 double discountAmount = couponRs.getDouble("discount_amount");
                 details.append("   🎟️ Coupon Used: ").append(couponCode).append("\n");
-                details.append("   🎟️ Coupon Discount: -$").append(String.format("%.2f", discountAmount)).append("\n");
+                details.append("   🎟️ Coupon Discount: -₺").append(String.format("%.2f", discountAmount)).append("\n");
             }
             couponRs.close();
             couponStmt.close();
@@ -1206,7 +1224,7 @@ public class CustomerController {
             details.append("   🔥 G Points Earned: +").append(String.format("%.0f", gPointsEarned)).append(" points\n");
 
             details.append("\n   ━━━━━━━━━━━━━━━━━━━━━━━━\n");
-            details.append("   💰 TOTAL PAID: $").append(String.format("%.2f", totalAmount)).append("\n");
+            details.append("   💰 TOTAL PAID: ₺").append(String.format("%.2f", totalAmount)).append("\n");
 
             conn.close();
         } catch (java.sql.SQLException e) {
@@ -1214,11 +1232,51 @@ public class CustomerController {
             e.printStackTrace();
         }
 
-        // Show styled dialog
-        com.greengrocer.util.StyledAlert.showDetailed(
-                "Order Details",
-                "Order #" + selected.getId() + " - " + selected.getStatus().toUpperCase(),
-                details.toString());
+        // Show styled dialog with download option
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                javafx.scene.control.Alert.AlertType.INFORMATION);
+        alert.setTitle("Order Details");
+        alert.setHeaderText("Order #" + selected.getId() + " - " + selected.getStatus().toUpperCase());
+
+        javafx.scene.control.TextArea textArea = new javafx.scene.control.TextArea(details.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(false);
+        textArea.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace; -fx-font-size: 12px;");
+        textArea.setPrefWidth(500);
+        textArea.setPrefHeight(400);
+
+        javafx.scene.control.ButtonType downloadBtn = new javafx.scene.control.ButtonType("📥 Download Invoice",
+                javafx.scene.control.ButtonBar.ButtonData.LEFT);
+        javafx.scene.control.ButtonType closeBtn = new javafx.scene.control.ButtonType("Close",
+                javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        alert.getButtonTypes().setAll(downloadBtn, closeBtn);
+        alert.getDialogPane().setContent(textArea);
+        alert.getDialogPane().setMinWidth(550);
+
+        java.util.Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
+
+        if (result.isPresent() && result.get() == downloadBtn) {
+            // Save invoice to Downloads folder
+            String fileName = "invoice_order_" + selected.getId() + ".txt";
+            String filePath = System.getProperty("user.home") + "/Downloads/" + fileName;
+
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath)) {
+                fos.write(details.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                statusLabel.setText("✅ Invoice saved to Downloads: " + fileName);
+                statusLabel.setStyle("-fx-text-fill: green;");
+
+                // Try to open the file
+                try {
+                    java.awt.Desktop.getDesktop().open(new java.io.File(filePath));
+                } catch (Exception ex) {
+                    // Ignore if can't open
+                }
+            } catch (java.io.IOException ex) {
+                statusLabel.setText("❌ Failed to save invoice.");
+                statusLabel.setStyle("-fx-text-fill: red;");
+            }
+        }
     }
 
     // ==================== COUPON APPLICATION ====================

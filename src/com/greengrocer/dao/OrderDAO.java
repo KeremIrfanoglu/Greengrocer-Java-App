@@ -89,6 +89,36 @@ public class OrderDAO {
         }
     }
 
+    /**
+     * Save invoice data to order
+     */
+    public boolean saveInvoice(int orderId, byte[] invoiceData) throws SQLException {
+        String query = "UPDATE OrderInfo SET invoice_data = ? WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setBytes(1, invoiceData);
+            stmt.setInt(2, orderId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Get invoice data for an order
+     */
+    public byte[] getInvoice(int orderId) throws SQLException {
+        String query = "SELECT invoice_data FROM OrderInfo WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, orderId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBytes("invoice_data");
+                }
+            }
+        }
+        return null;
+    }
+
     public List<Order> getOrdersByCustomer(int customerId) throws SQLException {
         List<Order> orders = new ArrayList<>();
         String query = "SELECT * FROM OrderInfo WHERE customer_id = ? ORDER BY order_date DESC";
