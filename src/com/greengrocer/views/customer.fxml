@@ -84,6 +84,7 @@
                                       <Label fx:id="quantityLabel" text="Quantity:" styleClass="text-label" />
                                       <TextField fx:id="quantityField" prefWidth="100" promptText="e.g. 1, 2.5" styleClass="text-field" />
                                       <Button onAction="#handleAddToCart" text="🛒 Add to Cart" styleClass="button-primary" />
+                                      <Label fx:id="addToCartStatusLabel" text="" style="-fx-font-size: 12px;" />
                                    </children>
                                 </HBox>
                              </children>
@@ -140,7 +141,11 @@
                           
                           <HBox spacing="20" alignment="CENTER_RIGHT" styleClass="glass-card-small">
                              <children>
-                                <Button onAction="#handleRemoveFromCart" text="🗑️ Remove Selected" styleClass="button-danger" />
+                                <Label text="New Qty:" style="-fx-text-fill: #ddd;" />
+                                <TextField fx:id="updateQtyField" prefWidth="70" promptText="e.g. 2" styleClass="text-field" />
+                                <Button onAction="#handleUpdateCartQty" text="📝 Update" styleClass="button-secondary" />
+                                <Button onAction="#handleRemoveFromCart" text="🗑️ Remove" styleClass="button-danger" />
+                                <Label fx:id="updateCartStatusLabel" text="" style="-fx-font-size: 12px;" prefWidth="150" />
                                 <Region HBox.hgrow="ALWAYS" />
                                 <VBox spacing="5" alignment="CENTER_RIGHT">
                                    <children>

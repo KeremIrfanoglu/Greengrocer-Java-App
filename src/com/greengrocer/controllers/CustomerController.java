@@ -2,6 +2,7 @@ package com.greengrocer.controllers;
 
 import com.greengrocer.dao.OrderDAO;
 import com.greengrocer.dao.ProductDAO;
+import com.greengrocer.dao.CartDAO;
 import com.greengrocer.models.CartItem;
 import com.greengrocer.models.Order;
 import com.greengrocer.models.Product;
@@ -20,6 +21,7 @@ public class CustomerController {
     private User currentUser;
     private ProductDAO productDAO;
     private OrderDAO orderDAO;
+    private CartDAO cartDAO;
     private com.greengrocer.dao.UserDAO userDAO;
     private com.greengrocer.dao.RecommendationDAO recommendationDAO;
     private ObservableList<Product> productList;
@@ -63,6 +65,10 @@ public class CustomerController {
     private TextField quantityField;
     @FXML
     private Label quantityLabel;
+    @FXML
+    private Label addToCartStatusLabel;
+    @FXML
+    private Label updateCartStatusLabel;
 
     private ObservableList<Product> allProducts; // Keep original list for filtering
     private com.greengrocer.dao.FavoritesDAO favoritesDAO;
@@ -81,6 +87,8 @@ public class CustomerController {
 
     @FXML
     private Label cartTotalLabel;
+    @FXML
+    private TextField updateQtyField;
 
     // Orders Tab
     @FXML
@@ -162,6 +170,7 @@ public class CustomerController {
         this.recommendationDAO = new com.greengrocer.dao.RecommendationDAO();
         this.favoritesDAO = new com.greengrocer.dao.FavoritesDAO();
         this.couponDAO = new com.greengrocer.dao.CouponDAO();
+        this.cartDAO = new CartDAO();
         this.notificationService = new com.greengrocer.util.NotificationService();
         this.cartList = FXCollections.observableArrayList();
         this.orderList = FXCollections.observableArrayList();
@@ -173,6 +182,9 @@ public class CustomerController {
             welcomeLabel.setText("Welcome, " + user.getFirstName());
         }
         updateGPointsDisplay();
+
+        // Load saved cart from database
+        loadSavedCart();
 
         // Check for price drops and low stock alerts
         javafx.application.Platform.runLater(() -> {
@@ -314,6 +326,25 @@ public class CustomerController {
         }
     }
 
+    /**
+     * Load saved cart from database (persist across sessions)
+     */
+    private void loadSavedCart() {
+        if (currentUser == null)
+            return;
+        try {
+            java.util.List<CartItem> savedItems = cartDAO.getCartByUserId(currentUser.getId());
+            cartList.clear();
+            cartList.addAll(savedItems);
+            if (cartTable != null) {
+                cartTable.refresh();
+            }
+            updateCartTotal();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     @FXML
     public void handleRefreshOrders() {
         loadOrders();
@@ -325,14 +356,14 @@ public class CustomerController {
         String qtyStr = quantityField.getText();
 
         if (selected == null || qtyStr.isEmpty()) {
-            statusLabel.setText("Select product and enter quantity.");
+            setLocalStatus(addToCartStatusLabel, "Select product and enter quantity.", "#FF9800");
             return;
         }
 
         try {
             double qty = Double.parseDouble(qtyStr);
             if (qty <= 0) {
-                statusLabel.setText("Quantity must be positive.");
+                setLocalStatus(addToCartStatusLabel, "Quantity must be positive.", "red");
                 return;
             }
 
@@ -340,16 +371,13 @@ public class CustomerController {
             if (selected.isSoldByPiece()) {
                 // For piece-based products, only allow whole numbers
                 if (qty != Math.floor(qty)) {
-                    statusLabel.setText("This product is sold by piece. Enter a whole number (e.g., 1, 2, 3).");
-                    statusLabel.setStyle("-fx-text-fill: red;");
+                    setLocalStatus(addToCartStatusLabel, "Whole numbers only!", "red");
                     return;
                 }
             }
 
             if (qty > selected.getStock()) {
-                statusLabel.setText("Not enough stock. Available: " +
-                        String.format(selected.isSoldByPiece() ? "%.0f" : "%.2f", selected.getStock()) +
-                        " " + selected.getUnitLabel());
+                setLocalStatus(addToCartStatusLabel, "Not enough stock!", "red");
                 return;
             }
 
@@ -358,7 +386,7 @@ public class CustomerController {
             for (CartItem item : cartList) {
                 if (item.getProduct().getId() == selected.getId()) {
                     if (item.getQuantity() + qty > selected.getStock()) {
-                        statusLabel.setText("Total quantity exceeds stock.");
+                        setLocalStatus(addToCartStatusLabel, "Exceeds stock!", "red");
                         return;
                     }
                     item.setQuantity(item.getQuantity() + qty);
@@ -369,6 +397,13 @@ public class CustomerController {
 
             if (!exists) {
                 cartList.add(new CartItem(selected, qty));
+            }
+
+            // Persist to database
+            try {
+                cartDAO.addToCart(currentUser.getId(), selected.getId(), qty);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
 
             cartTable.refresh();
@@ -383,16 +418,14 @@ public class CustomerController {
                 }
             }
             if (addedItem != null && addedItem.isDiscounted()) {
-                statusLabel.setText("Added to cart with 10% DISCOUNT! (Low stock)");
-                statusLabel.setStyle("-fx-text-fill: green;");
+                setLocalStatus(addToCartStatusLabel, "✅ Added +10% OFF!", "#4CAF50");
             } else {
-                statusLabel.setText("Added to cart.");
-                statusLabel.setStyle("-fx-text-fill: blue;");
+                setLocalStatus(addToCartStatusLabel, "✅ Added!", "#4CAF50");
             }
             quantityField.clear();
 
         } catch (NumberFormatException e) {
-            statusLabel.setText("Invalid quantity.");
+            setLocalStatus(addToCartStatusLabel, "Invalid qty!", "red");
         }
     }
 
@@ -400,9 +433,70 @@ public class CustomerController {
     public void handleRemoveFromCart() {
         CartItem selected = cartTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
+            // Remove from database
+            try {
+                cartDAO.removeFromCart(currentUser.getId(), selected.getProduct().getId());
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             cartList.remove(selected);
             updateCartTotal();
-            statusLabel.setText("Removed from cart.");
+            setLocalStatus(updateCartStatusLabel, "🗑️ Removed!", "#F44336");
+        }
+    }
+
+    @FXML
+    public void handleUpdateCartQty() {
+        CartItem selected = cartTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            setLocalStatus(updateCartStatusLabel, "Select item!", "#FF9800");
+            return;
+        }
+
+        String qtyStr = updateQtyField != null ? updateQtyField.getText().trim() : "";
+        if (qtyStr.isEmpty()) {
+            setLocalStatus(updateCartStatusLabel, "Enter qty!", "#FF9800");
+            return;
+        }
+
+        try {
+            double newQty = Double.parseDouble(qtyStr);
+            if (newQty <= 0) {
+                setLocalStatus(updateCartStatusLabel, "Must be positive!", "red");
+                return;
+            }
+
+            Product product = selected.getProduct();
+
+            // Validate integer for piece-based products
+            if (product.isSoldByPiece() && newQty != Math.floor(newQty)) {
+                setLocalStatus(updateCartStatusLabel, "Whole numbers!", "red");
+                return;
+            }
+
+            // Check stock
+            if (newQty > product.getStock()) {
+                setLocalStatus(updateCartStatusLabel, "Not enough stock!", "red");
+                return;
+            }
+
+            // Update local cart
+            selected.setQuantity(newQty);
+
+            // Update database
+            try {
+                cartDAO.updateQuantity(currentUser.getId(), product.getId(), newQty);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+
+            cartTable.refresh();
+            updateCartTotal();
+            updateQtyField.clear();
+            setLocalStatus(updateCartStatusLabel, "✅ Updated!", "#4CAF50");
+
+        } catch (NumberFormatException e) {
+            setLocalStatus(updateCartStatusLabel, "Invalid qty!", "red");
         }
     }
 
@@ -414,6 +508,16 @@ public class CustomerController {
         }
 
         double subtotal = getCartTotal();
+
+        // Minimum cart value requirement
+        double MINIMUM_CART_VALUE = 20.0;
+        if (subtotal < MINIMUM_CART_VALUE) {
+            statusLabel.setText(
+                    String.format("⚠️ Minimum order is ₺%.2f. Your cart: ₺%.2f", MINIMUM_CART_VALUE, subtotal));
+            statusLabel.setStyle("-fx-text-fill: #FF9800;");
+            return;
+        }
+
         double couponDiscountAmount = appliedCoupon != null ? subtotal * (appliedCoupon.getDiscountPercent() / 100.0)
                 : 0;
         double afterDiscounts = subtotal - gPointsToUse - couponDiscountAmount;
@@ -538,7 +642,14 @@ public class CustomerController {
                 statusLabel.setText(msg.toString());
                 statusLabel.setStyle("-fx-text-fill: green;");
 
-                // Reset
+                // Clear cart from database
+                try {
+                    cartDAO.clearCart(currentUser.getId());
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+
+                // Reset local cart
                 cartList.clear();
                 gPointsToUse = 0;
                 appliedCoupon = null;
@@ -645,6 +756,16 @@ public class CustomerController {
 
         productList = FXCollections.observableArrayList(filtered);
         shopTable.setItems(productList);
+    }
+
+    /**
+     * Set local status label with message and color
+     */
+    private void setLocalStatus(Label label, String message, String color) {
+        if (label != null) {
+            label.setText(message);
+            label.setStyle("-fx-text-fill: " + color + ";");
+        }
     }
 
     /**
