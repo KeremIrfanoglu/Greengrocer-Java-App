@@ -55,7 +55,8 @@ public class LoginController {
             if (user != null) {
                 // Successful Login
                 System.out.println("Login Successful: " + user.getRole());
-                errorLabel.setText("Login Successful! Redirecting...");
+                errorLabel.setText("Success! Logging in...");
+                errorLabel.setStyle("-fx-text-fill: #4CAF50;"); // Green color for success
 
                 // Redirect based on role
                 String fxmlFile = "";
@@ -72,31 +73,38 @@ public class LoginController {
                         break;
                 }
 
-                try {
-                    FXMLLoader loader = new FXMLLoader(new java.io.File(fxmlFile).toURI().toURL());
-                    Parent root = loader.load();
+                final String finalFxmlFile = fxmlFile;
 
-                    // Pass user data to controller
-                    if (user.getRole().equalsIgnoreCase("owner")) {
-                        OwnerController controller = loader.getController();
-                        controller.initData(user);
-                    } else if (user.getRole().equalsIgnoreCase("carrier")) {
-                        CarrierController controller = loader.getController();
-                        controller.initData(user);
-                    } else {
-                        CustomerController controller = loader.getController();
-                        controller.initData(user);
+                // Use Platform.runLater so "Logging in..." message is visible during load
+                javafx.application.Platform.runLater(() -> {
+                    try {
+                        FXMLLoader loader = new FXMLLoader(new java.io.File(finalFxmlFile).toURI().toURL());
+                        Parent root = loader.load();
+
+                        // Pass user data to controller
+                        if (user.getRole().equalsIgnoreCase("owner")) {
+                            OwnerController controller = loader.getController();
+                            controller.initData(user);
+                        } else if (user.getRole().equalsIgnoreCase("carrier")) {
+                            CarrierController controller = loader.getController();
+                            controller.initData(user);
+                        } else {
+                            CustomerController controller = loader.getController();
+                            controller.initData(user);
+                        }
+
+                        Stage stage = (Stage) usernameField.getScene().getWindow();
+                        stage.setTitle("Group10 GreenGrocer - " +
+                                user.getRole().substring(0, 1).toUpperCase() + user.getRole().substring(1)
+                                + " Dashboard");
+                        stage.setScene(StyleHelper.createStyledScene(root, 960, 540));
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        errorLabel.setText("Error loading dashboard.");
+                        errorLabel.setStyle("-fx-text-fill: #f44336;");
                     }
-
-                    Stage stage = (Stage) usernameField.getScene().getWindow();
-                    stage.setTitle("Group10 GreenGrocer - " +
-                            user.getRole().substring(0, 1).toUpperCase() + user.getRole().substring(1) + " Dashboard");
-                    stage.setScene(StyleHelper.createStyledScene(root, 960, 540));
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    errorLabel.setText("Error loading dashboard.");
-                }
+                });
 
             } else {
                 errorLabel.setText("Invalid credentials!");
