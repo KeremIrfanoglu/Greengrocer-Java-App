@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ScrollPane?>
@@ -147,7 +148,7 @@
                                       <Label fx:id="finalTotalLabel" text="Total: ₺0.00" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FFD700; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 3, 0, 0, 1);" />
                                    </children>
                                 </VBox>
-                                <Button onAction="#handleCheckout" text="Checkout" styleClass="button-primary" style="-fx-pref-width: 150; -fx-pref-height: 45;" />
+                                <Button onAction="#handleCheckout" text="🛒 Checkout" styleClass="button-primary" style="-fx-pref-width: 150; -fx-pref-height: 45;" />
                              </children>
                           </HBox>
                        </children>
@@ -167,10 +168,12 @@
                             
                             <TableView fx:id="orderTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                               <columns>
-                                <TableColumn fx:id="colOrderId" prefWidth="100" text="Order #" />
-                                <TableColumn fx:id="colOrderDate" prefWidth="200" text="Date" />
-                                <TableColumn fx:id="colOrderTotal" prefWidth="120" text="Total" />
-                                <TableColumn fx:id="colOrderStatus" prefWidth="150" text="Status" />
+                                <TableColumn fx:id="colOrderId" prefWidth="70" text="Order #" />
+                                <TableColumn fx:id="colOrderDate" prefWidth="140" text="Date" />
+                                <TableColumn fx:id="colOrderTotal" prefWidth="90" text="Total" />
+                                <TableColumn fx:id="colOrderStatus" prefWidth="100" text="Status" />
+                                <TableColumn fx:id="colOrderRating" prefWidth="80" text="⭐ Rating" />
+                                <TableColumn fx:id="colOrderComment" prefWidth="150" text="💬 Comment" />
                               </columns>
                             </TableView>
                             
@@ -178,6 +181,8 @@
                                <children>
                                   <Label text="Sipariş durumunu takip etmek için seçin:" styleClass="text-secondary" />
                                   <Button onAction="#handleViewOrderDetails" text="View Details" styleClass="button-primary" style="-fx-pref-width: 150;" />
+                                  <Button onAction="#handleCancelOrder" text="Cancel Order" styleClass="button-danger" style="-fx-pref-width: 150;" />
+                                  <Button onAction="#handleRateCarrier" text="⭐ Rate Carrier" styleClass="button-secondary" style="-fx-pref-width: 150;" />
                                </children>
                             </HBox>
                          </children>

@@ -29,6 +29,9 @@ public class CustomerController {
     private ObservableList<Order> orderList;
     private double gPointsToUse = 0.0; // G Points to apply at checkout
 
+    // Rating cache - loaded once, used for all cells
+    private java.util.Map<Integer, com.greengrocer.models.CarrierRating> ratingCache = new java.util.HashMap<>();
+
     @FXML
     private javafx.scene.control.TabPane mainTabPane;
     @FXML
@@ -101,6 +104,10 @@ public class CustomerController {
     private TableColumn<Order, Double> colOrderTotal;
     @FXML
     private TableColumn<Order, String> colOrderStatus;
+    @FXML
+    private TableColumn<Order, String> colOrderRating;
+    @FXML
+    private TableColumn<Order, String> colOrderComment;
 
     // Favorites Tab
     @FXML
@@ -139,6 +146,12 @@ public class CustomerController {
     private com.greengrocer.models.Coupon appliedCoupon = null;
     private double couponDiscount = 0.0;
 
+    // Scheduled Delivery fields
+    @FXML
+    private javafx.scene.control.DatePicker deliveryDatePicker;
+    @FXML
+    private javafx.scene.control.ComboBox<String> deliveryTimeCombo;
+
     // Profile Tab fields
     @FXML
     private Label profileUsernameLabel;
@@ -176,6 +189,34 @@ public class CustomerController {
         this.orderList = FXCollections.observableArrayList();
     }
 
+    /**
+     * Update available time slots based on selected date.
+     * If today is selected, exclude past hours.
+     */
+    private void updateAvailableTimeSlots() {
+        if (deliveryTimeCombo == null)
+            return;
+
+        javafx.collections.ObservableList<String> timeSlots = FXCollections.observableArrayList();
+        int currentHour = java.time.LocalTime.now().getHour();
+        java.time.LocalDate selectedDate = deliveryDatePicker != null ? deliveryDatePicker.getValue() : null;
+        boolean isToday = selectedDate != null && selectedDate.equals(java.time.LocalDate.now());
+
+        for (int h = 9; h <= 21; h++) {
+            // If today is selected, only show future hours
+            if (isToday && h <= currentHour)
+                continue;
+            timeSlots.add(String.format("%02d:00", h));
+        }
+
+        deliveryTimeCombo.setItems(timeSlots);
+
+        // Set default value
+        if (!timeSlots.isEmpty()) {
+            deliveryTimeCombo.setValue(timeSlots.get(0));
+        }
+    }
+
     public void initData(User user) {
         this.currentUser = user;
         if (welcomeLabel != null) {
@@ -190,6 +231,32 @@ public class CustomerController {
         javafx.application.Platform.runLater(() -> {
             notificationService.checkAndNotify(user.getId());
         });
+
+        // Initialize delivery date/time picker with validation
+        if (deliveryDatePicker != null) {
+            deliveryDatePicker.setValue(java.time.LocalDate.now().plusDays(1)); // Default: tomorrow
+
+            // Block past dates
+            deliveryDatePicker.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+                @Override
+                public void updateItem(java.time.LocalDate date, boolean empty) {
+                    super.updateItem(date, empty);
+                    // Disable dates before today
+                    setDisable(empty || date.isBefore(java.time.LocalDate.now()));
+                    if (date.isBefore(java.time.LocalDate.now())) {
+                        setStyle("-fx-background-color: #555;");
+                    }
+                }
+            });
+
+            // Update time slots when date changes
+            deliveryDatePicker.valueProperty().addListener((obs, oldDate, newDate) -> {
+                updateAvailableTimeSlots();
+            });
+        }
+        if (deliveryTimeCombo != null) {
+            updateAvailableTimeSlots();
+        }
 
         // Setup tab change listener for auto-refresh
         if (mainTabPane != null) {
@@ -300,6 +367,29 @@ public class CustomerController {
         colOrderTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         colOrderStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
+        // Rating column - uses cached data (no DB query per cell)
+        if (colOrderRating != null) {
+            colOrderRating.setCellValueFactory(cellData -> {
+                com.greengrocer.models.CarrierRating rating = ratingCache.get(cellData.getValue().getId());
+                if (rating != null) {
+                    return new SimpleStringProperty("⭐".repeat(rating.getRating()));
+                }
+                return new SimpleStringProperty("-");
+            });
+        }
+
+        // Comment column - uses cached data (no DB query per cell)
+        if (colOrderComment != null) {
+            colOrderComment.setCellValueFactory(cellData -> {
+                com.greengrocer.models.CarrierRating rating = ratingCache.get(cellData.getValue().getId());
+                if (rating != null && rating.getComment() != null) {
+                    String comment = rating.getComment();
+                    return new SimpleStringProperty(comment.length() > 20 ? comment.substring(0, 20) + "..." : comment);
+                }
+                return new SimpleStringProperty("-");
+            });
+        }
+
         loadOrders();
     }
 
@@ -319,6 +409,20 @@ public class CustomerController {
     private void loadOrders() {
         try {
             orderList = FXCollections.observableArrayList(orderDAO.getOrdersByCustomer(currentUser.getId()));
+
+            // Pre-load all ratings into cache (single query instead of per-cell queries)
+            ratingCache.clear();
+            com.greengrocer.dao.CarrierRatingDAO ratingDAO = new com.greengrocer.dao.CarrierRatingDAO();
+            for (Order order : orderList) {
+                try {
+                    com.greengrocer.models.CarrierRating rating = ratingDAO.getRatingByOrderId(order.getId());
+                    if (rating != null) {
+                        ratingCache.put(order.getId(), rating);
+                    }
+                } catch (SQLException ex) {
+                    /* ignore */ }
+            }
+
             orderTable.setItems(orderList);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -623,8 +727,10 @@ public class CustomerController {
                 }
             }
 
-            // Create order with the subtotal (full amount for records)
-            int orderId = orderDAO.createOrder(currentUser.getId(), cartList, subtotal);
+            // Create order with the subtotal and delivery date
+            java.sql.Timestamp deliveryTimestamp = java.sql.Timestamp.valueOf(deliveryDateTime);
+            int orderId = orderDAO.createOrder(currentUser.getId(), new java.util.ArrayList<>(cartList), subtotal,
+                    deliveryTimestamp);
             if (orderId > 0) {
                 // Award G Points based on actual payment (1/5 of finalTotal)
                 double pointsEarned = finalTotal / 5.0;
@@ -1299,6 +1405,121 @@ public class CustomerController {
                 statusLabel.setText("Failed to download invoice: " + ex.getMessage());
                 statusLabel.setStyle("-fx-text-fill: red;");
             }
+        }
+    }
+
+    // ==================== ORDER CANCELLATION ====================
+
+    private com.greengrocer.dao.CarrierRatingDAO ratingDAO = new com.greengrocer.dao.CarrierRatingDAO();
+
+    /**
+     * Cancel an order (only within 30 minutes of placing and if Pending)
+     */
+    @FXML
+    public void handleCancelOrder() {
+        Order selected = orderTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            statusLabel.setText("Please select an order to cancel.");
+            statusLabel.setStyle("-fx-text-fill: orange;");
+            return;
+        }
+
+        // Check if status is Pending
+        if (!"Pending".equalsIgnoreCase(selected.getStatus())) {
+            statusLabel.setText("Only 'Pending' orders can be cancelled.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        // Check 30-minute limit
+        long diffInMinutes = java.time.Duration.between(
+                selected.getOrderDate().toLocalDateTime(),
+                java.time.LocalDateTime.now()).toMinutes();
+
+        if (diffInMinutes > 30) {
+            statusLabel.setText("Cancellation time limit (30 min) exceeded.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        // Confirm with user
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Cancel Order");
+        confirm.setHeaderText("Are you sure you want to cancel Order #" + selected.getId() + "?");
+        confirm.setContentText("Stock will be restored. Time remaining: " + (30 - diffInMinutes) + " minutes.");
+
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            try {
+                if (orderDAO.cancelOrder(selected.getId())) {
+                    statusLabel.setText("Order #" + selected.getId() + " cancelled successfully!");
+                    statusLabel.setStyle("-fx-text-fill: green;");
+                    loadOrders(); // Refresh table
+                } else {
+                    statusLabel.setText("Failed to cancel order (it may have been processed).");
+                    statusLabel.setStyle("-fx-text-fill: red;");
+                }
+            } catch (SQLException e) {
+                statusLabel.setText("Error cancelling order: " + e.getMessage());
+                statusLabel.setStyle("-fx-text-fill: red;");
+            }
+        }
+    }
+
+    // ==================== CARRIER RATING ====================
+
+    /**
+     * Rate a carrier after delivery (1-5 stars)
+     */
+    @FXML
+    public void handleRateCarrier() {
+        Order selected = orderTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            statusLabel.setText("Please select an order to rate.");
+            statusLabel.setStyle("-fx-text-fill: orange;");
+            return;
+        }
+
+        if (!"Delivered".equalsIgnoreCase(selected.getStatus())) {
+            statusLabel.setText("You can only rate delivered orders.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        try {
+            if (ratingDAO.hasBeenRated(selected.getId())) {
+                statusLabel.setText("You have already rated this delivery.");
+                statusLabel.setStyle("-fx-text-fill: orange;");
+                return;
+            }
+
+            // Create rating dialog
+            ChoiceDialog<Integer> dialog = new ChoiceDialog<>(5, 1, 2, 3, 4, 5);
+            dialog.setTitle("Rate Carrier");
+            dialog.setHeaderText("How was your delivery for Order #" + selected.getId() + "?");
+            dialog.setContentText("Choose rating (1-5 stars):");
+
+            java.util.Optional<Integer> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                int rating = result.get();
+
+                // Ask for optional comment
+                TextInputDialog commentDialog = new TextInputDialog();
+                commentDialog.setTitle("Add a Comment");
+                commentDialog.setHeaderText("Optional: Leave feedback about the delivery");
+                commentDialog.setContentText("Comment:");
+
+                String comment = commentDialog.showAndWait().orElse("");
+
+                if (ratingDAO.rateCarrier(selected.getId(), currentUser.getId(), selected.getCarrierId(), rating,
+                        comment)) {
+                    String stars = "⭐".repeat(rating);
+                    statusLabel.setText("Thank you! Rated: " + stars);
+                    statusLabel.setStyle("-fx-text-fill: green;");
+                }
+            }
+        } catch (SQLException e) {
+            statusLabel.setText("Error saving rating: " + e.getMessage());
+            statusLabel.setStyle("-fx-text-fill: red;");
         }
     }
 
