@@ -13,6 +13,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
@@ -319,9 +320,65 @@
                     </children>
                  </VBox>
               </content>
-           </Tab>
-           
-         </tabs>
+            </Tab>
+            
+            <!-- MESSAGES TAB -->
+            <Tab text="📬 Messages">
+               <content>
+                  <VBox spacing="15" style="-fx-padding: 20;">
+                     <children>
+                        <HBox spacing="15" alignment="CENTER_LEFT">
+                           <Label text="Customer Messages" styleClass="section-title" />
+                           <Region HBox.hgrow="ALWAYS" />
+                           <Label fx:id="ownerUnreadCountLabel" text="" style="-fx-font-weight: bold; -fx-text-fill: #FF6B6B;" />
+                           <Button onAction="#handleRefreshOwnerMessages" text="🔄 Refresh" styleClass="button-secondary" />
+                        </HBox>
+                        
+                        <HBox spacing="15" VBox.vgrow="ALWAYS">
+                           <children>
+                              <!-- Messages List -->
+                              <VBox spacing="10" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <HBox spacing="10" alignment="CENTER_LEFT">
+                                       <Button fx:id="ownerInboxBtn" onAction="#handleOwnerShowInbox" text="📥 Inbox" styleClass="button-primary" prefWidth="120" prefHeight="35" style="-fx-font-size: 13px;" />
+                                       <Button fx:id="ownerSentBtn" onAction="#handleOwnerShowSent" text="📤 Sent" styleClass="button-secondary" prefWidth="120" prefHeight="35" style="-fx-font-size: 13px;" />
+                                       <Region HBox.hgrow="ALWAYS" />
+                                       <Button fx:id="ownerReplyBtn" onAction="#handleOwnerReplyToMessage" text="↩️ Reply" styleClass="button-warning" prefWidth="120" prefHeight="35" style="-fx-font-size: 13px;" />
+                                    </HBox>
+                                    <TableView fx:id="ownerMessagesTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                                      <columns>
+                                        <TableColumn fx:id="colOwnerMsgFrom" prefWidth="120" text="From" />
+                                        <TableColumn fx:id="colOwnerMsgSubject" prefWidth="200" text="Subject" />
+                                        <TableColumn fx:id="colOwnerMsgDate" prefWidth="140" text="Date" />
+                                        <TableColumn fx:id="colOwnerMsgStatus" prefWidth="80" text="Status" />
+                                      </columns>
+                                    </TableView>
+                                 </children>
+                              </VBox>
+                              
+                              <!-- Message Content / Reply -->
+                              <VBox spacing="10" prefWidth="350" styleClass="glass-card" style="-fx-padding: 15;">
+                                 <children>
+                                    <Label text="Message Content" style="-fx-font-weight: bold; -fx-text-fill: white;" />
+                                    <TextArea fx:id="ownerMessageContentArea" wrapText="true" editable="false" VBox.vgrow="ALWAYS" 
+                                              style="-fx-control-inner-background: #1e293b; -fx-text-fill: #e2e8f0; -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-radius: 8; -fx-background-radius: 8;" />
+                                    
+                                    <Label text="Reply to Message" style="-fx-font-weight: bold; -fx-text-fill: #4CAF50; -fx-padding: 10 0 0 0;" />
+                                    <TextField fx:id="ownerReplySubjectField" promptText="Subject" styleClass="text-field" />
+                                    <TextArea fx:id="ownerReplyArea" promptText="Write your reply here..." wrapText="true" prefRowCount="4"
+                                              style="-fx-control-inner-background: #1e293b; -fx-text-fill: #e2e8f0; -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-radius: 8; -fx-background-radius: 8;" />
+                                    <Button onAction="#handleOwnerReply" text="📨 Send Reply" styleClass="button-primary" maxWidth="Infinity" />
+                                    <Label fx:id="ownerMsgStatusLabel" text="" style="-fx-font-size: 12px;" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+            
+          </tabs>
        </TabPane>
     </children>
 </VBox>

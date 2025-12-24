@@ -270,6 +270,8 @@ public class CustomerController {
                         handleRefreshFavorites();
                     } else if (tabText.contains("Profile")) {
                         loadProfileData();
+                    } else if (tabText.contains("Messages")) {
+                        handleRefreshMessages();
                     }
                 }
             });
@@ -1815,5 +1817,295 @@ public class CustomerController {
         }
 
         return null;
+    }
+
+    // ==================== MESSAGING FEATURE ====================
+
+    private com.greengrocer.dao.MessageDAO messageDAO = new com.greengrocer.dao.MessageDAO();
+    private boolean showingInbox = true;
+
+    @FXML
+    private TableView<com.greengrocer.models.Message> messagesTable;
+    @FXML
+    private TableColumn<com.greengrocer.models.Message, String> colMsgFrom;
+    @FXML
+    private TableColumn<com.greengrocer.models.Message, String> colMsgSubject;
+    @FXML
+    private TableColumn<com.greengrocer.models.Message, java.sql.Timestamp> colMsgDate;
+    @FXML
+    private TableColumn<com.greengrocer.models.Message, String> colMsgStatus;
+    @FXML
+    private TextArea messageContentArea;
+    @FXML
+    private TextField msgSubjectField;
+    @FXML
+    private TextArea msgComposeArea;
+    @FXML
+    private Label msgStatusLabel;
+    @FXML
+    private Label unreadCountLabel;
+    @FXML
+    private Button inboxBtn;
+    @FXML
+    private Button sentBtn;
+    @FXML
+    private Button replyBtn;
+    @FXML
+    private Button sendMsgBtn;
+    @FXML
+    private Label composeLabel;
+
+    private com.greengrocer.models.Message selectedMessage = null;
+    private boolean isReplyMode = false;
+
+    @FXML
+    public void handleRefreshMessages() {
+        loadMessages();
+        updateUnreadCount();
+    }
+
+    @FXML
+    public void handleShowInbox() {
+        showingInbox = true;
+        if (inboxBtn != null) {
+            inboxBtn.getStyleClass().clear();
+            inboxBtn.getStyleClass().add("button-primary");
+        }
+        if (sentBtn != null) {
+            sentBtn.getStyleClass().clear();
+            sentBtn.getStyleClass().add("button-secondary");
+        }
+        if (colMsgFrom != null)
+            colMsgFrom.setText("From");
+        // Show reply button in inbox mode
+        if (replyBtn != null) {
+            replyBtn.setVisible(true);
+            replyBtn.setManaged(true);
+        }
+        loadMessages();
+    }
+
+    @FXML
+    public void handleShowSent() {
+        showingInbox = false;
+        if (inboxBtn != null) {
+            inboxBtn.getStyleClass().clear();
+            inboxBtn.getStyleClass().add("button-secondary");
+        }
+        if (sentBtn != null) {
+            sentBtn.getStyleClass().clear();
+            sentBtn.getStyleClass().add("button-primary");
+        }
+        if (colMsgFrom != null)
+            colMsgFrom.setText("To");
+        // Hide reply button in sent mode
+        if (replyBtn != null) {
+            replyBtn.setVisible(false);
+            replyBtn.setManaged(false);
+        }
+        loadMessages();
+    }
+
+    @FXML
+    public void handleReplyToMessage() {
+        // Only allow reply in inbox mode
+        if (!showingInbox) {
+            setMsgStatus("You can only reply to messages in your Inbox.", "#FF9800");
+            return;
+        }
+
+        if (selectedMessage == null) {
+            setMsgStatus("Select a message to reply to.", "red");
+            return;
+        }
+
+        // Enter reply mode
+        isReplyMode = true;
+
+        // Update UI to show reply mode
+        if (composeLabel != null) {
+            composeLabel.setText("↩️ Reply to: "
+                    + (selectedMessage.getSenderName() != null ? selectedMessage.getSenderName() : "Owner"));
+            composeLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #FF9800; -fx-padding: 10 0 0 0;");
+        }
+        if (sendMsgBtn != null) {
+            sendMsgBtn.setText("📨 Send Reply");
+        }
+
+        // Set reply subject
+        String subject = selectedMessage.getSubject();
+        if (!subject.startsWith("Re: ")) {
+            msgSubjectField.setText("Re: " + subject);
+        } else {
+            msgSubjectField.setText(subject);
+        }
+
+        setMsgStatus("Reply mode - write your response.", "#FF9800");
+    }
+
+    private void loadMessages() {
+        if (messagesTable == null || currentUser == null)
+            return;
+
+        try {
+            // Setup table columns
+            if (colMsgFrom != null) {
+                colMsgFrom.setCellValueFactory(cellData -> {
+                    com.greengrocer.models.Message msg = cellData.getValue();
+                    String name = showingInbox ? msg.getSenderName() : msg.getReceiverName();
+                    return new SimpleStringProperty(name != null ? name : "Owner");
+                });
+            }
+            if (colMsgSubject != null) {
+                colMsgSubject.setCellValueFactory(new PropertyValueFactory<>("subject"));
+            }
+            if (colMsgDate != null) {
+                colMsgDate.setCellValueFactory(new PropertyValueFactory<>("sentAt"));
+            }
+            if (colMsgStatus != null) {
+                colMsgStatus.setCellValueFactory(cellData -> {
+                    return new SimpleStringProperty(cellData.getValue().isRead() ? "Read" : "Unread");
+                });
+            }
+
+            java.util.List<com.greengrocer.models.Message> messages;
+            if (showingInbox) {
+                messages = messageDAO.getInbox(currentUser.getId());
+            } else {
+                messages = messageDAO.getSentMessages(currentUser.getId());
+            }
+            messagesTable.setItems(FXCollections.observableArrayList(messages));
+
+            // Selection listener to show message content
+            messagesTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
+                if (newSel != null) {
+                    selectedMessage = newSel;
+                    showMessageContent(newSel);
+                    // Mark as read if inbox
+                    if (showingInbox && !newSel.isRead()) {
+                        try {
+                            messageDAO.markAsRead(newSel.getId());
+                            newSel.setRead(true);
+                            messagesTable.refresh();
+                            updateUnreadCount();
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (msgStatusLabel != null) {
+                msgStatusLabel.setText("Error loading messages.");
+                msgStatusLabel.setStyle("-fx-text-fill: red;");
+            }
+        }
+    }
+
+    private void showMessageContent(com.greengrocer.models.Message message) {
+        if (messageContentArea == null)
+            return;
+
+        StringBuilder content = new StringBuilder();
+        content.append("From: ").append(message.getSenderName() != null ? message.getSenderName() : "Owner")
+                .append("\n");
+        content.append("To: ").append(message.getReceiverName() != null ? message.getReceiverName() : "You")
+                .append("\n");
+        content.append("Date: ").append(message.getSentAt()).append("\n");
+        content.append("Subject: ").append(message.getSubject()).append("\n");
+        content.append("─".repeat(30)).append("\n\n");
+        content.append(message.getContent());
+
+        messageContentArea.setText(content.toString());
+    }
+
+    private void updateUnreadCount() {
+        if (unreadCountLabel == null || currentUser == null)
+            return;
+
+        try {
+            int count = messageDAO.getUnreadCount(currentUser.getId());
+            if (count > 0) {
+                unreadCountLabel.setText("📬 " + count + " unread");
+                unreadCountLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #FF6B6B;");
+            } else {
+                unreadCountLabel.setText("");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    public void handleSendMessage() {
+        if (currentUser == null)
+            return;
+
+        String subject = msgSubjectField != null ? msgSubjectField.getText().trim() : "";
+        String content = msgComposeArea != null ? msgComposeArea.getText().trim() : "";
+
+        if (subject.isEmpty()) {
+            setMsgStatus("Please enter a subject.", "red");
+            return;
+        }
+
+        if (content.isEmpty()) {
+            setMsgStatus("Please enter a message.", "red");
+            return;
+        }
+
+        try {
+            int receiverId;
+
+            if (isReplyMode && selectedMessage != null) {
+                // Reply to the sender of the selected message
+                receiverId = selectedMessage.getSenderId();
+            } else {
+                // New message to owner
+                receiverId = messageDAO.getOwnerId();
+            }
+
+            if (receiverId == -1) {
+                setMsgStatus("Recipient not found.", "red");
+                return;
+            }
+
+            com.greengrocer.models.Message message = new com.greengrocer.models.Message(
+                    currentUser.getId(), receiverId, subject, content);
+
+            if (messageDAO.sendMessage(message)) {
+                String successMsg = isReplyMode ? "Reply sent successfully!" : "Message sent successfully!";
+                setMsgStatus(successMsg, "#4CAF50");
+                msgSubjectField.clear();
+                msgComposeArea.clear();
+
+                // Reset reply mode
+                isReplyMode = false;
+                if (composeLabel != null) {
+                    composeLabel.setText("Compose New Message");
+                    composeLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #4CAF50; -fx-padding: 10 0 0 0;");
+                }
+                if (sendMsgBtn != null) {
+                    sendMsgBtn.setText("📨 Send to Owner");
+                }
+
+                loadMessages();
+            } else {
+                setMsgStatus("Failed to send message.", "red");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            setMsgStatus("Error sending message.", "red");
+        }
+    }
+
+    private void setMsgStatus(String text, String color) {
+        if (msgStatusLabel != null) {
+            msgStatusLabel.setText(text);
+            msgStatusLabel.setStyle("-fx-text-fill: " + color + ";");
+        }
     }
 }
