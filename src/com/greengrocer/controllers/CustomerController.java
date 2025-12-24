@@ -18,6 +18,11 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import java.sql.SQLException;
 import com.greengrocer.util.FormatHelper;
 import com.greengrocer.util.StyledAlert;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 public class CustomerController {
     private User currentUser;
@@ -43,21 +48,11 @@ public class CustomerController {
     @FXML
     private Label gPointsLabel; // G Points balance display
 
-    // Shop Tab
+    // Shop Tab - Grid View
     @FXML
-    private TableView<Product> shopTable;
-    @FXML
-    private TableColumn<Product, String> colShopName;
-    @FXML
-    private TableColumn<Product, String> colShopType;
-    @FXML
-    private TableColumn<Product, Double> colShopPrice;
-    @FXML
-    private TableColumn<Product, Double> colShopStock;
-    @FXML
-    private TableColumn<Product, javafx.scene.image.ImageView> colShopImage;
-    @FXML
-    private TableColumn<Product, String> colShopFav;
+    private FlowPane shopFlowPane;
+
+    private Product selectedProduct = null; // For grid view selection
 
     @FXML
     private javafx.scene.control.ComboBox<String> filterTypeCombo;
@@ -280,62 +275,8 @@ public class CustomerController {
             });
         }
 
-        // Shop Setup
-        colShopName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colShopType.setCellValueFactory(new PropertyValueFactory<>("type"));
-        colShopPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
-        colShopStock.setCellValueFactory(new PropertyValueFactory<>("stock"));
-
-        // Image Column with ImageView
-        colShopImage
-                .setCellFactory(column -> new javafx.scene.control.TableCell<Product, javafx.scene.image.ImageView>() {
-                    private final javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
-
-                    @Override
-                    protected void updateItem(javafx.scene.image.ImageView item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                            setGraphic(null);
-                        } else {
-                            Product product = getTableRow().getItem();
-                            javafx.scene.image.Image img = product.getImage();
-                            if (img != null) {
-                                imageView.setImage(img);
-                                imageView.setFitWidth(50);
-                                imageView.setFitHeight(50);
-                                imageView.setPreserveRatio(true);
-                                setGraphic(imageView);
-                            } else {
-                                setGraphic(null);
-                            }
-                        }
-                    }
-                });
-
-        // Favorite Star Column - shows star if product is in favorites
-        colShopFav.setCellFactory(column -> new javafx.scene.control.TableCell<Product, String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                    setText("");
-                    setStyle("");
-                } else {
-                    Product product = getTableRow().getItem();
-                    try {
-                        if (favoritesDAO.isFavorite(currentUser.getId(), product.getId())) {
-                            setText("*");
-                            setStyle("-fx-font-size: 16px; -fx-alignment: CENTER;");
-                        } else {
-                            setText("");
-                            setStyle("");
-                        }
-                    } catch (java.sql.SQLException e) {
-                        setText("");
-                    }
-                }
-            }
-        });
+        // Grid View is now used instead of TableView - setup handled in
+        // loadProducts/refreshShopGrid
 
         // Setup Filter/Sort ComboBoxes
         filterTypeCombo.setItems(FXCollections.observableArrayList("All", "Vegetable", "Fruit", "Dairy", "Bakery",
@@ -346,26 +287,6 @@ public class CustomerController {
         sortCombo.setValue("Default");
 
         loadProducts();
-
-        // Update favorite button and quantity label when selection changes
-        shopTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            updateFavButton();
-            updateQuantityLabelForProduct(newSelection);
-        });
-
-        // Double-click to add 1 unit to cart
-        shopTable.setRowFactory(tv -> {
-            TableRow<Product> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && (!row.isEmpty())) {
-                    if (quantityField != null) {
-                        quantityField.setText("1");
-                        handleAddToCart();
-                    }
-                }
-            });
-            return row;
-        });
 
         // Cart Setup
         colCartName.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductName()));
@@ -415,11 +336,148 @@ public class CustomerController {
             // Sort products by name alphabetically (A-Z)
             allProducts.sort((p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName()));
             productList = FXCollections.observableArrayList(allProducts);
-            shopTable.setItems(productList);
+            refreshShopGrid();
         } catch (SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Error loading products.");
         }
+    }
+
+    private void refreshShopGrid() {
+        if (shopFlowPane == null)
+            return;
+        shopFlowPane.getChildren().clear();
+
+        for (Product product : productList) {
+            shopFlowPane.getChildren().add(createShopCard(product));
+        }
+    }
+
+    private VBox createShopCard(Product product) {
+        VBox card = new VBox(8);
+        card.getStyleClass().add("product-card");
+        card.setPrefWidth(150);
+        card.setPadding(new Insets(12));
+        card.setAlignment(Pos.CENTER);
+
+        // Favorite star indicator
+        Label favLabel = new Label();
+        try {
+            if (favoritesDAO.isFavorite(currentUser.getId(), product.getId())) {
+                favLabel.setText("★");
+                favLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #FFD700;");
+            }
+        } catch (SQLException e) {
+            // Ignore
+        }
+
+        // Image
+        javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView();
+        iv.setFitHeight(60);
+        iv.setFitWidth(60);
+        iv.setPreserveRatio(true);
+        if (product.getImage() != null) {
+            iv.setImage(product.getImage());
+        }
+
+        Label nameLabel = new Label(product.getName());
+        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #F8FAFC;");
+        nameLabel.setWrapText(true);
+        nameLabel.setMaxWidth(130);
+
+        Label typeLabel = new Label(product.getType());
+        typeLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #94A3B8;");
+
+        Label priceLabel = new Label(FormatHelper.formatCurrency(product.getPrice()));
+        priceLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
+
+        Label stockLabel = new Label("Stock: " + String.format("%.1f", product.getStock()));
+        if (product.getStock() <= product.getThreshold()) {
+            stockLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold; -fx-font-size: 10px;");
+        } else {
+            stockLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 10px;");
+        }
+
+        Button addBtn = new Button("Add to Cart");
+        addBtn.getStyleClass().add("button-primary");
+        addBtn.setStyle("-fx-font-size: 10px;");
+        addBtn.setPrefWidth(110);
+        addBtn.setOnAction(e -> {
+            selectedProduct = product;
+            // Use quantity field value or default to 1
+            String qtyText = quantityField.getText().trim();
+            double qty = 1.0;
+            if (!qtyText.isEmpty()) {
+                try {
+                    qty = Double.parseDouble(qtyText);
+                } catch (NumberFormatException ex) {
+                    qty = 1.0;
+                }
+            }
+            addProductToCart(product, qty);
+        });
+
+        // Make card clickable to select product and show top bar favorite button
+        card.setOnMouseClicked(e -> {
+            selectedProduct = product;
+            loadRecommendations(product);
+            updateFavButton();
+            statusLabel.setText("Selected: " + product.getName());
+        });
+
+        card.getChildren().addAll(favLabel, iv, nameLabel, typeLabel, priceLabel, stockLabel, addBtn);
+
+        // Low stock border
+        if (product.getStock() <= product.getThreshold()) {
+            card.setStyle("-fx-border-color: #800000; -fx-border-width: 2; -fx-border-radius: 12;");
+        }
+
+        return card;
+    }
+
+    private void addProductToCart(Product product, double quantity) {
+        if (quantity <= 0) {
+            addToCartStatusLabel.setText("Invalid quantity.");
+            addToCartStatusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+        if (quantity > product.getStock()) {
+            addToCartStatusLabel.setText("Not enough stock!");
+            addToCartStatusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        CartItem existingItem = null;
+        for (CartItem item : cartList) {
+            if (item.getProduct() != null && item.getProduct().getId() == product.getId()) {
+                existingItem = item;
+                break;
+            }
+        }
+
+        if (existingItem != null) {
+            double newQty = existingItem.getQuantity() + quantity;
+            if (newQty > product.getStock()) {
+                addToCartStatusLabel.setText("Not enough stock!");
+                addToCartStatusLabel.setStyle("-fx-text-fill: red;");
+                return;
+            }
+            existingItem.setQuantity(newQty);
+        } else {
+            cartList.add(new CartItem(product, quantity));
+        }
+
+        // Persist to database
+        try {
+            cartDAO.addToCart(currentUser.getId(), product.getId(), quantity);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        cartTable.refresh();
+        updateCartTotalWithDiscount();
+        addToCartStatusLabel.setText("Added " + quantity + " x " + product.getName());
+        addToCartStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
     }
 
     private void loadOrders() {
@@ -472,12 +530,17 @@ public class CustomerController {
 
     @FXML
     public void handleAddToCart() {
-        Product selected = shopTable.getSelectionModel().getSelectedItem();
+        // Use selectedProduct from grid view card click, or check quantity field
+        Product selected = selectedProduct;
         String qtyStr = quantityField.getText();
 
-        if (selected == null || qtyStr.isEmpty()) {
-            setLocalStatus(addToCartStatusLabel, "Select product and enter quantity.", "#FF9800");
+        if (selected == null) {
+            setLocalStatus(addToCartStatusLabel, "Click 'Add to Cart' on a product card.", "#FF9800");
             return;
+        }
+
+        if (qtyStr.isEmpty()) {
+            qtyStr = "1"; // Default to 1 if no quantity specified
         }
 
         try {
@@ -906,7 +969,7 @@ public class CustomerController {
         }
 
         productList = FXCollections.observableArrayList(filtered);
-        shopTable.setItems(productList);
+        refreshShopGrid();
     }
 
     /**
@@ -965,15 +1028,15 @@ public class CustomerController {
                     .filter(p -> p.getName().toLowerCase().contains(searchText))
                     .collect(java.util.stream.Collectors.toList());
             productList = FXCollections.observableArrayList(filtered);
-            shopTable.setItems(productList);
+            refreshShopGrid();
         }
     }
 
     @FXML
     public void handleAddToFavorites() {
-        Product selected = shopTable.getSelectionModel().getSelectedItem();
+        Product selected = selectedProduct;
         if (selected == null) {
-            statusLabel.setText("Select a product first.");
+            statusLabel.setText("Click on a product card first.");
             statusLabel.setStyle("-fx-text-fill: red;");
             return;
         }
@@ -1000,7 +1063,7 @@ public class CustomerController {
 
     // Update favorite button text based on selection
     private void updateFavButton() {
-        Product selected = shopTable.getSelectionModel().getSelectedItem();
+        Product selected = selectedProduct;
         if (favButton == null)
             return;
 
@@ -1253,9 +1316,8 @@ public class CustomerController {
      */
     @FXML
     public void handleProductSelection() {
-        Product selected = shopTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            loadRecommendations(selected);
+        if (selectedProduct != null) {
+            loadRecommendations(selectedProduct);
             updateFavButton();
         }
     }

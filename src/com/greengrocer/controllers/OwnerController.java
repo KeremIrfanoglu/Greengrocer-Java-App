@@ -22,6 +22,10 @@ import java.util.Optional;
 import com.greengrocer.util.FormatHelper;
 import com.greengrocer.util.StyledAlert;
 import javafx.geometry.Side;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
 
 public class OwnerController {
 
@@ -51,25 +55,10 @@ public class OwnerController {
     private javafx.scene.image.ImageView previewImageView;
 
     private int selectedProductId = -1; // For update functionality
+    private Product selectedProduct = null; // For grid view selection
 
     @FXML
-    private TableView<Product> productTable;
-    @FXML
-    private TableColumn<Product, Integer> colId;
-    @FXML
-    private TableColumn<Product, String> colName;
-    @FXML
-    private TableColumn<Product, String> colType;
-    @FXML
-    private TableColumn<Product, Double> colPrice;
-    @FXML
-    private TableColumn<Product, Double> colStock;
-    @FXML
-    private TableColumn<Product, Double> colThreshold;
-    @FXML
-    private TableColumn<Product, Double> colCost;
-    @FXML
-    private TableColumn<Product, javafx.scene.image.ImageView> colImage;
+    private FlowPane productFlowPane;
 
     // Carrier Tab Fields
     @FXML
@@ -259,54 +248,7 @@ public class OwnerController {
             });
         }
 
-        // Setup Table
-        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colType.setCellValueFactory(new PropertyValueFactory<>("type"));
-        colPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
-        colStock.setCellValueFactory(new PropertyValueFactory<>("stock"));
-        colThreshold.setCellValueFactory(new PropertyValueFactory<>("threshold"));
-        colCost.setCellValueFactory(new PropertyValueFactory<>("costPrice"));
-
-        // Image Column with ImageView
-        colImage.setCellFactory(column -> new javafx.scene.control.TableCell<Product, javafx.scene.image.ImageView>() {
-            private final javafx.scene.image.ImageView imageView = new javafx.scene.image.ImageView();
-
-            @Override
-            protected void updateItem(javafx.scene.image.ImageView item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                    setGraphic(null);
-                } else {
-                    Product product = getTableRow().getItem();
-                    javafx.scene.image.Image img = product.getImage();
-                    if (img != null) {
-                        imageView.setImage(img);
-                        imageView.setFitWidth(50);
-                        imageView.setFitHeight(50);
-                        imageView.setPreserveRatio(true);
-                        setGraphic(imageView);
-                    } else {
-                        setGraphic(null);
-                    }
-                }
-            }
-        });
-
-        // Highlight low stock rows
-        productTable.setRowFactory(tv -> new TableRow<Product>() {
-            @Override
-            protected void updateItem(Product item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setStyle("");
-                } else if (item.getStock() <= item.getThreshold()) {
-                    setStyle("-fx-background-color: #800000; -fx-text-fill: white;"); // Bordeaux for alert
-                } else {
-                    setStyle("");
-                }
-            }
-        });
+        // Grid View is now used - no table setup needed
 
         loadProducts();
 
@@ -342,12 +284,82 @@ public class OwnerController {
     private void loadProducts() {
         try {
             productList = FXCollections.observableArrayList(productDAO.getAllProducts());
-            productTable.setItems(productList);
+            refreshProductGrid();
         } catch (SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Error loading products.");
             statusLabel.setStyle("-fx-text-fill: red;");
         }
+    }
+
+    private void refreshProductGrid() {
+        if (productFlowPane == null)
+            return;
+        productFlowPane.getChildren().clear();
+
+        for (Product product : productList) {
+            productFlowPane.getChildren().add(createProductCard(product));
+        }
+    }
+
+    private VBox createProductCard(Product product) {
+        VBox card = new VBox(8);
+        card.getStyleClass().add("product-card");
+        card.setPrefWidth(160);
+        card.setPadding(new Insets(12));
+        card.setAlignment(Pos.CENTER);
+
+        // Image
+        javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView();
+        iv.setFitHeight(70);
+        iv.setFitWidth(70);
+        iv.setPreserveRatio(true);
+        if (product.getImage() != null) {
+            iv.setImage(product.getImage());
+        }
+
+        Label nameLabel = new Label(product.getName());
+        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #F8FAFC;");
+        nameLabel.setWrapText(true);
+        nameLabel.setMaxWidth(140);
+
+        Label typeLabel = new Label(product.getType());
+        typeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #94A3B8;");
+
+        Label priceLabel = new Label(FormatHelper.formatCurrency(product.getPrice()));
+        priceLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 14px;");
+
+        Label stockLabel = new Label("Stock: " + String.format("%.1f", product.getStock()));
+        if (product.getStock() <= product.getThreshold()) {
+            stockLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold;");
+        } else {
+            stockLabel.setStyle("-fx-text-fill: #94A3B8;");
+        }
+
+        Button editBtn = new Button("Edit");
+        editBtn.getStyleClass().add("button-secondary");
+        editBtn.setPrefWidth(120);
+        editBtn.setOnAction(e -> {
+            selectedProduct = product;
+            selectedProductId = product.getId();
+            prodNameField.setText(product.getName());
+            prodTypeCombo.setValue(product.getType());
+            prodPriceField.setText(String.valueOf(product.getPrice()));
+            prodCostField.setText(String.valueOf(product.getCostPrice()));
+            prodStockField.setText(String.valueOf(product.getStock()));
+            prodThresholdField.setText(String.valueOf(product.getThreshold()));
+            statusLabel.setText("Product #" + product.getId() + " loaded. Edit and click Update.");
+            statusLabel.setStyle("-fx-text-fill: #6366f1;");
+        });
+
+        card.getChildren().addAll(iv, nameLabel, typeLabel, priceLabel, stockLabel, editBtn);
+
+        // Low stock border
+        if (product.getStock() <= product.getThreshold()) {
+            card.setStyle("-fx-border-color: #800000; -fx-border-width: 2; -fx-border-radius: 12;");
+        }
+
+        return card;
     }
 
     @FXML
@@ -428,21 +440,22 @@ public class OwnerController {
 
     @FXML
     public void handleDeleteProduct() {
-        Product selected = productTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            statusLabel.setText("Select a product to delete.");
+        if (selectedProduct == null) {
+            statusLabel.setText("Click 'Edit' on a product card first.");
             statusLabel.setStyle("-fx-text-fill: red;");
             return;
         }
 
         boolean confirm = StyledAlert.showConfirmation("Delete Product", null,
-                "Are you sure you want to delete " + selected.getName() + "?");
+                "Are you sure you want to delete " + selectedProduct.getName() + "?");
 
         if (confirm) {
             try {
-                if (productDAO.deleteProduct(selected.getId())) {
+                if (productDAO.deleteProduct(selectedProduct.getId())) {
                     statusLabel.setText("Product deleted.");
                     statusLabel.setStyle("-fx-text-fill: green;");
+                    selectedProduct = null;
+                    selectedProductId = -1;
                     loadProducts();
                 } else {
                     statusLabel.setText("Delete failed.");
@@ -759,22 +772,14 @@ public class OwnerController {
 
     @FXML
     public void handleLoadProductToForm() {
-        Product selected = productTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            statusLabel.setText("Select a product to load.");
+        // This method is now handled by the Edit button on each card
+        if (selectedProduct == null) {
+            statusLabel.setText("Click 'Edit' on a product card first.");
             statusLabel.setStyle("-fx-text-fill: red;");
             return;
         }
-
-        selectedProductId = selected.getId();
-        prodNameField.setText(selected.getName());
-        prodTypeCombo.setValue(selected.getType());
-        prodPriceField.setText(String.valueOf(selected.getPrice()));
-        prodCostField.setText(String.valueOf(selected.getCostPrice()));
-        prodStockField.setText(String.valueOf(selected.getStock()));
-        prodThresholdField.setText(String.valueOf(selected.getThreshold()));
-
-        statusLabel.setText("Product #" + selected.getId() + " loaded. Edit and click Update.");
+        // Product already loaded when Edit was clicked
+        statusLabel.setText("Product already loaded from card.");
         statusLabel.setStyle("-fx-text-fill: blue;");
     }
 

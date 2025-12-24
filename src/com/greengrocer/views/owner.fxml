@@ -20,6 +20,7 @@
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
+<?import javafx.scene.layout.FlowPane?>
 
 <VBox prefHeight="540.0" prefWidth="960.0" styleClass="dashboard-container"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
@@ -69,18 +70,12 @@
                     
                     <Label fx:id="statusLabel" styleClass="status-success" />
                     
-                    <TableView fx:id="productTable" VBox.vgrow="ALWAYS" styleClass="table-view">
-                      <columns>
-                        <TableColumn fx:id="colId" prefWidth="50" text="ID" />
-                        <TableColumn fx:id="colImage" prefWidth="60" text="Img" />
-                        <TableColumn fx:id="colName" prefWidth="130" text="Name" />
-                        <TableColumn fx:id="colType" prefWidth="90" text="Type" />
-                        <TableColumn fx:id="colPrice" prefWidth="80" text="Price" />
-                        <TableColumn fx:id="colCost" prefWidth="80" text="Cost" />
-                        <TableColumn fx:id="colStock" prefWidth="70" text="Stock" />
-                        <TableColumn fx:id="colThreshold" prefWidth="70" text="Threshold" />
-                      </columns>
-                    </TableView>
+                    <!-- Products Grid View -->
+                    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent;">
+                       <content>
+                          <FlowPane fx:id="productFlowPane" hgap="15" vgap="15" style="-fx-padding: 10;" />
+                       </content>
+                    </ScrollPane>
                     
                     <HBox spacing="10">
                        <children>

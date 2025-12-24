@@ -20,6 +20,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
+<?import javafx.scene.layout.FlowPane?>
 
 <AnchorPane prefHeight="540.0" prefWidth="960.0" styleClass="dashboard-container" 
             xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
@@ -73,17 +74,12 @@
                                    </children>
                                 </HBox>
                                 
-                                <!-- Products Table -->
-                                <TableView fx:id="shopTable" VBox.vgrow="ALWAYS" styleClass="table-view" onMouseClicked="#handleProductSelection">
-                                  <columns>
-                                    <TableColumn fx:id="colShopFav" prefWidth="40" text="*" />
-                                    <TableColumn fx:id="colShopImage" prefWidth="70" text="Img" />
-                                    <TableColumn fx:id="colShopName" prefWidth="160" text="Product Name" />
-                                    <TableColumn fx:id="colShopType" prefWidth="90" text="Category" />
-                                    <TableColumn fx:id="colShopPrice" prefWidth="80" text="Price" />
-                                    <TableColumn fx:id="colShopStock" prefWidth="80" text="Stock" />
-                                  </columns>
-                                </TableView>
+                                <!-- Products Grid View -->
+                                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent;">
+                                   <content>
+                                      <FlowPane fx:id="shopFlowPane" hgap="15" vgap="15" style="-fx-padding: 10;" />
+                                   </content>
+                                </ScrollPane>
                                 
                                 <!-- Add to Cart Bar -->
                                 <HBox spacing="15" alignment="CENTER_LEFT" styleClass="glass-card-small">
