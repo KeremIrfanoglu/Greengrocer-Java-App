@@ -78,10 +78,7 @@
                     <Font size="13" />
                 </font>
             </Button>
-            
-            <!-- Forgot Password Link -->
-            <javafx.scene.control.Hyperlink onAction="#handleForgotPassword" text="Forgot Password?" 
-                                           styleClass="hyperlink" />
+
         </VBox>
     </VBox>
 </StackPane>

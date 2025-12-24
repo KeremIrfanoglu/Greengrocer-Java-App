@@ -243,6 +243,8 @@ public class OwnerController {
                     } else if (tabText.contains("Coupons")) {
                         loadCoupons();
                         loadCouponHistory();
+                    } else if (tabText.contains("Messages")) {
+                        handleRefreshOwnerMessages();
                     }
                 }
             });
@@ -305,14 +307,14 @@ public class OwnerController {
     private VBox createProductCard(Product product) {
         VBox card = new VBox(8);
         card.getStyleClass().add("product-card");
-        card.setPrefWidth(160);
+        card.setPrefWidth(170);
         card.setPadding(new Insets(12));
         card.setAlignment(Pos.CENTER);
 
-        // Image
+        // Image - larger size
         javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView();
-        iv.setFitHeight(70);
-        iv.setFitWidth(70);
+        iv.setFitHeight(90);
+        iv.setFitWidth(90);
         iv.setPreserveRatio(true);
         if (product.getImage() != null) {
             iv.setImage(product.getImage());
@@ -321,7 +323,8 @@ public class OwnerController {
         Label nameLabel = new Label(product.getName());
         nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #F8FAFC;");
         nameLabel.setWrapText(true);
-        nameLabel.setMaxWidth(140);
+        nameLabel.setMaxWidth(150);
+        nameLabel.setAlignment(Pos.CENTER);
 
         Label typeLabel = new Label(product.getType());
         typeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #94A3B8;");
@@ -771,22 +774,9 @@ public class OwnerController {
     }
 
     @FXML
-    public void handleLoadProductToForm() {
-        // This method is now handled by the Edit button on each card
-        if (selectedProduct == null) {
-            statusLabel.setText("Click 'Edit' on a product card first.");
-            statusLabel.setStyle("-fx-text-fill: red;");
-            return;
-        }
-        // Product already loaded when Edit was clicked
-        statusLabel.setText("Product already loaded from card.");
-        statusLabel.setStyle("-fx-text-fill: blue;");
-    }
-
-    @FXML
     public void handleUpdateProduct() {
         if (selectedProductId == -1) {
-            statusLabel.setText("First load a product using 'Load to Form'.");
+            statusLabel.setText("First select a product to update by clicking 'Edit' on a card.");
             statusLabel.setStyle("-fx-text-fill: red;");
             return;
         }
@@ -1123,6 +1113,15 @@ public class OwnerController {
             java.util.List<com.greengrocer.models.Message> inbox = messageDAO.getInbox(currentUser.getId());
             java.util.List<com.greengrocer.models.Message> sent = messageDAO.getSentMessages(currentUser.getId());
 
+            // Count unread messages per conversation
+            java.util.Map<String, Integer> unreadCounts = new java.util.HashMap<>();
+            for (com.greengrocer.models.Message msg : inbox) {
+                if (!msg.isRead()) {
+                    String subj = msg.getSubject().replaceFirst("^Re: ", "");
+                    unreadCounts.put(subj, unreadCounts.getOrDefault(subj, 0) + 1);
+                }
+            }
+
             java.util.Map<String, com.greengrocer.models.Message> conversations = new java.util.LinkedHashMap<>();
 
             java.util.List<com.greengrocer.models.Message> allMessages = new java.util.ArrayList<>();
@@ -1139,7 +1138,9 @@ public class OwnerController {
             }
 
             for (java.util.Map.Entry<String, com.greengrocer.models.Message> entry : conversations.entrySet()) {
-                javafx.scene.layout.HBox convItem = createOwnerConversationItem(entry.getKey(), entry.getValue());
+                int unread = unreadCounts.getOrDefault(entry.getKey(), 0);
+                javafx.scene.layout.HBox convItem = createOwnerConversationItem(entry.getKey(), entry.getValue(),
+                        unread);
                 ownerConversationListPane.getChildren().add(convItem);
             }
 
@@ -1155,13 +1156,13 @@ public class OwnerController {
     }
 
     private javafx.scene.layout.HBox createOwnerConversationItem(String subject,
-            com.greengrocer.models.Message lastMessage) {
+            com.greengrocer.models.Message lastMessage, int unreadCount) {
         javafx.scene.layout.HBox item = new javafx.scene.layout.HBox(10);
         item.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         item.setStyle("-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;");
 
         javafx.scene.layout.VBox textContent = new javafx.scene.layout.VBox(3);
-        textContent.setMaxWidth(220);
+        textContent.setMaxWidth(180);
 
         // Customer name
         String customerName = lastMessage.getSenderId() == currentUser.getId() ? lastMessage.getReceiverName()
@@ -1172,21 +1173,45 @@ public class OwnerController {
 
         Label subjectLabel = new Label(subject);
         subjectLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 11px;");
-        subjectLabel.setMaxWidth(200);
+        subjectLabel.setMaxWidth(170);
 
         String preview = lastMessage.getContent();
-        if (preview.length() > 25)
-            preview = preview.substring(0, 25) + "...";
-        Label previewLabel = new Label(preview);
-        previewLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 10px;");
+        if (preview.length() > 20)
+            preview = preview.substring(0, 20) + "...";
+
+        // Add checkmarks for sent messages
+        boolean isSent = lastMessage.getSenderId() == currentUser.getId();
+        String checkMark = "";
+        if (isSent) {
+            checkMark = lastMessage.isRead() ? "✓✓ " : "✓ ";
+        }
+
+        Label previewLabel = new Label(checkMark + preview);
+        previewLabel.setStyle("-fx-text-fill: " + (isSent && lastMessage.isRead() ? "#4FC3F7" : "#94A3B8")
+                + "; -fx-font-size: 10px;");
+
+        textContent.getChildren().addAll(nameLabel, subjectLabel, previewLabel);
+
+        // Right side: time and unread badge
+        javafx.scene.layout.VBox rightContent = new javafx.scene.layout.VBox(5);
+        rightContent.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
 
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm");
         Label timeLabel = new Label(sdf.format(lastMessage.getSentAt()));
         timeLabel.setStyle("-fx-text-fill: #64748B; -fx-font-size: 10px;");
 
-        textContent.getChildren().addAll(nameLabel, subjectLabel, previewLabel);
+        rightContent.getChildren().add(timeLabel);
 
-        item.getChildren().addAll(textContent, new javafx.scene.layout.Region(), timeLabel);
+        // Unread count badge
+        if (unreadCount > 0) {
+            Label unreadBadge = new Label(String.valueOf(unreadCount));
+            unreadBadge.setStyle(
+                    "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 2 6; -fx-min-width: 18;");
+            unreadBadge.setAlignment(javafx.geometry.Pos.CENTER);
+            rightContent.getChildren().add(unreadBadge);
+        }
+
+        item.getChildren().addAll(textContent, new javafx.scene.layout.Region(), rightContent);
         javafx.scene.layout.HBox.setHgrow(item.getChildren().get(1), javafx.scene.layout.Priority.ALWAYS);
 
         final String finalCustomerName = customerName;
@@ -1197,6 +1222,7 @@ public class OwnerController {
             ownerChatPartnerLabel
                     .setText("💬 " + (finalCustomerName != null ? finalCustomerName : "Customer") + " - " + subject);
             loadOwnerChatMessages();
+            loadOwnerConversations(); // Refresh to clear unread badge
         });
 
         item.setOnMouseEntered(e -> item.setStyle(
@@ -1335,11 +1361,15 @@ public class OwnerController {
         try {
             int count = messageDAO.getUnreadCount(currentUser.getId());
             if (count > 0) {
-                ownerUnreadCountLabel.setText(count + "");
+                ownerUnreadCountLabel.setText(String.valueOf(count));
                 ownerUnreadCountLabel.setStyle(
                         "-fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: #EF4444; -fx-background-radius: 10; -fx-padding: 2 8;");
+                ownerUnreadCountLabel.setVisible(true);
+                ownerUnreadCountLabel.setManaged(true);
             } else {
                 ownerUnreadCountLabel.setText("");
+                ownerUnreadCountLabel.setVisible(false);
+                ownerUnreadCountLabel.setManaged(false);
             }
         } catch (SQLException e) {
             e.printStackTrace();

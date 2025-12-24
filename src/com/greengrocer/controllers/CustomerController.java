@@ -1933,6 +1933,15 @@ public class CustomerController {
             java.util.List<com.greengrocer.models.Message> inbox = messageDAO.getInbox(currentUser.getId());
             java.util.List<com.greengrocer.models.Message> sent = messageDAO.getSentMessages(currentUser.getId());
 
+            // Count unread messages per conversation
+            java.util.Map<String, Integer> unreadCounts = new java.util.HashMap<>();
+            for (com.greengrocer.models.Message msg : inbox) {
+                if (!msg.isRead()) {
+                    String subj = msg.getSubject().replaceFirst("^Re: ", "");
+                    unreadCounts.put(subj, unreadCounts.getOrDefault(subj, 0) + 1);
+                }
+            }
+
             // Combine and group by subject
             java.util.Map<String, com.greengrocer.models.Message> conversations = new java.util.LinkedHashMap<>();
 
@@ -1953,7 +1962,8 @@ public class CustomerController {
 
             // Create conversation items
             for (java.util.Map.Entry<String, com.greengrocer.models.Message> entry : conversations.entrySet()) {
-                HBox convItem = createConversationItem(entry.getKey(), entry.getValue());
+                int unread = unreadCounts.getOrDefault(entry.getKey(), 0);
+                HBox convItem = createConversationItem(entry.getKey(), entry.getValue(), unread);
                 conversationListPane.getChildren().add(convItem);
             }
 
@@ -1969,33 +1979,57 @@ public class CustomerController {
         }
     }
 
-    private HBox createConversationItem(String subject, com.greengrocer.models.Message lastMessage) {
+    private HBox createConversationItem(String subject, com.greengrocer.models.Message lastMessage, int unreadCount) {
         HBox item = new HBox(10);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setStyle("-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;");
 
         VBox textContent = new VBox(3);
-        textContent.setMaxWidth(220);
+        textContent.setMaxWidth(180);
 
         Label subjectLabel = new Label(subject);
         subjectLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 13px;");
-        subjectLabel.setMaxWidth(200);
+        subjectLabel.setMaxWidth(170);
 
+        // Preview with read receipt for sent messages
         String preview = lastMessage.getContent();
-        if (preview.length() > 30)
-            preview = preview.substring(0, 30) + "...";
-        Label previewLabel = new Label(preview);
-        previewLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 11px;");
-        previewLabel.setMaxWidth(200);
+        if (preview.length() > 25)
+            preview = preview.substring(0, 25) + "...";
 
-        // Time label
+        // Add checkmarks for sent messages
+        boolean isSent = lastMessage.getSenderId() == currentUser.getId();
+        String checkMark = "";
+        if (isSent) {
+            checkMark = lastMessage.isRead() ? "✓✓ " : "✓ ";
+        }
+
+        Label previewLabel = new Label(checkMark + preview);
+        previewLabel.setStyle("-fx-text-fill: " + (isSent && lastMessage.isRead() ? "#4FC3F7" : "#94A3B8")
+                + "; -fx-font-size: 11px;");
+        previewLabel.setMaxWidth(170);
+
+        textContent.getChildren().addAll(subjectLabel, previewLabel);
+
+        // Right side: time and unread badge
+        VBox rightContent = new VBox(5);
+        rightContent.setAlignment(Pos.CENTER_RIGHT);
+
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm");
         Label timeLabel = new Label(sdf.format(lastMessage.getSentAt()));
         timeLabel.setStyle("-fx-text-fill: #64748B; -fx-font-size: 10px;");
 
-        textContent.getChildren().addAll(subjectLabel, previewLabel);
+        rightContent.getChildren().add(timeLabel);
 
-        item.getChildren().addAll(textContent, new Region(), timeLabel);
+        // Unread count badge
+        if (unreadCount > 0) {
+            Label unreadBadge = new Label(String.valueOf(unreadCount));
+            unreadBadge.setStyle(
+                    "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 2 6; -fx-min-width: 18;");
+            unreadBadge.setAlignment(Pos.CENTER);
+            rightContent.getChildren().add(unreadBadge);
+        }
+
+        item.getChildren().addAll(textContent, new Region(), rightContent);
         HBox.setHgrow(item.getChildren().get(1), javafx.scene.layout.Priority.ALWAYS);
 
         // Click handler
@@ -2005,6 +2039,7 @@ public class CustomerController {
                     : lastMessage.getSenderId();
             chatPartnerLabel.setText("💬 " + subject);
             loadChatMessages();
+            loadConversations(); // Refresh to clear unread badge
         });
 
         // Hover effect
@@ -2151,11 +2186,15 @@ public class CustomerController {
         try {
             int count = messageDAO.getUnreadCount(currentUser.getId());
             if (count > 0) {
-                unreadCountLabel.setText(count + "");
+                unreadCountLabel.setText(String.valueOf(count));
                 unreadCountLabel.setStyle(
-                        "-fx-font-weight: bold; -fx-text-fill: #FF6B6B; -fx-background-color: #EF4444; -fx-background-radius: 10; -fx-padding: 2 8;");
+                        "-fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: #EF4444; -fx-background-radius: 10; -fx-padding: 2 8;");
+                unreadCountLabel.setVisible(true);
+                unreadCountLabel.setManaged(true);
             } else {
                 unreadCountLabel.setText("");
+                unreadCountLabel.setVisible(false);
+                unreadCountLabel.setManaged(false);
             }
         } catch (SQLException e) {
             e.printStackTrace();
