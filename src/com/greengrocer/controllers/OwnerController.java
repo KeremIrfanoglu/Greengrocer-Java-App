@@ -1084,197 +1084,248 @@ public class OwnerController {
         couponMaxUsesField.clear();
     }
 
-    // ==================== MESSAGING FEATURE ====================
+    // ==================== MESSAGING FEATURE - WhatsApp Style ====================
 
     private com.greengrocer.dao.MessageDAO messageDAO = new com.greengrocer.dao.MessageDAO();
-    private boolean ownerShowingInbox = true;
-    private com.greengrocer.models.Message selectedMessage = null;
+    private String ownerCurrentConversationSubject = null;
+    private int ownerCurrentChatPartnerId = -1;
 
     @FXML
-    private TableView<com.greengrocer.models.Message> ownerMessagesTable;
+    private javafx.scene.layout.VBox ownerConversationListPane;
     @FXML
-    private TableColumn<com.greengrocer.models.Message, String> colOwnerMsgFrom;
+    private javafx.scene.layout.VBox ownerChatMessagesPane;
     @FXML
-    private TableColumn<com.greengrocer.models.Message, String> colOwnerMsgSubject;
+    private ScrollPane ownerChatScrollPane;
     @FXML
-    private TableColumn<com.greengrocer.models.Message, java.sql.Timestamp> colOwnerMsgDate;
-    @FXML
-    private TableColumn<com.greengrocer.models.Message, String> colOwnerMsgStatus;
-    @FXML
-    private TextArea ownerMessageContentArea;
-    @FXML
-    private TextField ownerReplySubjectField;
+    private Label ownerChatPartnerLabel;
     @FXML
     private TextArea ownerReplyArea;
     @FXML
     private Label ownerMsgStatusLabel;
     @FXML
     private Label ownerUnreadCountLabel;
-    @FXML
-    private Button ownerInboxBtn;
-    @FXML
-    private Button ownerSentBtn;
-    @FXML
-    private Button ownerReplyBtn;
 
     @FXML
     public void handleRefreshOwnerMessages() {
-        loadOwnerMessages();
+        loadOwnerConversations();
         updateOwnerUnreadCount();
+        if (ownerCurrentConversationSubject != null) {
+            loadOwnerChatMessages();
+        }
     }
 
-    @FXML
-    public void handleOwnerShowInbox() {
-        ownerShowingInbox = true;
-        if (ownerInboxBtn != null) {
-            ownerInboxBtn.getStyleClass().clear();
-            ownerInboxBtn.getStyleClass().add("button-primary");
-        }
-        if (ownerSentBtn != null) {
-            ownerSentBtn.getStyleClass().clear();
-            ownerSentBtn.getStyleClass().add("button-secondary");
-        }
-        if (colOwnerMsgFrom != null)
-            colOwnerMsgFrom.setText("From");
-        // Show reply button in inbox mode
-        if (ownerReplyBtn != null) {
-            ownerReplyBtn.setVisible(true);
-            ownerReplyBtn.setManaged(true);
-        }
-        loadOwnerMessages();
-    }
-
-    @FXML
-    public void handleOwnerShowSent() {
-        ownerShowingInbox = false;
-        if (ownerInboxBtn != null) {
-            ownerInboxBtn.getStyleClass().clear();
-            ownerInboxBtn.getStyleClass().add("button-secondary");
-        }
-        if (ownerSentBtn != null) {
-            ownerSentBtn.getStyleClass().clear();
-            ownerSentBtn.getStyleClass().add("button-primary");
-        }
-        if (colOwnerMsgFrom != null)
-            colOwnerMsgFrom.setText("To");
-        // Hide reply button in sent mode
-        if (ownerReplyBtn != null) {
-            ownerReplyBtn.setVisible(false);
-            ownerReplyBtn.setManaged(false);
-        }
-        loadOwnerMessages();
-    }
-
-    @FXML
-    public void handleOwnerReplyToMessage() {
-        // Only allow reply in inbox mode
-        if (!ownerShowingInbox) {
-            setOwnerMsgStatus("You can only reply to messages in your Inbox.", "#FF9800");
+    private void loadOwnerConversations() {
+        if (ownerConversationListPane == null || currentUser == null)
             return;
-        }
-
-        if (selectedMessage == null) {
-            setOwnerMsgStatus("Select a message to reply to.", "red");
-            return;
-        }
-
-        // Set reply subject
-        String subject = selectedMessage.getSubject();
-        if (!subject.startsWith("Re: ")) {
-            ownerReplySubjectField.setText("Re: " + subject);
-        } else {
-            ownerReplySubjectField.setText(subject);
-        }
-
-        setOwnerMsgStatus("Reply mode - write your response below.", "#FF9800");
-    }
-
-    private void loadOwnerMessages() {
-        if (ownerMessagesTable == null || currentUser == null)
-            return;
+        ownerConversationListPane.getChildren().clear();
 
         try {
-            // Setup table columns
-            if (colOwnerMsgFrom != null) {
-                colOwnerMsgFrom.setCellValueFactory(cellData -> {
-                    com.greengrocer.models.Message msg = cellData.getValue();
-                    String name = ownerShowingInbox ? msg.getSenderName() : msg.getReceiverName();
-                    return new javafx.beans.property.SimpleStringProperty(name != null ? name : "Unknown");
-                });
-            }
-            if (colOwnerMsgSubject != null) {
-                colOwnerMsgSubject.setCellValueFactory(new PropertyValueFactory<>("subject"));
-            }
-            if (colOwnerMsgDate != null) {
-                colOwnerMsgDate.setCellValueFactory(new PropertyValueFactory<>("sentAt"));
-            }
-            if (colOwnerMsgStatus != null) {
-                colOwnerMsgStatus.setCellValueFactory(cellData -> {
-                    return new javafx.beans.property.SimpleStringProperty(
-                            cellData.getValue().isRead() ? "Read" : "Unread");
-                });
-            }
+            java.util.List<com.greengrocer.models.Message> inbox = messageDAO.getInbox(currentUser.getId());
+            java.util.List<com.greengrocer.models.Message> sent = messageDAO.getSentMessages(currentUser.getId());
 
-            java.util.List<com.greengrocer.models.Message> messages;
-            if (ownerShowingInbox) {
-                messages = messageDAO.getInbox(currentUser.getId());
-            } else {
-                messages = messageDAO.getSentMessages(currentUser.getId());
-            }
-            ownerMessagesTable.setItems(FXCollections.observableArrayList(messages));
+            java.util.Map<String, com.greengrocer.models.Message> conversations = new java.util.LinkedHashMap<>();
 
-            // Selection listener to show message content and prepare reply
-            ownerMessagesTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
-                if (newSel != null) {
-                    selectedMessage = newSel;
-                    showOwnerMessageContent(newSel);
-                    // Set reply subject
-                    if (ownerReplySubjectField != null && ownerShowingInbox) {
-                        String subject = newSel.getSubject();
-                        if (!subject.startsWith("Re: ")) {
-                            ownerReplySubjectField.setText("Re: " + subject);
-                        } else {
-                            ownerReplySubjectField.setText(subject);
-                        }
-                    }
-                    // Mark as read if inbox
-                    if (ownerShowingInbox && !newSel.isRead()) {
-                        try {
-                            messageDAO.markAsRead(newSel.getId());
-                            newSel.setRead(true);
-                            ownerMessagesTable.refresh();
-                            updateOwnerUnreadCount();
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
-                    }
+            java.util.List<com.greengrocer.models.Message> allMessages = new java.util.ArrayList<>();
+            allMessages.addAll(inbox);
+            allMessages.addAll(sent);
+
+            allMessages.sort((a, b) -> b.getSentAt().compareTo(a.getSentAt()));
+
+            for (com.greengrocer.models.Message msg : allMessages) {
+                String subject = msg.getSubject().replaceFirst("^Re: ", "");
+                if (!conversations.containsKey(subject)) {
+                    conversations.put(subject, msg);
                 }
-            });
+            }
+
+            for (java.util.Map.Entry<String, com.greengrocer.models.Message> entry : conversations.entrySet()) {
+                javafx.scene.layout.HBox convItem = createOwnerConversationItem(entry.getKey(), entry.getValue());
+                ownerConversationListPane.getChildren().add(convItem);
+            }
+
+            if (conversations.isEmpty()) {
+                Label emptyLabel = new Label("No conversations yet.");
+                emptyLabel.setStyle("-fx-text-fill: #94A3B8; -fx-padding: 20;");
+                ownerConversationListPane.getChildren().add(emptyLabel);
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
-            if (ownerMsgStatusLabel != null) {
-                ownerMsgStatusLabel.setText("Error loading messages.");
-                ownerMsgStatusLabel.setStyle("-fx-text-fill: red;");
-            }
         }
     }
 
-    private void showOwnerMessageContent(com.greengrocer.models.Message message) {
-        if (ownerMessageContentArea == null)
+    private javafx.scene.layout.HBox createOwnerConversationItem(String subject,
+            com.greengrocer.models.Message lastMessage) {
+        javafx.scene.layout.HBox item = new javafx.scene.layout.HBox(10);
+        item.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        item.setStyle("-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;");
+
+        javafx.scene.layout.VBox textContent = new javafx.scene.layout.VBox(3);
+        textContent.setMaxWidth(220);
+
+        // Customer name
+        String customerName = lastMessage.getSenderId() == currentUser.getId() ? lastMessage.getReceiverName()
+                : lastMessage.getSenderName();
+
+        Label nameLabel = new Label(customerName != null ? customerName : "Customer");
+        nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 13px;");
+
+        Label subjectLabel = new Label(subject);
+        subjectLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 11px;");
+        subjectLabel.setMaxWidth(200);
+
+        String preview = lastMessage.getContent();
+        if (preview.length() > 25)
+            preview = preview.substring(0, 25) + "...";
+        Label previewLabel = new Label(preview);
+        previewLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 10px;");
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm");
+        Label timeLabel = new Label(sdf.format(lastMessage.getSentAt()));
+        timeLabel.setStyle("-fx-text-fill: #64748B; -fx-font-size: 10px;");
+
+        textContent.getChildren().addAll(nameLabel, subjectLabel, previewLabel);
+
+        item.getChildren().addAll(textContent, new javafx.scene.layout.Region(), timeLabel);
+        javafx.scene.layout.HBox.setHgrow(item.getChildren().get(1), javafx.scene.layout.Priority.ALWAYS);
+
+        final String finalCustomerName = customerName;
+        item.setOnMouseClicked(e -> {
+            ownerCurrentConversationSubject = subject;
+            ownerCurrentChatPartnerId = lastMessage.getSenderId() == currentUser.getId() ? lastMessage.getReceiverId()
+                    : lastMessage.getSenderId();
+            ownerChatPartnerLabel
+                    .setText("💬 " + (finalCustomerName != null ? finalCustomerName : "Customer") + " - " + subject);
+            loadOwnerChatMessages();
+        });
+
+        item.setOnMouseEntered(e -> item.setStyle(
+                "-fx-padding: 12; -fx-background-color: #475569; -fx-background-radius: 8; -fx-cursor: hand;"));
+        item.setOnMouseExited(e -> item.setStyle(
+                "-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;"));
+
+        return item;
+    }
+
+    private void loadOwnerChatMessages() {
+        if (ownerChatMessagesPane == null || currentUser == null || ownerCurrentConversationSubject == null)
+            return;
+        ownerChatMessagesPane.getChildren().clear();
+
+        try {
+            java.util.List<com.greengrocer.models.Message> inbox = messageDAO.getInbox(currentUser.getId());
+            java.util.List<com.greengrocer.models.Message> sent = messageDAO.getSentMessages(currentUser.getId());
+
+            java.util.List<com.greengrocer.models.Message> chatMessages = new java.util.ArrayList<>();
+
+            for (com.greengrocer.models.Message msg : inbox) {
+                String subj = msg.getSubject().replaceFirst("^Re: ", "");
+                if (subj.equals(ownerCurrentConversationSubject)) {
+                    chatMessages.add(msg);
+                    if (!msg.isRead()) {
+                        messageDAO.markAsRead(msg.getId());
+                    }
+                }
+            }
+            for (com.greengrocer.models.Message msg : sent) {
+                String subj = msg.getSubject().replaceFirst("^Re: ", "");
+                if (subj.equals(ownerCurrentConversationSubject)) {
+                    chatMessages.add(msg);
+                }
+            }
+
+            chatMessages.sort((a, b) -> a.getSentAt().compareTo(b.getSentAt()));
+
+            for (com.greengrocer.models.Message msg : chatMessages) {
+                javafx.scene.layout.HBox bubble = createOwnerChatBubble(msg);
+                ownerChatMessagesPane.getChildren().add(bubble);
+            }
+
+            javafx.application.Platform.runLater(() -> {
+                if (ownerChatScrollPane != null) {
+                    ownerChatScrollPane.setVvalue(1.0);
+                }
+            });
+
+            updateOwnerUnreadCount();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private javafx.scene.layout.HBox createOwnerChatBubble(com.greengrocer.models.Message msg) {
+        boolean isSent = msg.getSenderId() == currentUser.getId();
+
+        // Use HBox for proper left/right alignment
+        javafx.scene.layout.HBox container = new javafx.scene.layout.HBox();
+        container.setMaxWidth(Double.MAX_VALUE);
+
+        javafx.scene.layout.VBox bubble = new javafx.scene.layout.VBox(5);
+        bubble.setMaxWidth(350);
+        bubble.setStyle(isSent ? "-fx-background-color: #4CAF50; -fx-background-radius: 15 15 0 15; -fx-padding: 10;"
+                : "-fx-background-color: #334155; -fx-background-radius: 15 15 15 0; -fx-padding: 10;");
+
+        Label contentLabel = new Label(msg.getContent());
+        contentLabel.setWrapText(true);
+        contentLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13px;");
+        contentLabel.setMaxWidth(330);
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm");
+        Label timeLabel = new Label(sdf.format(msg.getSentAt()));
+        timeLabel.setStyle("-fx-text-fill: " + (isSent ? "#C8E6C9" : "#94A3B8") + "; -fx-font-size: 10px;");
+
+        bubble.getChildren().addAll(contentLabel, timeLabel);
+
+        // Alignment using spacer regions
+        if (isSent) {
+            // Sent message: spacer on left, bubble on right
+            javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+            javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            container.getChildren().addAll(spacer, bubble);
+        } else {
+            // Received message: bubble on left, spacer on right
+            javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+            javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            container.getChildren().addAll(bubble, spacer);
+        }
+
+        return container;
+    }
+
+    @FXML
+    public void handleOwnerSendMessage() {
+        if (currentUser == null)
             return;
 
-        StringBuilder content = new StringBuilder();
-        content.append("From: ").append(message.getSenderName() != null ? message.getSenderName() : "Unknown")
-                .append("\n");
-        content.append("To: ").append(message.getReceiverName() != null ? message.getReceiverName() : "You")
-                .append("\n");
-        content.append("Date: ").append(message.getSentAt()).append("\n");
-        content.append("Subject: ").append(message.getSubject()).append("\n");
-        content.append("─".repeat(30)).append("\n\n");
-        content.append(message.getContent());
+        String content = ownerReplyArea != null ? ownerReplyArea.getText().trim() : "";
 
-        ownerMessageContentArea.setText(content.toString());
+        if (content.isEmpty()) {
+            setOwnerMsgStatus("Type a message.", "red");
+            return;
+        }
+
+        if (ownerCurrentConversationSubject == null || ownerCurrentChatPartnerId == -1) {
+            setOwnerMsgStatus("Select a conversation first.", "#FF9800");
+            return;
+        }
+
+        try {
+            String subject = "Re: " + ownerCurrentConversationSubject;
+            com.greengrocer.models.Message message = new com.greengrocer.models.Message(
+                    currentUser.getId(), ownerCurrentChatPartnerId, subject, content);
+
+            if (messageDAO.sendMessage(message)) {
+                ownerReplyArea.clear();
+                loadOwnerChatMessages();
+                loadOwnerConversations();
+            } else {
+                setOwnerMsgStatus("Failed to send.", "red");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            setOwnerMsgStatus("Error sending.", "red");
+        }
     }
 
     private void updateOwnerUnreadCount() {
@@ -1284,61 +1335,14 @@ public class OwnerController {
         try {
             int count = messageDAO.getUnreadCount(currentUser.getId());
             if (count > 0) {
-                ownerUnreadCountLabel.setText("📬 " + count + " unread");
-                ownerUnreadCountLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #FF6B6B;");
+                ownerUnreadCountLabel.setText(count + "");
+                ownerUnreadCountLabel.setStyle(
+                        "-fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: #EF4444; -fx-background-radius: 10; -fx-padding: 2 8;");
             } else {
                 ownerUnreadCountLabel.setText("");
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-    }
-
-    @FXML
-    public void handleOwnerReply() {
-        // Only allow reply in inbox mode
-        if (!ownerShowingInbox) {
-            setOwnerMsgStatus("You can only reply to messages in your Inbox.", "#FF9800");
-            return;
-        }
-
-        if (currentUser == null || selectedMessage == null) {
-            setOwnerMsgStatus("Select a message to reply to.", "red");
-            return;
-        }
-
-        String subject = ownerReplySubjectField != null ? ownerReplySubjectField.getText().trim() : "";
-        String content = ownerReplyArea != null ? ownerReplyArea.getText().trim() : "";
-
-        if (subject.isEmpty()) {
-            setOwnerMsgStatus("Please enter a subject.", "red");
-            return;
-        }
-
-        if (content.isEmpty()) {
-            setOwnerMsgStatus("Please enter a reply message.", "red");
-            return;
-        }
-
-        try {
-            // Reply to the sender of the selected message
-            int receiverId = selectedMessage.getSenderId();
-
-            com.greengrocer.models.Message message = new com.greengrocer.models.Message(
-                    currentUser.getId(), receiverId, subject, content);
-
-            if (messageDAO.sendMessage(message)) {
-                setOwnerMsgStatus("Reply sent successfully!", "#4CAF50");
-                ownerReplySubjectField.clear();
-                ownerReplyArea.clear();
-                loadOwnerMessages();
-            } else {
-                setOwnerMsgStatus("Failed to send reply.", "red");
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            setOwnerMsgStatus("Error sending reply.", "red");
         }
     }
 
