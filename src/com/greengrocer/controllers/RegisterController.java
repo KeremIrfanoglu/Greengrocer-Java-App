@@ -60,9 +60,16 @@ public class RegisterController {
             return;
         }
 
-        // Username must be lowercase only
-        if (!username.equals(username.toLowerCase())) {
-            showError("Username must be lowercase only (no capital letters).");
+        // Username max length check
+        if (username.length() > 20) {
+            showError("Username must be at most 20 characters.");
+            return;
+        }
+
+        // Username must be lowercase letters and numbers only (no special chars, no
+        // uppercase)
+        if (!username.matches("^[a-z0-9]+$")) {
+            showError("Username must contain only lowercase letters and numbers (no special characters).");
             return;
         }
 
@@ -86,6 +93,34 @@ public class RegisterController {
 
         if (firstName.isEmpty() || lastName.isEmpty()) {
             showError("First name and last name are required.");
+            return;
+        }
+
+        // Name length validation
+        if (firstName.length() < 2 || firstName.length() > 50) {
+            showError("First name must be 2-50 characters.");
+            return;
+        }
+
+        if (lastName.length() < 2 || lastName.length() > 50) {
+            showError("Last name must be 2-50 characters.");
+            return;
+        }
+
+        // Name format validation (letters and spaces only)
+        if (!firstName.matches("^[a-zA-ZğüşıöçĞÜŞİÖÇ\\s]+$")) {
+            showError("First name can only contain letters.");
+            return;
+        }
+
+        if (!lastName.matches("^[a-zA-ZğüşıöçĞÜŞİÖÇ\\s]+$")) {
+            showError("Last name can only contain letters.");
+            return;
+        }
+
+        // Address length validation (optional but if provided, max 200 chars)
+        if (address.length() > 200) {
+            showError("Address must be at most 200 characters.");
             return;
         }
 
@@ -158,16 +193,51 @@ public class RegisterController {
 
     /**
      * Validate phone number format
+     * Supports Turkish (+90) and international formats
      * 
      * @return error message or null if valid
      */
     private String validatePhone(String phone) {
-        // Remove spaces, dashes, and parentheses for validation
-        String cleanPhone = phone.replaceAll("[\\s\\-\\(\\)]", "");
+        // Remove spaces, dashes, parentheses, and dots for validation
+        String cleanPhone = phone.replaceAll("[\\s\\-\\(\\)\\.]", "");
 
-        // Must be only digits (with optional + at start)
-        if (!cleanPhone.matches("^\\+?[0-9]{10,15}$")) {
-            return "Phone number must be 10-15 digits (e.g., 5551234567).";
+        // Empty check (phone is optional)
+        if (cleanPhone.isEmpty()) {
+            return null;
+        }
+
+        // Check for invalid characters (only digits and optional + at start)
+        if (!cleanPhone.matches("^\\+?[0-9]+$")) {
+            return "Phone number can only contain digits, spaces, dashes, and optional + prefix.";
+        }
+
+        // Turkish phone number validation
+        if (cleanPhone.startsWith("+90")) {
+            // Turkish format: +90 XXX XXX XX XX (10 digits after +90)
+            String turkishNumber = cleanPhone.substring(3);
+            if (turkishNumber.length() != 10) {
+                return "Turkish phone number must be 10 digits after +90 (e.g., +90 555 123 4567).";
+            }
+        } else if (cleanPhone.startsWith("90") && cleanPhone.length() == 12) {
+            // Turkish format without +: 90 XXX XXX XX XX
+            // Valid format - 10 digits after 90
+        } else if (cleanPhone.startsWith("0") && cleanPhone.length() == 11) {
+            // Local Turkish format: 0XXX XXX XX XX
+            // Valid format
+        } else if (cleanPhone.length() == 10 && !cleanPhone.startsWith("+")) {
+            // Short format: XXX XXX XX XX (10 digits)
+            // Valid format
+        } else if (cleanPhone.startsWith("+")) {
+            // Other international format
+            String intlNumber = cleanPhone.substring(1);
+            if (intlNumber.length() < 10 || intlNumber.length() > 15) {
+                return "International phone number must be 10-15 digits (e.g., +1 555 123 4567).";
+            }
+        } else {
+            // Generic format - must be 10-15 digits
+            if (cleanPhone.length() < 10 || cleanPhone.length() > 15) {
+                return "Phone number must be 10-15 digits.";
+            }
         }
 
         return null; // Phone is valid

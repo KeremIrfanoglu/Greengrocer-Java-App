@@ -941,6 +941,53 @@ public class OwnerController {
             return;
         }
 
+        // Username validation: length and format
+        if (username.length() < 3) {
+            statusLabel.setText("Username must be at least 3 characters.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        if (username.length() > 20) {
+            statusLabel.setText("Username must be at most 20 characters.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        if (!username.matches("^[a-z0-9]+$")) {
+            statusLabel.setText("Username must contain only lowercase letters and numbers.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        // Password strength validation
+        if (password.length() < 6) {
+            statusLabel.setText("Password must be at least 6 characters.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        boolean hasUppercase = false;
+        boolean hasNumber = false;
+        for (char c : password.toCharArray()) {
+            if (Character.isUpperCase(c))
+                hasUppercase = true;
+            if (Character.isDigit(c))
+                hasNumber = true;
+        }
+
+        if (!hasUppercase) {
+            statusLabel.setText("Password must contain at least 1 uppercase letter.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        if (!hasNumber) {
+            statusLabel.setText("Password must contain at least 1 number.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
         try {
             if (userDAO.register(username, password, "carrier", name, surname, "", phone)) {
                 statusLabel.setText("Carrier added successfully.");

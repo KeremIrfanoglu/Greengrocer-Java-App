@@ -206,6 +206,31 @@ public class LoginController {
                         return;
                     }
 
+                    // Password strength validation
+                    if (newPass.length() < 6) {
+                        showAlert("Error", "Password must be at least 6 characters.");
+                        return;
+                    }
+
+                    boolean hasUppercase = false;
+                    boolean hasNumber = false;
+                    for (char c : newPass.toCharArray()) {
+                        if (Character.isUpperCase(c))
+                            hasUppercase = true;
+                        if (Character.isDigit(c))
+                            hasNumber = true;
+                    }
+
+                    if (!hasUppercase) {
+                        showAlert("Error", "Password must contain at least 1 uppercase letter.");
+                        return;
+                    }
+
+                    if (!hasNumber) {
+                        showAlert("Error", "Password must contain at least 1 number.");
+                        return;
+                    }
+
                     try {
                         if (!userDAO.verifyOldPassword(user.getId(), oldPass)) {
                             showAlert("Error", "Old password is incorrect.");

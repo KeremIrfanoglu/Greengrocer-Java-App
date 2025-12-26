@@ -1747,6 +1747,39 @@ public class CustomerController {
             return;
         }
 
+        // Name length validation
+        if (firstName.length() < 2 || firstName.length() > 50) {
+            profileStatusLabel.setText("First name must be 2-50 characters.");
+            profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        if (lastName.length() < 2 || lastName.length() > 50) {
+            profileStatusLabel.setText("Last name must be 2-50 characters.");
+            profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        // Name format validation (letters and spaces only)
+        if (!firstName.matches("^[a-zA-ZğüşıöçĞÜŞİÖÇ\\s]+$")) {
+            profileStatusLabel.setText("First name can only contain letters.");
+            profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        if (!lastName.matches("^[a-zA-ZğüşıöçĞÜŞİÖÇ\\s]+$")) {
+            profileStatusLabel.setText("Last name can only contain letters.");
+            profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
+        // Address length validation
+        if (address.length() > 200) {
+            profileStatusLabel.setText("Address must be at most 200 characters.");
+            profileStatusLabel.setStyle("-fx-text-fill: #f44336;");
+            return;
+        }
+
         try {
             boolean success = userDAO.updateUserProfile(currentUser.getId(), firstName, lastName, address, phone);
             if (success) {
