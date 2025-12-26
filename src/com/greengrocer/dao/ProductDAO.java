@@ -47,9 +47,49 @@ public class ProductDAO {
         return products;
     }
 
+    /**
+     * Check if a product with the given name already exists.
+     */
+    public boolean productNameExists(String name) throws SQLException {
+        String query = "SELECT COUNT(*) FROM ProductInfo WHERE LOWER(name) = LOWER(?)";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, name);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if a product with the given name already exists (excluding a specific
+     * product ID).
+     * Used for update operations to allow keeping the same name.
+     */
+    public boolean productNameExists(String name, int excludeProductId) throws SQLException {
+        String query = "SELECT COUNT(*) FROM ProductInfo WHERE LOWER(name) = LOWER(?) AND id != ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, name);
+            stmt.setInt(2, excludeProductId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        }
+        return false;
+    }
+
     public boolean addProduct(String name, String type, double price, double costPrice, double stock, double threshold,
             InputStream image, String unitType)
             throws SQLException {
+        // Check for duplicate name
+        if (productNameExists(name)) {
+            throw new SQLException("A product with the name '" + name + "' already exists.");
+        }
+
         String query = "INSERT INTO ProductInfo (name, type, price, cost_price, stock, threshold, image, unit_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {

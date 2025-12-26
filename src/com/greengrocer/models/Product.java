@@ -100,10 +100,12 @@ public class Product {
     /**
      * Returns a JavaFX Image from the stored byte array.
      * Returns null if no image data exists.
+     * Note: Image is loaded at original resolution. Use ImageView's
+     * fitWidth/fitHeight for display sizing.
      */
     public Image getImage() {
         if (imageData != null && imageData.length > 0) {
-            return new Image(new ByteArrayInputStream(imageData), 50, 50, true, true);
+            return new Image(new ByteArrayInputStream(imageData));
         }
         return null;
     }

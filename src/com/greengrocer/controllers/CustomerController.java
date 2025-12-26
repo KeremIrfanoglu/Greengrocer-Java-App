@@ -289,6 +289,19 @@ public class CustomerController {
                 "Price (High-Low)"));
         sortCombo.setValue("Default");
 
+        // Click on empty area to deselect product
+        if (shopFlowPane != null) {
+            shopFlowPane.setOnMouseClicked(e -> {
+                // Only clear if clicking directly on FlowPane, not on a card
+                if (e.getTarget() == shopFlowPane) {
+                    selectedProduct = null;
+                    updateFavButton();
+                    statusLabel.setText("Selection cleared.");
+                    statusLabel.setStyle("-fx-text-fill: #94A3B8;");
+                }
+            });
+        }
+
         loadProducts();
 
         // Cart Setup
@@ -357,14 +370,19 @@ public class CustomerController {
     }
 
     private VBox createShopCard(Product product) {
-        VBox card = new VBox(8);
+        VBox card = new VBox(5);
         card.getStyleClass().add("product-card");
         card.setPrefWidth(150);
-        card.setPadding(new Insets(12));
-        card.setAlignment(Pos.CENTER);
+        card.setPrefHeight(260); // Fixed height for consistent alignment
+        card.setMinHeight(260);
+        card.setMaxHeight(260);
+        card.setPadding(new Insets(10));
+        card.setAlignment(Pos.TOP_CENTER);
 
-        // Favorite star indicator
+        // Favorite star indicator with fixed height
         Label favLabel = new Label();
+        favLabel.setPrefHeight(16);
+        favLabel.setMinHeight(16);
         try {
             if (favoritesDAO.isFavorite(currentUser.getId(), product.getId())) {
                 favLabel.setText("★");
@@ -374,7 +392,7 @@ public class CustomerController {
             // Ignore
         }
 
-        // Image
+        // Image container with fixed height
         javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView();
         iv.setFitHeight(60);
         iv.setFitWidth(60);
@@ -382,25 +400,44 @@ public class CustomerController {
         if (product.getImage() != null) {
             iv.setImage(product.getImage());
         }
+        VBox imageContainer = new VBox(iv);
+        imageContainer.setAlignment(Pos.CENTER);
+        imageContainer.setPrefHeight(65);
+        imageContainer.setMinHeight(65);
 
+        // Name label with fixed height (2 lines max)
         Label nameLabel = new Label(product.getName());
         nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #F8FAFC;");
         nameLabel.setWrapText(true);
         nameLabel.setMaxWidth(130);
+        nameLabel.setPrefHeight(32);
+        nameLabel.setMinHeight(32);
+        nameLabel.setAlignment(Pos.CENTER);
 
+        // Type label
         Label typeLabel = new Label(product.getType());
         typeLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #94A3B8;");
+        typeLabel.setPrefHeight(16);
 
+        // Price label
         Label priceLabel = new Label(FormatHelper.formatCurrency(product.getPrice()));
         priceLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
+        priceLabel.setPrefHeight(18);
 
+        // Stock label
         Label stockLabel = new Label("Stock: " + String.format("%.1f", product.getStock()));
         if (product.getStock() <= product.getThreshold()) {
             stockLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold; -fx-font-size: 10px;");
         } else {
             stockLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 10px;");
         }
+        stockLabel.setPrefHeight(16);
 
+        // Spacer to push button to bottom
+        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+        VBox.setVgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+
+        // Add to Cart button at bottom
         Button addBtn = new Button("Add to Cart");
         addBtn.getStyleClass().add("button-primary");
         addBtn.setStyle("-fx-font-size: 10px;");
@@ -428,7 +465,8 @@ public class CustomerController {
             statusLabel.setText("Selected: " + product.getName());
         });
 
-        card.getChildren().addAll(favLabel, iv, nameLabel, typeLabel, priceLabel, stockLabel, addBtn);
+        card.getChildren().addAll(favLabel, imageContainer, nameLabel, typeLabel, priceLabel, stockLabel, spacer,
+                addBtn);
 
         // Low stock border
         if (product.getStock() <= product.getThreshold()) {

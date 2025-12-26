@@ -32,6 +32,7 @@ public class OwnerController {
     private User currentUser;
     private ProductDAO productDAO;
     private ObservableList<Product> productList;
+    private ObservableList<Product> allProducts; // Master list for filtering
     private File selectedImageFile;
 
     @FXML
@@ -59,6 +60,16 @@ public class OwnerController {
 
     @FXML
     private FlowPane productFlowPane;
+
+    // Filter/Search Fields
+    @FXML
+    private TextField searchField;
+    @FXML
+    private ComboBox<String> filterTypeCombo;
+    @FXML
+    private ComboBox<String> sortCombo;
+    @FXML
+    private javafx.scene.control.ScrollPane productScrollPane;
 
     // Carrier Tab Fields
     @FXML
@@ -224,8 +235,7 @@ public class OwnerController {
             welcomeLabel.setText("Welcome, " + currentUser.getFirstName() + " " + currentUser.getLastName() + "!");
         }
 
-        prodTypeCombo.setItems(FXCollections.observableArrayList("Vegetable", "Fruit", "Dairy", "Bakery", "Meat",
-                "Beverages", "Snacks"));
+        // prodTypeCombo removed from FXML - dialog now handles type selection
 
         // Setup tab change listener for auto-refresh
         if (mainTabPane != null) {
@@ -233,7 +243,9 @@ public class OwnerController {
                 if (newTab != null) {
                     String tabText = newTab.getText();
                     if (tabText.contains("Products")) {
-                        loadProducts();
+                        // Just refresh grid, don't reload from database (causes lag)
+                        refreshProductGrid();
+                        clearFields(); // Clear form when switching tabs
                     } else if (tabText.contains("Reports")) {
                         handleRefreshReports();
                     } else if (tabText.contains("Orders")) {
@@ -251,6 +263,30 @@ public class OwnerController {
         }
 
         // Grid View is now used - no table setup needed
+
+        // Setup Filter/Sort ComboBoxes
+        if (filterTypeCombo != null) {
+            filterTypeCombo.setItems(FXCollections.observableArrayList("All", "Vegetable", "Fruit", "Dairy", "Bakery",
+                    "Meat", "Beverages", "Snacks"));
+            filterTypeCombo.setValue("All");
+        }
+        if (sortCombo != null) {
+            sortCombo.setItems(FXCollections.observableArrayList("Default", "Name (A-Z)", "Name (Z-A)",
+                    "Price (Low-High)", "Price (High-Low)", "Stock (Low-High)"));
+            sortCombo.setValue("Default");
+        }
+
+        // Click on empty area to deselect product and clear form
+        if (productFlowPane != null) {
+            productFlowPane.setOnMouseClicked(e -> {
+                // Only clear if clicking directly on FlowPane, not on a card
+                if (e.getTarget() == productFlowPane) {
+                    clearFields();
+                    statusLabel.setText("Selection cleared.");
+                    statusLabel.setStyle("-fx-text-fill: #94A3B8;");
+                }
+            });
+        }
 
         loadProducts();
 
@@ -283,15 +319,104 @@ public class OwnerController {
         loadProducts();
     }
 
+    @FXML
+    public void handleClearSelection(javafx.scene.input.MouseEvent event) {
+        // Only clear if clicking directly on ScrollPane or FlowPane background, not on
+        // a card
+        if (event.getTarget() == productScrollPane ||
+                event.getTarget() == productFlowPane ||
+                event.getTarget() instanceof javafx.scene.control.ScrollPane) {
+            clearFields();
+            statusLabel.setText("Selection cleared.");
+            statusLabel.setStyle("-fx-text-fill: #94A3B8;");
+        }
+    }
+
     private void loadProducts() {
         try {
-            productList = FXCollections.observableArrayList(productDAO.getAllProducts());
-            refreshProductGrid();
+            allProducts = FXCollections.observableArrayList(productDAO.getAllProducts());
+            applyFilterAndSort();
         } catch (SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Error loading products.");
             statusLabel.setStyle("-fx-text-fill: red;");
         }
+    }
+
+    // Filter and Sort Methods
+    @FXML
+    public void handleFilter() {
+        applyFilterAndSort();
+    }
+
+    @FXML
+    public void handleSort() {
+        applyFilterAndSort();
+    }
+
+    @FXML
+    public void handleSearch() {
+        applyFilterAndSort();
+    }
+
+    @FXML
+    public void handleResetProducts() {
+        if (filterTypeCombo != null)
+            filterTypeCombo.setValue("All");
+        if (sortCombo != null)
+            sortCombo.setValue("Default");
+        if (searchField != null)
+            searchField.clear();
+        applyFilterAndSort();
+        statusLabel.setText("Filters reset.");
+        statusLabel.setStyle("-fx-text-fill: #4CAF50;");
+    }
+
+    private void applyFilterAndSort() {
+        if (allProducts == null)
+            return;
+
+        java.util.List<Product> filtered = new java.util.ArrayList<>();
+
+        // Get filter values
+        String filterType = filterTypeCombo != null ? filterTypeCombo.getValue() : "All";
+        String searchText = searchField != null ? searchField.getText().toLowerCase().trim() : "";
+
+        // Filter by type and search
+        for (Product p : allProducts) {
+            boolean matchesType = "All".equals(filterType) || p.getType().equals(filterType);
+            boolean matchesSearch = searchText.isEmpty() || p.getName().toLowerCase().contains(searchText);
+            if (matchesType && matchesSearch) {
+                filtered.add(p);
+            }
+        }
+
+        // Sort
+        String sortOption = sortCombo != null ? sortCombo.getValue() : "Default";
+        if (sortOption != null) {
+            switch (sortOption) {
+                case "Name (A-Z)":
+                    filtered.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                    break;
+                case "Name (Z-A)":
+                    filtered.sort((a, b) -> b.getName().compareToIgnoreCase(a.getName()));
+                    break;
+                case "Price (Low-High)":
+                    filtered.sort((a, b) -> Double.compare(a.getPrice(), b.getPrice()));
+                    break;
+                case "Price (High-Low)":
+                    filtered.sort((a, b) -> Double.compare(b.getPrice(), a.getPrice()));
+                    break;
+                case "Stock (Low-High)":
+                    filtered.sort((a, b) -> Double.compare(a.getStock(), b.getStock()));
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        productList = FXCollections.observableArrayList(filtered);
+        refreshProductGrid();
     }
 
     private void refreshProductGrid() {
@@ -305,57 +430,72 @@ public class OwnerController {
     }
 
     private VBox createProductCard(Product product) {
-        VBox card = new VBox(8);
+        VBox card = new VBox(6);
         card.getStyleClass().add("product-card");
         card.setPrefWidth(170);
+        card.setPrefHeight(280); // Fixed height for consistent alignment
+        card.setMinHeight(280);
+        card.setMaxHeight(280);
         card.setPadding(new Insets(12));
-        card.setAlignment(Pos.CENTER);
+        card.setAlignment(Pos.TOP_CENTER);
 
-        // Image - larger size
+        // Image container with fixed height
         javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView();
-        iv.setFitHeight(90);
-        iv.setFitWidth(90);
+        iv.setFitHeight(80);
+        iv.setFitWidth(80);
         iv.setPreserveRatio(true);
         if (product.getImage() != null) {
             iv.setImage(product.getImage());
         }
+        // Wrap in a container with fixed height
+        VBox imageContainer = new VBox(iv);
+        imageContainer.setAlignment(Pos.CENTER);
+        imageContainer.setPrefHeight(85);
+        imageContainer.setMinHeight(85);
 
+        // Name label with fixed height (2 lines max)
         Label nameLabel = new Label(product.getName());
         nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #F8FAFC;");
         nameLabel.setWrapText(true);
         nameLabel.setMaxWidth(150);
+        nameLabel.setPrefHeight(36);
+        nameLabel.setMinHeight(36);
         nameLabel.setAlignment(Pos.CENTER);
 
+        // Type label
         Label typeLabel = new Label(product.getType());
         typeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #94A3B8;");
+        typeLabel.setPrefHeight(18);
 
+        // Price label
         Label priceLabel = new Label(FormatHelper.formatCurrency(product.getPrice()));
         priceLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 14px;");
+        priceLabel.setPrefHeight(20);
 
+        // Stock label
         Label stockLabel = new Label("Stock: " + String.format("%.1f", product.getStock()));
         if (product.getStock() <= product.getThreshold()) {
             stockLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold;");
         } else {
             stockLabel.setStyle("-fx-text-fill: #94A3B8;");
         }
+        stockLabel.setPrefHeight(18);
 
+        // Spacer to push button to bottom
+        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+        VBox.setVgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+
+        // Edit button at bottom
         Button editBtn = new Button("Edit");
         editBtn.getStyleClass().add("button-secondary");
         editBtn.setPrefWidth(120);
         editBtn.setOnAction(e -> {
             selectedProduct = product;
             selectedProductId = product.getId();
-            prodNameField.setText(product.getName());
-            prodTypeCombo.setValue(product.getType());
-            prodPriceField.setText(String.valueOf(product.getPrice()));
-            prodCostField.setText(String.valueOf(product.getCostPrice()));
-            prodStockField.setText(String.valueOf(product.getStock()));
-            prodThresholdField.setText(String.valueOf(product.getThreshold()));
-            statusLabel.setText("Product #" + product.getId() + " loaded. Edit and click Update.");
-            statusLabel.setStyle("-fx-text-fill: #6366f1;");
+            showProductDialog(product);
         });
 
-        card.getChildren().addAll(iv, nameLabel, typeLabel, priceLabel, stockLabel, editBtn);
+        card.getChildren().addAll(imageContainer, nameLabel, typeLabel, priceLabel, stockLabel, spacer, editBtn);
 
         // Low stock border
         if (product.getStock() <= product.getThreshold()) {
@@ -363,6 +503,282 @@ public class OwnerController {
         }
 
         return card;
+    }
+
+    @FXML
+    public void handleNewProduct() {
+        showProductDialog(null);
+    }
+
+    /**
+     * Show a dialog to add or edit a product.
+     * 
+     * @param product The product to edit, or null for a new product.
+     */
+    private void showProductDialog(Product product) {
+        boolean isEdit = product != null;
+
+        javafx.scene.control.Dialog<String> dialog = new javafx.scene.control.Dialog<>();
+        com.greengrocer.util.StyleHelper.applyAppIcon(dialog);
+        dialog.setTitle(isEdit ? "Edit Product" : "Add New Product");
+
+        // Dark theme styling for dialog
+        javafx.scene.control.DialogPane dialogPane = dialog.getDialogPane();
+        dialogPane.setStyle("-fx-background-color: #1e293b;");
+
+        // Create styled form fields
+        TextField nameField = createStyledTextField("Product Name", 220);
+        ComboBox<String> typeCombo = new ComboBox<>();
+        typeCombo.setItems(FXCollections.observableArrayList("Vegetable", "Fruit", "Dairy", "Bakery", "Meat",
+                "Beverages", "Snacks"));
+        typeCombo.setPromptText("Select Type");
+        typeCombo.setPrefWidth(220);
+        typeCombo.setStyle("-fx-background-color: #334155; -fx-text-fill: white; -fx-prompt-text-fill: #94A3B8;");
+
+        TextField priceField = createStyledTextField("Price (₺)", 150);
+        TextField costField = createStyledTextField("Cost Price", 150);
+        TextField stockField = createStyledTextField("Stock", 150);
+        TextField thresholdField = createStyledTextField("Low Stock Threshold", 150);
+
+        // Image preview with border
+        javafx.scene.image.ImageView previewImage = new javafx.scene.image.ImageView();
+        previewImage.setFitHeight(100);
+        previewImage.setFitWidth(100);
+        previewImage.setPreserveRatio(true);
+        previewImage.setStyle("-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);");
+
+        final File[] selectedImage = { null };
+
+        Button browseBtn = new Button("📷 Browse Image");
+        browseBtn.setStyle(
+                "-fx-background-color: #475569; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;");
+        browseBtn.setOnMouseEntered(e -> browseBtn.setStyle(
+                "-fx-background-color: #64748b; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;"));
+        browseBtn.setOnMouseExited(e -> browseBtn.setStyle(
+                "-fx-background-color: #475569; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;"));
+        browseBtn.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select Product Image");
+            fileChooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif"));
+            File file = fileChooser.showOpenDialog(dialog.getDialogPane().getScene().getWindow());
+            if (file != null) {
+                selectedImage[0] = file;
+                try {
+                    previewImage.setImage(new javafx.scene.image.Image(new FileInputStream(file)));
+                } catch (FileNotFoundException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        // Pre-fill fields if editing
+        if (isEdit) {
+            nameField.setText(product.getName());
+            typeCombo.setValue(product.getType());
+            priceField.setText(String.valueOf(product.getPrice()));
+            costField.setText(String.valueOf(product.getCostPrice()));
+            stockField.setText(String.valueOf(product.getStock()));
+            thresholdField.setText(String.valueOf(product.getThreshold()));
+            if (product.getImage() != null) {
+                previewImage.setImage(product.getImage());
+            }
+        }
+
+        // Main layout
+        javafx.scene.layout.VBox mainLayout = new javafx.scene.layout.VBox(15);
+        mainLayout.setPadding(new Insets(20));
+        mainLayout.setStyle("-fx-background-color: #1e293b;");
+
+        // Header with icon
+        Label headerLabel = new Label(isEdit ? "✏️ Edit Product Details" : "➕ Add New Product");
+        headerLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #F8FAFC;");
+
+        // Form grid
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(15);
+        grid.setVgap(12);
+        grid.setStyle("-fx-background-color: #334155; -fx-background-radius: 12; -fx-padding: 20;");
+
+        grid.add(createStyledLabel("Name:"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(createStyledLabel("Type:"), 0, 1);
+        grid.add(typeCombo, 1, 1);
+        grid.add(createStyledLabel("Price (₺):"), 0, 2);
+        grid.add(priceField, 1, 2);
+        grid.add(createStyledLabel("Cost Price:"), 0, 3);
+        grid.add(costField, 1, 3);
+        grid.add(createStyledLabel("Stock:"), 0, 4);
+        grid.add(stockField, 1, 4);
+        grid.add(createStyledLabel("Threshold:"), 0, 5);
+        grid.add(thresholdField, 1, 5);
+        grid.add(createStyledLabel("Image:"), 0, 6);
+
+        javafx.scene.layout.VBox imageBox = new javafx.scene.layout.VBox(10, browseBtn, previewImage);
+        imageBox.setAlignment(Pos.CENTER_LEFT);
+        grid.add(imageBox, 1, 6);
+
+        // Status label for validation messages
+        Label dialogStatus = new Label();
+        dialogStatus.setStyle("-fx-font-size: 12px;");
+
+        // Button bar
+        javafx.scene.layout.HBox buttonBar = new javafx.scene.layout.HBox(10);
+        buttonBar.setAlignment(Pos.CENTER_RIGHT);
+
+        Button saveBtn = new Button(isEdit ? "💾 Save Changes" : "➕ Add Product");
+        saveBtn.setStyle(
+                "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-weight: bold; -fx-cursor: hand;");
+        saveBtn.setOnMouseEntered(e -> saveBtn.setStyle(
+                "-fx-background-color: #66BB6A; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-weight: bold; -fx-cursor: hand;"));
+        saveBtn.setOnMouseExited(e -> saveBtn.setStyle(
+                "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-weight: bold; -fx-cursor: hand;"));
+
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.setStyle(
+                "-fx-background-color: #64748b; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;");
+        cancelBtn.setOnMouseEntered(e -> cancelBtn.setStyle(
+                "-fx-background-color: #94a3b8; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;"));
+        cancelBtn.setOnMouseExited(e -> cancelBtn.setStyle(
+                "-fx-background-color: #64748b; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;"));
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        buttonBar.getChildren().addAll(cancelBtn, saveBtn);
+
+        // Delete button only for edit mode
+        if (isEdit) {
+            Button deleteBtn = new Button("🗑️ Delete Product");
+            deleteBtn.setStyle(
+                    "-fx-background-color: #EF4444; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-weight: bold; -fx-cursor: hand;");
+            deleteBtn.setOnMouseEntered(e -> deleteBtn.setStyle(
+                    "-fx-background-color: #F87171; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-weight: bold; -fx-cursor: hand;"));
+            deleteBtn.setOnMouseExited(e -> deleteBtn.setStyle(
+                    "-fx-background-color: #EF4444; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-weight: bold; -fx-cursor: hand;"));
+
+            final Product productToDelete = product;
+            deleteBtn.setOnAction(e -> {
+                boolean confirm = StyledAlert.showConfirmation("Delete Product", null,
+                        "Are you sure you want to delete '" + productToDelete.getName() + "'?");
+                if (confirm) {
+                    try {
+                        if (productDAO.deleteProduct(productToDelete.getId())) {
+                            statusLabel.setText("Product deleted successfully!");
+                            statusLabel.setStyle("-fx-text-fill: #4CAF50;");
+                            selectedProduct = null;
+                            selectedProductId = -1;
+                            loadProducts();
+                            dialog.close();
+                        }
+                    } catch (SQLException ex) {
+                        String msg = ex.getMessage().toLowerCase();
+                        if (msg.contains("foreign key") || msg.contains("constraint")) {
+                            dialogStatus.setText("Cannot delete: Product has order history.");
+                        } else {
+                            dialogStatus.setText("Delete failed: " + ex.getMessage());
+                        }
+                        dialogStatus.setStyle("-fx-text-fill: #EF4444;");
+                    }
+                }
+            });
+
+            // Add delete button to the left
+            javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+            javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            buttonBar.getChildren().add(0, deleteBtn);
+            buttonBar.getChildren().add(1, spacer);
+        }
+
+        // Save button action
+        saveBtn.setOnAction(e -> {
+            String name = nameField.getText().trim();
+            String type = typeCombo.getValue();
+            String priceStr = priceField.getText().trim();
+            String costStr = costField.getText().trim();
+            String stockStr = stockField.getText().trim();
+            String thresholdStr = thresholdField.getText().trim();
+
+            if (name.isEmpty() || type == null || priceStr.isEmpty() || stockStr.isEmpty() || thresholdStr.isEmpty()) {
+                dialogStatus.setText("All fields are required.");
+                dialogStatus.setStyle("-fx-text-fill: #EF4444;");
+                return;
+            }
+
+            try {
+                double price = Double.parseDouble(priceStr);
+                double cost = costStr.isEmpty() ? 0 : Double.parseDouble(costStr);
+                double stock = Double.parseDouble(stockStr);
+                double threshold = Double.parseDouble(thresholdStr);
+
+                if (price < 0 || stock < 0 || threshold < 0 || cost < 0) {
+                    dialogStatus.setText("Values cannot be negative.");
+                    dialogStatus.setStyle("-fx-text-fill: #EF4444;");
+                    return;
+                }
+
+                if (isEdit) {
+                    product.setName(name);
+                    product.setType(type);
+                    product.setPrice(price);
+                    product.setCostPrice(cost);
+                    product.setStock(stock);
+                    product.setThreshold(threshold);
+                    if (selectedImage[0] != null) {
+                        product.setImageData(java.nio.file.Files.readAllBytes(selectedImage[0].toPath()));
+                    }
+                    if (productDAO.updateProduct(product)) {
+                        statusLabel.setText("Product updated successfully!");
+                        statusLabel.setStyle("-fx-text-fill: #4CAF50;");
+                        loadProducts();
+                        dialog.close();
+                    }
+                } else {
+                    FileInputStream imageStream = selectedImage[0] != null ? new FileInputStream(selectedImage[0])
+                            : null;
+                    if (productDAO.addProduct(name, type, price, cost, stock, threshold, imageStream, "kg")) {
+                        statusLabel.setText("Product added successfully!");
+                        statusLabel.setStyle("-fx-text-fill: #4CAF50;");
+                        loadProducts();
+                        dialog.close();
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                dialogStatus.setText("Invalid number format.");
+                dialogStatus.setStyle("-fx-text-fill: #EF4444;");
+            } catch (SQLException ex) {
+                if (ex.getMessage().contains("already exists")) {
+                    dialogStatus.setText("Product name already exists!");
+                } else {
+                    dialogStatus.setText("Database error: " + ex.getMessage());
+                }
+                dialogStatus.setStyle("-fx-text-fill: #EF4444;");
+            } catch (Exception ex) {
+                dialogStatus.setText("Error: " + ex.getMessage());
+                dialogStatus.setStyle("-fx-text-fill: #EF4444;");
+            }
+        });
+
+        mainLayout.getChildren().addAll(headerLabel, grid, dialogStatus, buttonBar);
+
+        dialogPane.setContent(mainLayout);
+        dialogPane.getButtonTypes().add(javafx.scene.control.ButtonType.CLOSE);
+        dialogPane.lookupButton(javafx.scene.control.ButtonType.CLOSE).setVisible(false);
+
+        dialog.showAndWait();
+    }
+
+    private TextField createStyledTextField(String prompt, double width) {
+        TextField field = new TextField();
+        field.setPromptText(prompt);
+        field.setPrefWidth(width);
+        field.setStyle(
+                "-fx-background-color: #475569; -fx-text-fill: white; -fx-prompt-text-fill: #94A3B8; -fx-background-radius: 6; -fx-padding: 8;");
+        return field;
+    }
+
+    private Label createStyledLabel(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-text-fill: #F8FAFC; -fx-font-size: 13px;");
+        return label;
     }
 
     @FXML
@@ -484,7 +900,10 @@ public class OwnerController {
         prodPriceField.clear();
         prodStockField.clear();
         prodThresholdField.clear();
+        prodCostField.clear();
         selectedImageFile = null;
+        selectedProduct = null;
+        selectedProductId = -1;
         if (previewImageView != null) {
             previewImageView.setImage(null);
         }

@@ -53,37 +53,33 @@
             <content>
               <VBox spacing="15" style="-fx-padding: 20;">
                  <children>
-                    <!-- Product Form -->
-                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="glass-card-small">
+                    <!-- Action Bar with New Product Button -->
+                    <HBox spacing="15" alignment="CENTER_LEFT">
                        <children>
-                          <TextField fx:id="prodNameField" promptText="Name" prefWidth="100" styleClass="text-field" />
-                          <ComboBox fx:id="prodTypeCombo" prefWidth="100" promptText="Type" styleClass="combo-box" />
-                          <TextField fx:id="prodPriceField" prefWidth="70" promptText="Price" styleClass="text-field" />
-                          <TextField fx:id="prodCostField" prefWidth="70" promptText="Cost" styleClass="text-field" />
-                          <TextField fx:id="prodStockField" prefWidth="60" promptText="Stock" styleClass="text-field" />
-                          <TextField fx:id="prodThresholdField" prefWidth="70" promptText="Threshold" styleClass="text-field" />
-                          <Button fx:id="browseImageBtn" onAction="#handleBrowseImage" text="Img" styleClass="button-secondary" />
-                           <ImageView fx:id="previewImageView" fitHeight="40" fitWidth="40" preserveRatio="true" />
-                          <Button fx:id="addProdBtn" onAction="#handleAddProduct" text="Add" styleClass="button-primary" />
-                          <Button onAction="#handleUpdateProduct" text="Update" styleClass="button" />
+                          <Button onAction="#handleNewProduct" text="+ New Product" styleClass="button-primary" />
+                          <Region HBox.hgrow="ALWAYS" />
+                          <Label fx:id="statusLabel" styleClass="status-success" />
                        </children>
                     </HBox>
                     
-                    <Label fx:id="statusLabel" styleClass="status-success" />
+                    <!-- Search & Filter Bar -->
+                    <HBox spacing="15" alignment="CENTER_LEFT" styleClass="glass-card-small">
+                       <children>
+                          <TextField fx:id="searchField" prefWidth="180" promptText="Search products..." onKeyReleased="#handleSearch" styleClass="text-field" />
+                          <Label text="Filter:" styleClass="text-label" />
+                          <ComboBox fx:id="filterTypeCombo" prefWidth="130" promptText="All Types" onAction="#handleFilter" styleClass="combo-box" />
+                          <Label text="Sort:" styleClass="text-label" />
+                          <ComboBox fx:id="sortCombo" prefWidth="130" promptText="Default" onAction="#handleSort" styleClass="combo-box" />
+                          <Button onAction="#handleResetProducts" text="Reset" styleClass="button-secondary" />
+                       </children>
+                    </HBox>
                     
                     <!-- Products Grid View -->
-                    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent;">
+                    <ScrollPane fx:id="productScrollPane" fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent;" onMouseClicked="#handleClearSelection">
                        <content>
                           <FlowPane fx:id="productFlowPane" hgap="15" vgap="15" style="-fx-padding: 10;" />
                        </content>
                     </ScrollPane>
-                    
-                    <HBox spacing="10">
-                       <children>
-                          <Button onAction="#handleDeleteProduct" text="Delete" styleClass="button-danger" />
-                          
-                       </children>
-                    </HBox>
                  </children>
               </VBox>
             </content>
