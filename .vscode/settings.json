@@ -3,19 +3,6 @@
         "src"
     ],
     "java.project.referencedLibraries": [
-        "lib\\openpdf-1.3.30.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\javafx.swing.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\javafx.fxml.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\mysql-connector-j-8.2.0.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\jfx.incubator.richtext.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\javafx.graphics.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\jfx.incubator.input.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\javafx.base.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\javafx.web.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\openpdf-1.3.30.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\jdk.jsobject.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\javafx-swt.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\javafx.controls.jar",
-        "c:\\Users\\Gökdeniz\\Desktop\\masaüstü\\OOP Project 3\\lib\\javafx.media.jar"
+        "lib/**/*.jar"
     ]
 }
