@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.sql.Statement;
+
 public class UserDAO {
 
     public User authenticate(String username, String password) throws SQLException {
@@ -245,5 +247,41 @@ public class UserDAO {
             updateStmt.setInt(2, userId);
             return updateStmt.executeUpdate() > 0;
         }
+    }
+
+    /**
+     * Get customer analytics (order count and total spent)
+     * For Owner Panel - Customer Analytics Tab
+     */
+    public java.util.List<com.greengrocer.models.CustomerAnalytics> getCustomerAnalytics() throws SQLException {
+        java.util.List<com.greengrocer.models.CustomerAnalytics> analytics = new java.util.ArrayList<>();
+        String query = "SELECT u.id, u.username, u.first_name, u.last_name, u.phone, " +
+                "COUNT(o.id) as order_count, " +
+                "SUM(COALESCE(o.total_amount, 0)) as total_spent " +
+                "FROM UserInfo u " +
+                "LEFT JOIN OrderInfo o ON u.id = o.customer_id " +
+                "WHERE u.role = 'customer' " +
+                "GROUP BY u.id " +
+                "ORDER BY total_spent DESC";
+
+        try (Connection conn = DatabaseAdapter.getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                String fullName = (rs.getString("first_name") != null ? rs.getString("first_name") : "") +
+                        " " +
+                        (rs.getString("last_name") != null ? rs.getString("last_name") : "");
+
+                analytics.add(new com.greengrocer.models.CustomerAnalytics(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        fullName.trim(),
+                        rs.getString("phone"),
+                        rs.getInt("order_count"),
+                        rs.getDouble("total_spent")));
+            }
+        }
+        return analytics;
     }
 }
