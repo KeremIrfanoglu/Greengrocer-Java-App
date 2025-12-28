@@ -6,9 +6,11 @@ import com.greengrocer.models.Product;
 import com.greengrocer.models.User;
 import com.greengrocer.dao.SupplierDAO;
 import com.greengrocer.dao.AnalyticsDAO;
+import com.greengrocer.dao.CarrierRatingDAO;
 import com.greengrocer.models.Supplier;
 import com.greengrocer.models.CustomerAnalytics;
 import com.greengrocer.models.CarrierPerformance;
+import com.greengrocer.models.CarrierRating;
 import com.greengrocer.models.ProductSalesStats;
 import com.greengrocer.models.HourlyOrderStats;
 import javafx.collections.FXCollections;
@@ -30,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.greengrocer.util.FormatHelper;
 import com.greengrocer.util.StyledAlert;
+
 import javafx.geometry.Side;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -237,6 +240,20 @@ public class OwnerController {
     private TableColumn<CarrierPerformance, String> colCpName;
     @FXML
     private TableColumn<CarrierPerformance, Integer> colCpDeliveries;
+    @FXML
+    private TableColumn<CarrierPerformance, Double> colCpRating;
+
+    // Reviews Table Fields
+    @FXML
+    private TableView<CarrierRating> carrierReviewsTable;
+    @FXML
+    private TableColumn<CarrierRating, Integer> colReviewRating;
+    @FXML
+    private TableColumn<CarrierRating, String> colReviewComment;
+    @FXML
+    private TableColumn<CarrierRating, String> colReviewDate;
+    @FXML
+    private Label carrierReviewsLabel;
 
     @FXML
     private TableView<ProductSalesStats> topSellingTable;
@@ -261,6 +278,7 @@ public class OwnerController {
 
     private SupplierDAO supplierDAO;
     private AnalyticsDAO analyticsDAO;
+    private CarrierRatingDAO carrierRatingDAO;
     private com.greengrocer.dao.OrderDAO orderDAO;
     private com.greengrocer.dao.CouponDAO couponDAO;
 
@@ -302,6 +320,9 @@ public class OwnerController {
         this.reportDAO = new ReportDAO();
         this.orderDAO = new com.greengrocer.dao.OrderDAO();
         this.couponDAO = new com.greengrocer.dao.CouponDAO();
+        this.supplierDAO = new SupplierDAO();
+        this.analyticsDAO = new AnalyticsDAO();
+        this.carrierRatingDAO = new CarrierRatingDAO();
     }
 
     public void initData(User user) {
@@ -433,6 +454,43 @@ public class OwnerController {
         colCpId.setCellValueFactory(new PropertyValueFactory<>("carrierId"));
         colCpName.setCellValueFactory(new PropertyValueFactory<>("carrierName"));
         colCpDeliveries.setCellValueFactory(new PropertyValueFactory<>("deliveryCount"));
+        colCpRating.setCellValueFactory(new PropertyValueFactory<>("averageRating"));
+        colCpRating.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double rating, boolean empty) {
+                super.updateItem(rating, empty);
+                if (empty || rating == null)
+                    setText(null);
+                else
+                    setText(String.format("%.1f / 5.0", rating));
+            }
+        });
+
+        // Listener for Carrier Selection to Load Reviews
+        carrierPerformanceTable.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                loadCarrierReviews(newVal.getCarrierId(), newVal.getCarrierName());
+            } else {
+                if (carrierReviewsTable != null)
+                    carrierReviewsTable.getItems().clear();
+                if (carrierReviewsLabel != null)
+                    carrierReviewsLabel.setText("Select a carrier to view reviews");
+            }
+        });
+
+        // Setup Carrier Reviews Table
+        if (carrierReviewsTable != null) {
+            colReviewRating.setCellValueFactory(new PropertyValueFactory<>("rating"));
+            colReviewComment.setCellValueFactory(new PropertyValueFactory<>("comment"));
+            colReviewDate.setCellValueFactory(cellData -> {
+                if (cellData.getValue().getCreatedAt() != null) {
+                    return new javafx.beans.property.SimpleStringProperty(
+                            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                                    .format(cellData.getValue().getCreatedAt().toLocalDateTime()));
+                }
+                return new javafx.beans.property.SimpleStringProperty("");
+            });
+        }
 
         // Product Columns
         colProdName.setCellValueFactory(new PropertyValueFactory<>("productName"));
@@ -2217,6 +2275,27 @@ public class OwnerController {
             carrierPerformanceTable.setItems(FXCollections.observableArrayList(data));
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void loadCarrierReviews(int carrierId, String carrierName) {
+        if (carrierReviewsTable == null)
+            return;
+
+        if (carrierReviewsLabel != null) {
+            carrierReviewsLabel.setText("Reviews for: " + carrierName);
+        }
+
+        try {
+            if (carrierRatingDAO == null)
+                carrierRatingDAO = new CarrierRatingDAO();
+            java.util.List<CarrierRating> reviews = carrierRatingDAO.getRatingsForCarrier(carrierId);
+            carrierReviewsTable.setItems(FXCollections.observableArrayList(reviews));
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (carrierReviewsLabel != null) {
+                carrierReviewsLabel.setText("Error loading reviews.");
+            }
         }
     }
 
