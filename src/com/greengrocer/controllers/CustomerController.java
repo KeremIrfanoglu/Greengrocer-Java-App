@@ -2008,8 +2008,8 @@ public class CustomerController {
             java.util.Map<String, Integer> unreadCounts = new java.util.HashMap<>();
             for (com.greengrocer.models.Message msg : inbox) {
                 if (!msg.isRead()) {
-                    String subj = msg.getSubject().replaceFirst("^Re: ", "");
-                    unreadCounts.put(subj, unreadCounts.getOrDefault(subj, 0) + 1);
+                    String key = getConversationKey(msg.getSubject());
+                    unreadCounts.put(key, unreadCounts.getOrDefault(key, 0) + 1);
                 }
             }
 
@@ -2025,9 +2025,9 @@ public class CustomerController {
             allMessages.sort((a, b) -> b.getSentAt().compareTo(a.getSentAt()));
 
             for (com.greengrocer.models.Message msg : allMessages) {
-                String subject = msg.getSubject().replaceFirst("^Re: ", ""); // Remove Re: prefix for grouping
-                if (!conversations.containsKey(subject)) {
-                    conversations.put(subject, msg);
+                String key = getConversationKey(msg.getSubject());
+                if (!conversations.containsKey(key)) {
+                    conversations.put(key, msg);
                 }
             }
 
@@ -2048,6 +2048,16 @@ public class CustomerController {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private String getConversationKey(String subject) {
+        // Regex to find [Order #123]
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile("\\[Order #\\d+\\]");
+        java.util.regex.Matcher m = p.matcher(subject);
+        if (m.find()) {
+            return m.group();
+        }
+        return subject.replaceFirst("^Re: ", "");
     }
 
     private HBox createConversationItem(String subject, com.greengrocer.models.Message lastMessage, int unreadCount) {
@@ -2133,10 +2143,9 @@ public class CustomerController {
 
             java.util.List<com.greengrocer.models.Message> chatMessages = new java.util.ArrayList<>();
 
-            // Filter messages for this conversation (by subject, ignoring Re:)
             for (com.greengrocer.models.Message msg : inbox) {
-                String subj = msg.getSubject().replaceFirst("^Re: ", "");
-                if (subj.equals(currentConversationSubject)) {
+                String key = getConversationKey(msg.getSubject());
+                if (key.equals(currentConversationSubject)) {
                     chatMessages.add(msg);
                     // Mark as read
                     if (!msg.isRead()) {
@@ -2145,8 +2154,8 @@ public class CustomerController {
                 }
             }
             for (com.greengrocer.models.Message msg : sent) {
-                String subj = msg.getSubject().replaceFirst("^Re: ", "");
-                if (subj.equals(currentConversationSubject)) {
+                String key = getConversationKey(msg.getSubject());
+                if (key.equals(currentConversationSubject)) {
                     chatMessages.add(msg);
                 }
             }

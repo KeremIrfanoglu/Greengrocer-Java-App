@@ -204,15 +204,16 @@ public class OrderDAO {
         return orders;
     }
 
-    public List<Order> getOrdersByCarrierAndStatus(int carrierId, String status) throws SQLException {
+    public List<Order> getActiveDeliveries(int carrierId) throws SQLException {
         List<Order> orders = new ArrayList<>();
-        String query = "SELECT id, customer_id, carrier_id, order_date, status, total_amount, delivery_date FROM OrderInfo WHERE carrier_id = ? AND status = ? ORDER BY order_date DESC";
+        String query = "SELECT id, customer_id, carrier_id, order_date, status, total_amount, delivery_date " +
+                "FROM OrderInfo WHERE carrier_id = ? AND status IN ('Picked Up', 'Delivering') " +
+                "ORDER BY status DESC, delivery_date ASC";
 
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, carrierId);
-            stmt.setString(2, status);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     orders.add(new Order(
@@ -222,7 +223,7 @@ public class OrderDAO {
                             rs.getTimestamp("order_date"),
                             rs.getString("status"),
                             rs.getDouble("total_amount"),
-                            null, // cancelled_at - not needed here
+                            null, // cancelled_at
                             rs.getTimestamp("delivery_date"),
                             null, null));
                 }
@@ -262,7 +263,8 @@ public class OrderDAO {
     }
 
     public boolean assignCarrier(int orderId, int carrierId) throws SQLException {
-        String query = "UPDATE OrderInfo SET carrier_id = ?, status = 'Delivering' WHERE id = ? AND carrier_id IS NULL";
+        // Initial status is now 'Picked Up' when assigned
+        String query = "UPDATE OrderInfo SET carrier_id = ?, status = 'Picked Up' WHERE id = ? AND carrier_id IS NULL";
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -273,19 +275,54 @@ public class OrderDAO {
     }
 
     public boolean updateOrderStatus(int orderId, String status) throws SQLException {
-        String query;
-        if ("Delivered".equals(status)) {
-            // Record the actual delivery time when marking as delivered
-            query = "UPDATE OrderInfo SET status = ?, delivered_at = NOW() WHERE id = ?";
-        } else {
-            query = "UPDATE OrderInfo SET status = ? WHERE id = ?";
-        }
+        String query = "UPDATE OrderInfo SET status = ? WHERE id = ?";
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, status);
             stmt.setInt(2, orderId);
             return stmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Complete delivery and award points if on time
+     */
+    public boolean completeDelivery(int orderId, int carrierId) throws SQLException {
+        Connection conn = DatabaseAdapter.getConnection();
+        PreparedStatement updateStmt = null;
+
+        try {
+            conn.setAutoCommit(false);
+
+            // Update status to 'Delivered' and set delivery time
+            String updateQuery = "UPDATE OrderInfo SET status = 'Delivered', delivered_at = ?, carrier_id = ? WHERE id = ?";
+            updateStmt = conn.prepareStatement(updateQuery);
+            updateStmt.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
+            updateStmt.setInt(2, carrierId); // redundant but safe check
+            updateStmt.setInt(3, orderId);
+
+            int affected = updateStmt.executeUpdate();
+
+            conn.commit();
+            return affected > 0;
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            throw e;
+        } finally {
+            if (updateStmt != null)
+                updateStmt.close();
+            if (conn != null) {
+                conn.setAutoCommit(true);
+                conn.close();
+            }
         }
     }
 
