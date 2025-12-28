@@ -5,12 +5,18 @@ import com.greengrocer.dao.ReportDAO;
 import com.greengrocer.models.Product;
 import com.greengrocer.models.User;
 import com.greengrocer.dao.SupplierDAO;
+import com.greengrocer.dao.AnalyticsDAO;
 import com.greengrocer.models.Supplier;
 import com.greengrocer.models.CustomerAnalytics;
+import com.greengrocer.models.CarrierPerformance;
+import com.greengrocer.models.ProductSalesStats;
+import com.greengrocer.models.HourlyOrderStats;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
@@ -219,7 +225,42 @@ public class OwnerController {
     @FXML
     private Label analyticsStatusLabel;
 
+    // Advanced Analytic Fields
+    @FXML
+    private TabPane analyticsTabPane;
+
+    @FXML
+    private TableView<CarrierPerformance> carrierPerformanceTable;
+    @FXML
+    private TableColumn<CarrierPerformance, Integer> colCpId;
+    @FXML
+    private TableColumn<CarrierPerformance, String> colCpName;
+    @FXML
+    private TableColumn<CarrierPerformance, Integer> colCpDeliveries;
+
+    @FXML
+    private TableView<ProductSalesStats> topSellingTable;
+    @FXML
+    private TableColumn<ProductSalesStats, String> colProdName;
+    @FXML
+    private TableColumn<ProductSalesStats, Double> colProdQty;
+    @FXML
+    private TableColumn<ProductSalesStats, Double> colProdRev;
+
+    @FXML
+    private TableView<ProductSalesStats> deadStockTable;
+    @FXML
+    private TableColumn<ProductSalesStats, String> colDeadName;
+
+    @FXML
+    private BarChart<String, Number> heatmapChart;
+    @FXML
+    private CategoryAxis xAxis;
+    @FXML
+    private NumberAxis yAxis;
+
     private SupplierDAO supplierDAO;
+    private AnalyticsDAO analyticsDAO;
     private com.greengrocer.dao.OrderDAO orderDAO;
     private com.greengrocer.dao.CouponDAO couponDAO;
 
@@ -364,26 +405,73 @@ public class OwnerController {
             loadSuppliers();
         }
 
-        // Setup Customer Analytics Table
-        if (analyticsTable != null) {
-            colAnUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
-            colAnName.setCellValueFactory(new PropertyValueFactory<>("fullName"));
-            colAnPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
-            colAnOrderCount.setCellValueFactory(new PropertyValueFactory<>("orderCount"));
-            colAnTotalSpent.setCellValueFactory(new PropertyValueFactory<>("totalSpent"));
-            colAnTotalSpent.setCellFactory(tc -> new TableCell<>() {
-                @Override
-                protected void updateItem(Double price, boolean empty) {
-                    super.updateItem(price, empty);
-                    if (empty || price == null) {
-                        setText(null);
-                    } else {
-                        setText(String.format("%.2f TL", price));
-                    }
-                }
-            });
-            loadCustomerAnalytics();
+        // Setup Analytics Tables
+        if (analyticsTabPane != null) {
+            setupAnalyticsTabs();
         }
+    }
+
+    private void setupAnalyticsTabs() {
+        // Customer Columns
+        colAnUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
+        colAnName.setCellValueFactory(new PropertyValueFactory<>("fullName"));
+        colAnPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        colAnOrderCount.setCellValueFactory(new PropertyValueFactory<>("orderCount"));
+        colAnTotalSpent.setCellValueFactory(new PropertyValueFactory<>("totalSpent"));
+        colAnTotalSpent.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null)
+                    setText(null);
+                else
+                    setText(String.format("%.2f TL", price));
+            }
+        });
+
+        // Carrier Columns
+        colCpId.setCellValueFactory(new PropertyValueFactory<>("carrierId"));
+        colCpName.setCellValueFactory(new PropertyValueFactory<>("carrierName"));
+        colCpDeliveries.setCellValueFactory(new PropertyValueFactory<>("deliveryCount"));
+
+        // Product Columns
+        colProdName.setCellValueFactory(new PropertyValueFactory<>("productName"));
+        colProdQty.setCellValueFactory(new PropertyValueFactory<>("quantitySold"));
+        colProdRev.setCellValueFactory(
+                tc -> new javafx.beans.property.SimpleDoubleProperty(tc.getValue().getRevenue()).asObject());
+        colProdRev.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null)
+                    setText(null);
+                else
+                    setText(String.format("%.2f TL", price));
+            }
+        });
+
+        colDeadName.setCellValueFactory(new PropertyValueFactory<>("productName"));
+
+        // Load Initial Data
+        loadCustomerAnalytics();
+        loadCarrierAnalytics();
+        loadProductAnalytics();
+        loadHeatmap();
+
+        // Add Listener to sub-tabs
+        analyticsTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab != null) {
+                String text = newTab.getText();
+                if (text.equals("Customers"))
+                    loadCustomerAnalytics();
+                else if (text.equals("Carriers"))
+                    loadCarrierAnalytics();
+                else if (text.equals("Products"))
+                    loadProductAnalytics();
+                else if (text.equals("Peak Hours"))
+                    loadHeatmap();
+            }
+        });
     }
 
     @FXML
@@ -2116,6 +2204,68 @@ public class OwnerController {
                 analyticsStatusLabel.setText("Error loading analytics.");
                 analyticsStatusLabel.setStyle("-fx-text-fill: red;");
             }
+        }
+    }
+
+    private void loadCarrierAnalytics() {
+        if (carrierPerformanceTable == null)
+            return;
+        try {
+            if (analyticsDAO == null)
+                analyticsDAO = new AnalyticsDAO();
+            java.util.List<CarrierPerformance> data = analyticsDAO.getCarrierPerformance();
+            carrierPerformanceTable.setItems(FXCollections.observableArrayList(data));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadProductAnalytics() {
+        if (topSellingTable == null || deadStockTable == null)
+            return;
+        try {
+            if (analyticsDAO == null)
+                analyticsDAO = new AnalyticsDAO();
+            java.util.List<ProductSalesStats> sales = analyticsDAO.getProductSalesAnalysis();
+            topSellingTable.setItems(FXCollections.observableArrayList(sales));
+
+            java.util.List<ProductSalesStats> dead = analyticsDAO.getDeadStock();
+            deadStockTable.setItems(FXCollections.observableArrayList(dead));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadHeatmap() {
+        if (heatmapChart == null)
+            return;
+        try {
+            if (analyticsDAO == null)
+                analyticsDAO = new AnalyticsDAO();
+            java.util.List<HourlyOrderStats> stats = analyticsDAO.getHourlyOrderStats();
+
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Orders per Hour");
+
+            // Initialize all 24 hours with 0
+            java.util.Map<Integer, Integer> hourMap = new java.util.HashMap<>();
+            for (int i = 0; i < 24; i++)
+                hourMap.put(i, 0);
+
+            for (HourlyOrderStats s : stats) {
+                hourMap.put(s.getHourOfDay(), s.getOrderCount());
+            }
+
+            for (int i = 0; i < 24; i++) {
+                String label = String.format("%02d:00", i);
+                series.getData().add(new XYChart.Data<>(label, hourMap.get(i)));
+            }
+
+            heatmapChart.getData().clear();
+            heatmapChart.getData().add(series);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 }

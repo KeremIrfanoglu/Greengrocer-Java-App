@@ -66,7 +66,7 @@
                 <!-- SHOP TAB -->
                 <Tab text="Shop">
                   <content>
-                    <HBox spacing="15" style="-fx-padding: 20;" HBox.hgrow="ALWAYS">
+                    <HBox spacing="15" style="-fx-padding: 20 20 0 20;" HBox.hgrow="ALWAYS">
                        <children>
                           <!-- Left: Products -->
                           <VBox spacing="15" HBox.hgrow="ALWAYS">
@@ -93,15 +93,7 @@
                                    </content>
                                 </ScrollPane>
                                 
-                                <!-- Add to Cart Bar -->
-                                <HBox spacing="15" alignment="CENTER_LEFT" styleClass="glass-card-small">
-                                   <children>
-                                      <Label fx:id="quantityLabel" text="Quantity:" styleClass="text-label" />
-                                      <TextField fx:id="quantityField" prefWidth="100" promptText="e.g. 1, 2.5" styleClass="text-field" />
-                                      <Button onAction="#handleAddToCart" text="Add to Cart" styleClass="button-primary" />
-                                      <Label fx:id="addToCartStatusLabel" text="" style="-fx-font-size: 12px;" />
-                                   </children>
-                                </HBox>
+
                              </children>
                           </VBox>
                           
