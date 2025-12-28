@@ -16,15 +16,41 @@ public class CarrierRatingDAO {
      */
     public boolean rateCarrier(int orderId, int customerId, int carrierId, int rating, String comment)
             throws SQLException {
-        String query = "INSERT INTO CarrierRatings (order_id, customer_id, carrier_id, rating, comment) VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = DatabaseAdapter.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(query)) {
+        Connection conn = DatabaseAdapter.getConnection();
+        PreparedStatement stmt = null;
+        PreparedStatement pointStmt = null;
+
+        try {
+            conn.setAutoCommit(false);
+
+            String query = "INSERT INTO CarrierRatings (order_id, customer_id, carrier_id, rating, comment) VALUES (?, ?, ?, ?, ?)";
+            stmt = conn.prepareStatement(query);
             stmt.setInt(1, orderId);
             stmt.setInt(2, customerId);
             stmt.setInt(3, carrierId);
             stmt.setInt(4, rating);
             stmt.setString(5, comment);
-            return stmt.executeUpdate() > 0;
+            int affected = stmt.executeUpdate();
+
+            if (affected > 0) {
+                // Points logic removed
+            }
+
+            conn.commit();
+            return affected > 0;
+        } catch (SQLException e) {
+            if (conn != null)
+                conn.rollback();
+            throw e;
+        } finally {
+            if (stmt != null)
+                stmt.close();
+            if (pointStmt != null)
+                pointStmt.close();
+            if (conn != null) {
+                conn.setAutoCommit(true);
+                conn.close();
+            }
         }
     }
 
@@ -135,7 +161,7 @@ public class CarrierRatingDAO {
      */
     public List<Object[]> getCarrierLeaderboard() throws SQLException {
         List<Object[]> leaderboard = new ArrayList<>();
-        String query = "SELECT u.id, u.first_name, u.last_name, " +
+        String query = "SELECT u.id, u.first_name, u.last_name, u.g_points, " +
                 "(SELECT COUNT(*) FROM OrderInfo o WHERE o.carrier_id = u.id AND o.status = 'Delivered') as deliveries, "
                 +
                 "(SELECT COALESCE(SUM(o.total_amount), 0) FROM OrderInfo o WHERE o.carrier_id = u.id AND o.status = 'Delivered') as total_value, "
@@ -156,7 +182,7 @@ public class CarrierRatingDAO {
                         rank++,
                         rs.getString("first_name") + " " + rs.getString("last_name"),
                         rs.getInt("deliveries"),
-                        rs.getDouble("total_value"),
+                        rs.getDouble("total_value"), // Reverted to total_value
                         rs.getDouble("avg_rating"),
                         rs.getInt("rating_count")
                 });

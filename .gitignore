@@ -1,5 +1,13 @@
 ﻿bin/
 *.class
+
+# Dependencies
+*.jar
+lib/
+
+# System
+.DS_Store
+.vscode/
 *.jar
 lib/.DS_Store
 lib/

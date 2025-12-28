@@ -28,6 +28,27 @@ public class CarrierController {
     private ObservableList<Order> myDeliveries;
     private ObservableList<Order> completedOrders;
 
+    // Messaging
+    private com.greengrocer.dao.MessageDAO messageDAO;
+
+    // Communication Tab
+    @FXML
+    private ListView<Order> communicationOrderList;
+    @FXML
+    private ListView<Order> communicationDeliveredList;
+    private java.util.Map<Integer, Integer> unreadMap = new java.util.HashMap<>();
+    @FXML
+    private Label commStatusLabel;
+
+    public CarrierController() {
+        this.orderDAO = new OrderDAO();
+        this.ratingDAO = new CarrierRatingDAO();
+        this.messageDAO = new com.greengrocer.dao.MessageDAO();
+        this.availableOrders = FXCollections.observableArrayList();
+        this.myDeliveries = FXCollections.observableArrayList();
+        this.completedOrders = FXCollections.observableArrayList();
+    }
+
     @FXML
     private Label welcomeLabel;
     @FXML
@@ -123,14 +144,6 @@ public class CarrierController {
     @FXML
     private Label myRankLabel;
 
-    public CarrierController() {
-        this.orderDAO = new OrderDAO();
-        this.ratingDAO = new CarrierRatingDAO();
-        this.availableOrders = FXCollections.observableArrayList();
-        this.myDeliveries = FXCollections.observableArrayList();
-        this.completedOrders = FXCollections.observableArrayList();
-    }
-
     public void initData(User user) {
         this.currentUser = user;
         if (welcomeLabel != null) {
@@ -145,6 +158,11 @@ public class CarrierController {
         loadAvailableOrders();
         loadMyDeliveries();
         loadCompletedOrders();
+        loadAvailableOrders();
+        loadMyDeliveries();
+        loadCompletedOrders();
+        setupCommunicationListeners(); // Initialize listeners once
+        loadCommunicationTab();
 
         // Tab change listener
         if (mainTabPane != null) {
@@ -161,6 +179,8 @@ public class CarrierController {
                         loadMyRatings();
                     } else if (tabText.contains("Leaderboard")) {
                         loadLeaderboard();
+                    } else if (tabText.contains("Communication")) {
+                        loadCommunicationTab();
                     }
                 }
             });
@@ -201,6 +221,32 @@ public class CarrierController {
         }
         colDelTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         colDelStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // Highlight late deliveries
+        deliveryTable.setRowFactory(tv -> new TableRow<Order>() {
+            @Override
+            protected void updateItem(Order item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setStyle("");
+                } else {
+                    if ("Delivering".equals(item.getStatus()) && item.getDeliveryDate() != null) {
+                        if (new java.util.Date().after(item.getDeliveryDate())) {
+                            // Deep Red Background for Late
+                            setStyle("-fx-background-color: rgba(220, 38, 38, 0.25); -fx-text-fill: #fecaca;");
+                        } else {
+                            // Normal delivering - slight green tint? Or just default
+                            setStyle("");
+                        }
+                    } else if ("Picked Up".equals(item.getStatus())) {
+                        // Deep Blue/Slate Background for Picked Up
+                        setStyle("-fx-background-color: rgba(59, 130, 246, 0.15); -fx-text-fill: #bfdbfe;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
 
         // Completed Table
         colCompId.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -271,6 +317,7 @@ public class CarrierController {
         loadMyDeliveries();
         loadCompletedOrders();
         updateAverageRatingDisplay();
+        loadCommunicationTab();
     }
 
     private void loadAvailableOrders() {
@@ -287,7 +334,7 @@ public class CarrierController {
     private void loadMyDeliveries() {
         try {
             myDeliveries = FXCollections.observableArrayList(
-                    orderDAO.getOrdersByCarrierAndStatus(currentUser.getId(), "Delivering"));
+                    orderDAO.getActiveDeliveries(currentUser.getId()));
             deliveryTable.setItems(myDeliveries);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -372,42 +419,70 @@ public class CarrierController {
     }
 
     @FXML
-    public void handleCompleteDelivery() {
+    public void handleStatusUpdate() {
         Order selected = deliveryTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             if (statusLabel != null)
-                statusLabel.setText("Select a delivery to complete.");
+                statusLabel.setText("Select a delivery to update.");
             return;
         }
 
-        // Check if scheduled delivery date has arrived
-        if (selected.getDeliveryDate() != null) {
-            java.time.LocalDateTime scheduledDate = selected.getDeliveryDate().toLocalDateTime();
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-
-            if (now.isBefore(scheduledDate)) {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
-                if (statusLabel != null) {
-                    statusLabel.setText(
-                            "Cannot complete before scheduled date: " + sdf.format(selected.getDeliveryDate()));
-                    statusLabel.setStyle("-fx-text-fill: orange;");
-                }
-                return;
-            }
-        }
+        String currentStatus = selected.getStatus();
 
         try {
-            if (orderDAO.updateOrderStatus(selected.getId(), "Delivered")) {
-                if (statusLabel != null) {
-                    statusLabel.setText("Order #" + selected.getId() + " marked as Delivered!");
-                    statusLabel.setStyle("-fx-text-fill: green;");
+            if ("Picked Up".equals(currentStatus)) {
+                // Picked Up -> Delivering
+                if (orderDAO.updateOrderStatus(selected.getId(), "Delivering")) {
+                    if (statusLabel != null) {
+                        statusLabel.setText("Delivery started for Order #" + selected.getId());
+                        statusLabel.setStyle("-fx-text-fill: green;");
+                    }
+                    loadMyDeliveries();
+                } else {
+                    if (statusLabel != null)
+                        statusLabel.setText("Failed to start delivery.");
                 }
-                loadMyDeliveries();
-                loadCompletedOrders();
-            } else {
-                if (statusLabel != null) {
-                    statusLabel.setText("Failed to update status.");
-                    statusLabel.setStyle("-fx-text-fill: red;");
+            } else if ("Delivering".equals(currentStatus)) {
+                // Delivering -> Delivered
+                // Check if scheduled delivery date has arrived
+                if (selected.getDeliveryDate() != null) {
+                    java.time.LocalDateTime scheduledDate = selected.getDeliveryDate().toLocalDateTime();
+                    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+                    if (now.isBefore(scheduledDate)) {
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
+                        if (statusLabel != null) {
+                            statusLabel.setText("Wait until " + sdf.format(selected.getDeliveryDate()));
+                            statusLabel.setStyle("-fx-text-fill: orange;");
+                        }
+                        return;
+                    }
+                }
+
+                if (orderDAO.updateOrderStatus(selected.getId(), "Delivered")) {
+                    if (statusLabel != null) {
+                        statusLabel.setText("Order #" + selected.getId() + " Delivered!");
+                        statusLabel.setStyle("-fx-text-fill: green;");
+                    }
+
+                    // Auto-send message to customer
+                    try {
+                        String subject = String.format("[Order #%d] Delivery Completed", selected.getId());
+                        com.greengrocer.models.Message autoMsg = new com.greengrocer.models.Message(
+                                currentUser.getId(),
+                                selected.getCustomerId(),
+                                subject,
+                                "Your order has been successfully delivered.");
+                        messageDAO.sendMessage(autoMsg);
+                    } catch (SQLException e) {
+                        e.printStackTrace(); // Log but don't fail the action
+                    }
+
+                    loadMyDeliveries();
+                    loadCompletedOrders();
+                } else {
+                    if (statusLabel != null)
+                        statusLabel.setText("Failed to complete delivery.");
                 }
             }
         } catch (SQLException e) {
@@ -471,6 +546,7 @@ public class CarrierController {
             });
 
             // Format total value column to show 2 decimal places
+            colTotalValue.setText("💰 Total Value");
             colTotalValue.setCellFactory(col -> new TableCell<Object[], Double>() {
                 @Override
                 protected void updateItem(Double value, boolean empty) {
@@ -500,6 +576,418 @@ public class CarrierController {
                         myRankLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #FF9800;");
                     }
                     break;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ==================== COMMUNICATION ====================
+
+    @FXML
+    private javafx.scene.control.ScrollPane chatScrollPane;
+    @FXML
+    private javafx.scene.layout.VBox chatMessagesPane;
+
+    @FXML
+    private TextField manualMessageInput;
+
+    @FXML
+    public void handleSendOnWay() {
+        sendPresetMessage("On My Way", "I am on my way to your address.");
+    }
+
+    @FXML
+    public void handleSendAtAddress() {
+        sendPresetMessage("At Address", "I have arrived at your address.");
+    }
+
+    @FXML
+    public void handleSendDelay() {
+        sendPresetMessage("Delay", "There will be a short delay in your delivery. Thank you for your patience.");
+    }
+
+    @FXML
+    public void handleSendLeftAtDoor() {
+        sendPresetMessage("Delivery", "I have left your order at the door.");
+    }
+
+    @FXML
+    public void handleManualMessageSend() {
+        String content = manualMessageInput.getText().trim();
+        if (content.isEmpty()) {
+            if (commStatusLabel != null) {
+                commStatusLabel.setText("Please enter a message.");
+                commStatusLabel.setStyle("-fx-text-fill: orange;");
+            }
+            return;
+        }
+        // Use a generic subject for manual messages, the threading depends on the tag
+        sendPresetMessage("Message", content);
+        manualMessageInput.clear();
+    }
+
+    private void sendPresetMessage(String subject, String content) {
+        if (communicationOrderList == null)
+            return;
+
+        Order selected = communicationOrderList.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            if (commStatusLabel != null) {
+                commStatusLabel.setText("Please select an order first.");
+                commStatusLabel.setStyle("-fx-text-fill: red;");
+            }
+            return;
+        }
+
+        try {
+            String taggedSubject = String.format("[Order #%d] %s", selected.getId(), subject);
+            com.greengrocer.models.Message msg = new com.greengrocer.models.Message(
+                    currentUser.getId(),
+                    selected.getCustomerId(),
+                    taggedSubject,
+                    content);
+            if (messageDAO.sendMessage(msg)) {
+                if (commStatusLabel != null) {
+                    commStatusLabel.setText("Message sent: " + subject);
+                    commStatusLabel.setStyle("-fx-text-fill: green;");
+                }
+                loadChatHistory(selected);
+                // Refresh the list to show the new message preview
+                loadCommunicationTab();
+            } else {
+                if (commStatusLabel != null) {
+                    commStatusLabel.setText("Failed to send message.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (commStatusLabel != null) {
+                commStatusLabel.setText("Error sending message.");
+            }
+        }
+    }
+
+    private void loadChatHistory(Order order) {
+        if (chatMessagesPane == null || order == null)
+            return;
+
+        chatMessagesPane.getChildren().clear();
+
+        try {
+            java.util.List<com.greengrocer.models.Message> inbox = messageDAO.getInbox(currentUser.getId());
+            java.util.List<com.greengrocer.models.Message> sent = messageDAO.getSentMessages(currentUser.getId());
+
+            // Merge and sort
+            java.util.List<com.greengrocer.models.Message> conversation = new java.util.ArrayList<>();
+            String orderTag = String.format("[Order #%d]", order.getId());
+
+            for (com.greengrocer.models.Message m : inbox) {
+                if (m.getSenderId() == order.getCustomerId() && m.getSubject().contains(orderTag))
+                    conversation.add(m);
+            }
+            for (com.greengrocer.models.Message m : sent) {
+                if (m.getReceiverId() == order.getCustomerId() && m.getSubject().contains(orderTag))
+                    conversation.add(m);
+            }
+
+            conversation.sort(java.util.Comparator.comparing(com.greengrocer.models.Message::getSentAt));
+
+            if (conversation.isEmpty()) {
+                Label emptyLabel = new Label("No messages for this order yet.");
+                emptyLabel.setStyle("-fx-text-fill: #94A3B8;");
+                chatMessagesPane.getChildren().add(emptyLabel);
+            } else {
+                for (com.greengrocer.models.Message msg : conversation) {
+                    chatMessagesPane.getChildren().add(createChatBubble(msg));
+                }
+            }
+
+            // Scroll to bottom
+            javafx.application.Platform.runLater(() -> {
+                if (chatScrollPane != null) {
+                    chatScrollPane.setVvalue(1.0);
+                }
+            });
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private javafx.scene.layout.HBox createChatBubble(com.greengrocer.models.Message msg) {
+        boolean isSent = msg.getSenderId() == currentUser.getId();
+
+        javafx.scene.layout.HBox container = new javafx.scene.layout.HBox();
+        container.setMaxWidth(Double.MAX_VALUE);
+
+        javafx.scene.layout.VBox bubble = new javafx.scene.layout.VBox(5);
+        bubble.setMaxWidth(350);
+        // Green for me (Sent), Blue/Grey for customer (Received)
+        bubble.setStyle(isSent
+                ? "-fx-background-color: #4CAF50; -fx-background-radius: 15 15 0 15; -fx-padding: 10;"
+                : "-fx-background-color: #334155; -fx-background-radius: 15 15 15 0; -fx-padding: 10;");
+
+        Label contentLabel = new Label(msg.getContent());
+        contentLabel.setWrapText(true);
+        contentLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13px;");
+        contentLabel.setMaxWidth(330);
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm");
+        Label timeLabel = new Label(sdf.format(msg.getSentAt()));
+        timeLabel.setStyle("-fx-text-fill: " + (isSent ? "#C8E6C9" : "#94A3B8") + "; -fx-font-size: 10px;");
+
+        bubble.getChildren().addAll(contentLabel, timeLabel);
+
+        if (isSent) {
+            javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+            javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            container.getChildren().addAll(spacer, bubble);
+        } else {
+            javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+            javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            container.getChildren().addAll(bubble, spacer);
+        }
+
+        return container;
+    }
+
+    private void loadCommunicationTab() {
+        if (communicationOrderList == null || communicationDeliveredList == null)
+            return;
+
+        // Save current selection to restore after reload
+        int selectedOrderId = -1;
+        Order currentActive = communicationOrderList.getSelectionModel().getSelectedItem();
+        Order currentDelivered = communicationDeliveredList.getSelectionModel().getSelectedItem();
+
+        if (currentActive != null)
+            selectedOrderId = currentActive.getId();
+        else if (currentDelivered != null)
+            selectedOrderId = currentDelivered.getId();
+
+        try {
+            List<com.greengrocer.models.Message> inbox = messageDAO.getInbox(currentUser.getId());
+            List<com.greengrocer.models.Message> sent = messageDAO.getSentMessages(currentUser.getId());
+
+            // Map OrderID -> Latest Message
+            java.util.Map<Integer, com.greengrocer.models.Message> latestMessageMap = new java.util.HashMap<>();
+            // Clear and repopulate the class-level unreadMap
+            unreadMap.clear();
+
+            // Process Inbox (for unread counts and latest msg)
+            for (com.greengrocer.models.Message msg : inbox) {
+                int orderId = extractOrderId(msg.getSubject());
+                if (orderId != -1) {
+                    if (!msg.isRead()) {
+                        unreadMap.put(orderId, unreadMap.getOrDefault(orderId, 0) + 1);
+                    }
+                    updateLatestMessage(latestMessageMap, orderId, msg);
+                }
+            }
+
+            // Process Sent (for latest msg)
+            for (com.greengrocer.models.Message msg : sent) {
+                int orderId = extractOrderId(msg.getSubject());
+                if (orderId != -1) {
+                    updateLatestMessage(latestMessageMap, orderId, msg);
+                }
+            }
+
+            // Load Lists
+            List<Order> activeOrders = orderDAO.getActiveDeliveries(currentUser.getId());
+            communicationOrderList.setItems(FXCollections.observableArrayList(activeOrders));
+
+            List<Order> deliveredOrders = orderDAO.getCompletedDeliveriesByCarrier(currentUser.getId());
+            communicationDeliveredList.setItems(FXCollections.observableArrayList(deliveredOrders));
+
+            // Set Custom Cell Factory
+            javafx.util.Callback<ListView<Order>, ListCell<Order>> cellFactory = param -> new ListCell<Order>() {
+                @Override
+                protected void updateItem(Order item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setGraphic(null);
+                        setStyle("-fx-background-color: transparent;");
+                    } else {
+                        com.greengrocer.models.Message lastMsg = latestMessageMap.get(item.getId());
+                        int unreadCount = unreadMap.getOrDefault(item.getId(), 0);
+                        setGraphic(createOrderListCell(item, lastMsg, unreadCount));
+                        setText(null);
+                        setStyle("-fx-background-color: transparent; -fx-padding: 5;");
+                    }
+                }
+            };
+
+            communicationOrderList.setCellFactory(cellFactory);
+            communicationDeliveredList.setCellFactory(cellFactory);
+
+            // Listeners have been moved to setupCommunicationListeners()
+
+            // Restore selection if it existed
+            if (selectedOrderId != -1) {
+                // Try to find and select in active list
+                for (Order o : communicationOrderList.getItems()) {
+                    if (o.getId() == selectedOrderId) {
+                        communicationOrderList.getSelectionModel().select(o);
+                        return;
+                    }
+                }
+                // Try to find and select in delivered list
+                for (Order o : communicationDeliveredList.getItems()) {
+                    if (o.getId() == selectedOrderId) {
+                        communicationDeliveredList.getSelectionModel().select(o);
+                        return;
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setupCommunicationListeners() {
+        if (communicationOrderList == null || communicationDeliveredList == null)
+            return;
+
+        communicationOrderList.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                communicationDeliveredList.getSelectionModel().clearSelection();
+                markMessagesAsRead(newVal);
+                loadChatHistory(newVal);
+                if (commStatusLabel != null)
+                    commStatusLabel.setText("Active: Order #" + newVal.getId());
+
+                // Update badges locally
+                unreadMap.put(newVal.getId(), 0);
+                communicationOrderList.refresh();
+            } else {
+                // Only clear if neither is selected (avoid clearing when switching between
+                // lists)
+                if (communicationDeliveredList.getSelectionModel().getSelectedItem() == null
+                        && chatMessagesPane != null)
+                    chatMessagesPane.getChildren().clear();
+            }
+        });
+
+        communicationDeliveredList.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                communicationOrderList.getSelectionModel().clearSelection();
+                markMessagesAsRead(newVal);
+                loadChatHistory(newVal);
+                if (commStatusLabel != null)
+                    commStatusLabel.setText("Delivered: Order #" + newVal.getId());
+
+                // Update badges locally
+                unreadMap.put(newVal.getId(), 0);
+                communicationDeliveredList.refresh();
+            } else {
+                if (communicationOrderList.getSelectionModel().getSelectedItem() == null && chatMessagesPane != null)
+                    chatMessagesPane.getChildren().clear();
+            }
+        });
+    }
+
+    private int extractOrderId(String subject) {
+        // Case insensitive, optional spaces
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?i)\\[\\s*Order\\s*#\\s*(\\d+)\\s*\\]")
+                .matcher(subject);
+        if (m.find()) {
+            try {
+                return Integer.parseInt(m.group(1));
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+        }
+        return -1;
+    }
+
+    private void updateLatestMessage(java.util.Map<Integer, com.greengrocer.models.Message> map, int orderId,
+            com.greengrocer.models.Message msg) {
+        if (!map.containsKey(orderId) || msg.getSentAt().after(map.get(orderId).getSentAt())) {
+            map.put(orderId, msg);
+        }
+    }
+
+    private javafx.scene.Node createOrderListCell(Order order, com.greengrocer.models.Message lastMsg,
+            int unreadCount) {
+        javafx.scene.layout.VBox card = new javafx.scene.layout.VBox(5);
+        // Dark card style
+        card.setStyle(
+                "-fx-background-color: #334155; -fx-background-radius: 10; -fx-padding: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2);");
+
+        // Top Row: Title + Time
+        javafx.scene.layout.HBox topRow = new javafx.scene.layout.HBox();
+        topRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("[Order #" + order.getId() + "]");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
+
+        javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+        javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+
+        Label timeLabel = new Label("");
+        if (lastMsg != null) {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm");
+            timeLabel.setText(sdf.format(lastMsg.getSentAt()));
+        }
+        timeLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 11px;");
+
+        topRow.getChildren().addAll(titleLabel, spacer, timeLabel);
+
+        // Bottom Row: Stats/Preview + Badge
+        javafx.scene.layout.HBox bottomRow = new javafx.scene.layout.HBox(5);
+        bottomRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        if (lastMsg != null) {
+            // Read receipt for sent messages
+            if (lastMsg.getSenderId() == currentUser.getId()) {
+                Label readStatus = new Label(lastMsg.isRead() ? "✓✓" : "✓");
+                // Cyan for read, Gray for sent
+                readStatus.setStyle("-fx-text-fill: " + (lastMsg.isRead() ? "#06b6d4" : "#94A3B8")
+                        + "; -fx-font-size: 11px; -fx-font-weight: bold;");
+                bottomRow.getChildren().add(readStatus);
+            }
+
+            String previewText = lastMsg.getContent().replace("\n", " ");
+            if (previewText.length() > 25)
+                previewText = previewText.substring(0, 25) + "...";
+            Label previewLabel = new Label(previewText);
+            previewLabel.setStyle("-fx-text-fill: #CBD5E1; -fx-font-size: 12px;");
+            bottomRow.getChildren().add(previewLabel);
+        } else {
+            Label noMsgLabel = new Label("No messages");
+            noMsgLabel.setStyle("-fx-text-fill: #64748B; -fx-font-size: 12px; -fx-font-style: italic;");
+            bottomRow.getChildren().add(noMsgLabel);
+        }
+
+        javafx.scene.layout.Region bottomSpacer = new javafx.scene.layout.Region();
+        javafx.scene.layout.HBox.setHgrow(bottomSpacer, javafx.scene.layout.Priority.ALWAYS);
+        bottomRow.getChildren().add(bottomSpacer);
+
+        // Green Unread Badge
+        if (unreadCount > 0) {
+            Label badge = new Label(String.valueOf(unreadCount));
+            // Green circle badge
+            badge.setStyle(
+                    "-fx-background-color: #22c55e; -fx-text-fill: white; -fx-background-radius: 10; -fx-min-width: 20; -fx-alignment: center; -fx-padding: 2 6; -fx-font-size: 11px; -fx-font-weight: bold;");
+            bottomRow.getChildren().add(badge);
+        }
+
+        card.getChildren().addAll(topRow, bottomRow);
+        return card;
+    }
+
+    private void markMessagesAsRead(Order order) {
+        try {
+            List<com.greengrocer.models.Message> inbox = messageDAO.getInbox(currentUser.getId());
+            String orderTag = String.format("[Order #%d]", order.getId());
+            for (com.greengrocer.models.Message msg : inbox) {
+                if (!msg.isRead() && msg.getSubject().contains(orderTag)) {
+                    messageDAO.markAsRead(msg.getId());
                 }
             }
         } catch (SQLException e) {

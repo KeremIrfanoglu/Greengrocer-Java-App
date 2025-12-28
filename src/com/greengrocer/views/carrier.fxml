@@ -103,7 +103,7 @@
                              <children>
                                 <Label text="Mark orders as delivered when completed" styleClass="text-secondary" />
                                 <Region HBox.hgrow="ALWAYS" />
-                                <Button onAction="#handleCompleteDelivery" text="📦 Complete Delivery" styleClass="button-accent" style="-fx-pref-width: 180; -fx-pref-height: 40;" />
+                                <Button onAction="#handleStatusUpdate" text="📦 Update Status" styleClass="button-accent" style="-fx-pref-width: 180; -fx-pref-height: 40;" />
                              </children>
                           </HBox>
                        </children>
@@ -185,6 +185,72 @@
                           </TableView>
                        </children>
                     </VBox>
+                  </content>
+                </Tab>
+
+                <!-- COMMUNICATION TAB -->
+                <Tab text="💬 Communication" onSelectionChanged="#handleRefresh">
+                  <content>
+                    <HBox spacing="0" style="-fx-padding: 0;">
+                       <children>
+                          <!-- Left Panel: Order Selection List -->
+                          <VBox prefWidth="300" spacing="0" style="-fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 0 1 0 0;">
+                             <children>
+                                <!-- Active Deliveries Section -->
+                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10 15; -fx-background-color: #0f172a;">
+                                   <Label text="Active Deliveries" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                                   <Region HBox.hgrow="ALWAYS" />
+                                   <Button text="↻" onAction="#handleRefresh" style="-fx-background-color: transparent; -fx-text-fill: #94A3B8; -fx-cursor: hand; -fx-font-size: 14px;" />
+                                </HBox>
+                                <ListView fx:id="communicationOrderList" VBox.vgrow="ALWAYS" styleClass="list-view" style="-fx-background-color: #1e293b;" />
+                                
+                                <!-- Delivered Orders Section -->
+                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10 15; -fx-background-color: #0f172a; -fx-border-color: #334155; -fx-border-width: 1 0 0 0;">
+                                   <Label text="Delivered Orders" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                                </HBox>
+                                <ListView fx:id="communicationDeliveredList" VBox.vgrow="ALWAYS" styleClass="list-view" style="-fx-background-color: #1e293b;" />
+                             </children>
+                          </VBox>
+                          
+                          <!-- Right Panel: Chat Area -->
+                          <VBox HBox.hgrow="ALWAYS" spacing="0" style="-fx-background-color: #0f172a;">
+                             <children>
+                                <!-- Chat Header -->
+                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 15; -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 0 0 1 0;">
+                                   <Label text="Conversation History" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                                   <Region HBox.hgrow="ALWAYS" />
+                                   <Label fx:id="commStatusLabel" text="" style="-fx-font-size: 12px; -fx-text-fill: #94A3B8;" />
+                                </HBox>
+                                
+                                <!-- Chat Messages Area -->
+                                <ScrollPane fx:id="chatScrollPane" fitToWidth="true" VBox.vgrow="ALWAYS" 
+                                            style="-fx-background: #0f172a; -fx-background-color: #0f172a;">
+                                   <VBox fx:id="chatMessagesPane" spacing="10" style="-fx-padding: 15;" />
+                                </ScrollPane>
+                                
+                                <!-- Input Area -->
+                                <VBox spacing="10" style="-fx-padding: 15; -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 1 0 0 0;">
+                                   
+                                   <!-- Quick Actions (Preset Buttons) -->
+                                   <HBox spacing="10" alignment="CENTER_LEFT">
+                                      <Label text="Quick Replies:" style="-fx-text-fill: #94A3B8; -fx-font-size: 11px;" />
+                                      <Button text="🏃 On My Way" onAction="#handleSendOnWay" styleClass="button-secondary" style="-fx-font-size: 11px; -fx-padding: 5 10;" />
+                                      <Button text="📍 At Address" onAction="#handleSendAtAddress" styleClass="button-secondary" style="-fx-font-size: 11px; -fx-padding: 5 10;" />
+                                      <Button text="⏱️ Late" onAction="#handleSendDelay" styleClass="button-secondary" style="-fx-font-size: 11px; -fx-padding: 5 10;" />
+                                      <Button text="📦 Delivered" onAction="#handleSendLeftAtDoor" styleClass="button-secondary" style="-fx-font-size: 11px; -fx-padding: 5 10;" />
+                                   </HBox>
+                                   
+                                   <!-- Manual Input -->
+                                    <HBox spacing="10" alignment="CENTER_LEFT">
+                                       <TextField fx:id="manualMessageInput" promptText="Type a message..." HBox.hgrow="ALWAYS" 
+                                                 style="-fx-control-inner-background: #0f172a; -fx-text-fill: #e2e8f0; -fx-background-color: #0f172a; -fx-border-color: #334155; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 8;" />
+                                       <Button onAction="#handleManualMessageSend" text="Send" styleClass="button-primary" prefWidth="80" style="-fx-background-radius: 20;" />
+                                    </HBox>
+                                </VBox>
+                             </children>
+                          </VBox>
+                       </children>
+                    </HBox>
                   </content>
                 </Tab>
                 
