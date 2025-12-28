@@ -40,6 +40,10 @@ public class CustomerController {
     // Rating cache - loaded once, used for all cells
     private java.util.Map<Integer, com.greengrocer.models.CarrierRating> ratingCache = new java.util.HashMap<>();
 
+    // Favorites cache - loaded once, used for all product cards (performance
+    // optimization)
+    private java.util.Set<Integer> favoriteProductIds = new java.util.HashSet<>();
+
     @FXML
     private javafx.scene.control.TabPane mainTabPane;
     @FXML
@@ -55,6 +59,10 @@ public class CustomerController {
 
     private Product selectedProduct = null; // For grid view selection
 
+    // Product card cache - for efficient single-card updates instead of full grid
+    // refresh
+    private java.util.Map<Integer, VBox> productCardMap = new java.util.HashMap<>();
+
     @FXML
     private javafx.scene.control.ComboBox<String> filterTypeCombo;
     @FXML
@@ -62,12 +70,10 @@ public class CustomerController {
     @FXML
     private TextField searchField;
 
-    @FXML
-    private TextField quantityField;
-    @FXML
-    private Label quantityLabel;
-    @FXML
-    private Label addToCartStatusLabel;
+    // Global quantity controls removed
+
+    // Global status label for cart moved to main statusLabel
+
     @FXML
     private Label updateCartStatusLabel;
 
@@ -308,9 +314,29 @@ public class CustomerController {
         colCartName.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductName()));
         colCartPrice
                 .setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getPrice()).asObject());
+        colCartPrice.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null)
+                    setText(null);
+                else
+                    setText(FormatHelper.formatCurrency(price));
+            }
+        });
         colCartQty.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         colCartTotal
                 .setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotal()).asObject());
+        colCartTotal.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double total, boolean empty) {
+                super.updateItem(total, empty);
+                if (empty || total == null)
+                    setText(null);
+                else
+                    setText(FormatHelper.formatCurrency(total));
+            }
+        });
 
         cartTable.setItems(cartList);
 
@@ -352,6 +378,11 @@ public class CustomerController {
             // Sort products by name alphabetically (A-Z)
             allProducts.sort((p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName()));
             productList = FXCollections.observableArrayList(allProducts);
+
+            // Load favorites once into cache (performance optimization)
+            favoriteProductIds.clear();
+            favoriteProductIds.addAll(favoritesDAO.getFavoriteProductIds(currentUser.getId()));
+
             refreshShopGrid();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -363,9 +394,33 @@ public class CustomerController {
         if (shopFlowPane == null)
             return;
         shopFlowPane.getChildren().clear();
+        productCardMap.clear();
 
         for (Product product : productList) {
-            shopFlowPane.getChildren().add(createShopCard(product));
+            VBox card = createShopCard(product);
+            productCardMap.put(product.getId(), card);
+            shopFlowPane.getChildren().add(card);
+        }
+    }
+
+    /**
+     * Update only the single product card instead of refreshing entire grid.
+     * This provides much better performance for quantity changes.
+     */
+    private void updateSingleProductCard(Product product) {
+        VBox card = productCardMap.get(product.getId());
+        if (card == null)
+            return;
+
+        // Find the action container (last child before spacer, which is at index
+        // card.getChildren().size() - 2)
+        // ActionBox is the last element in the card
+        if (card.getChildren().size() > 1) {
+            javafx.scene.Node lastChild = card.getChildren().get(card.getChildren().size() - 1);
+            if (lastChild instanceof VBox) {
+                VBox actionBox = (VBox) lastChild;
+                updateProductCardControls(product, actionBox);
+            }
         }
     }
 
@@ -373,23 +428,19 @@ public class CustomerController {
         VBox card = new VBox(5);
         card.getStyleClass().add("product-card");
         card.setPrefWidth(150);
-        card.setPrefHeight(260); // Fixed height for consistent alignment
-        card.setMinHeight(260);
-        card.setMaxHeight(260);
+        card.setPrefHeight(290); // Fixed height for consistent alignment
+        card.setMinHeight(290);
+        card.setMaxHeight(290);
         card.setPadding(new Insets(10));
         card.setAlignment(Pos.TOP_CENTER);
 
-        // Favorite star indicator with fixed height
+        // Favorite star indicator with fixed height (uses cached data - no DB query)
         Label favLabel = new Label();
         favLabel.setPrefHeight(16);
         favLabel.setMinHeight(16);
-        try {
-            if (favoritesDAO.isFavorite(currentUser.getId(), product.getId())) {
-                favLabel.setText("★");
-                favLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #FFD700;");
-            }
-        } catch (SQLException e) {
-            // Ignore
+        if (favoriteProductIds.contains(product.getId())) {
+            favLabel.setText("★");
+            favLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #FFD700;");
         }
 
         // Image container with fixed height
@@ -437,25 +488,9 @@ public class CustomerController {
         javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
         VBox.setVgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 
-        // Add to Cart button at bottom
-        Button addBtn = new Button("Add to Cart");
-        addBtn.getStyleClass().add("button-primary");
-        addBtn.setStyle("-fx-font-size: 10px;");
-        addBtn.setPrefWidth(110);
-        addBtn.setOnAction(e -> {
-            selectedProduct = product;
-            // Use quantity field value or default to 1
-            String qtyText = quantityField.getText().trim();
-            double qty = 1.0;
-            if (!qtyText.isEmpty()) {
-                try {
-                    qty = Double.parseDouble(qtyText);
-                } catch (NumberFormatException ex) {
-                    qty = 1.0;
-                }
-            }
-            addProductToCart(product, qty);
-        });
+        // Initialize action container
+        VBox actionBox = new VBox(5);
+        actionBox.setAlignment(Pos.CENTER);
 
         // Make card clickable to select product and show top bar favorite button
         card.setOnMouseClicked(e -> {
@@ -465,8 +500,10 @@ public class CustomerController {
             statusLabel.setText("Selected: " + product.getName());
         });
 
+        updateProductCardControls(product, actionBox);
+
         card.getChildren().addAll(favLabel, imageContainer, nameLabel, typeLabel, priceLabel, stockLabel, spacer,
-                addBtn);
+                actionBox);
 
         // Low stock border
         if (product.getStock() <= product.getThreshold()) {
@@ -477,17 +514,7 @@ public class CustomerController {
     }
 
     private void addProductToCart(Product product, double quantity) {
-        if (quantity <= 0) {
-            addToCartStatusLabel.setText("Invalid quantity.");
-            addToCartStatusLabel.setStyle("-fx-text-fill: red;");
-            return;
-        }
-        if (quantity > product.getStock()) {
-            addToCartStatusLabel.setText("Not enough stock!");
-            addToCartStatusLabel.setStyle("-fx-text-fill: red;");
-            return;
-        }
-
+        // Local update first
         CartItem existingItem = null;
         for (CartItem item : cartList) {
             if (item.getProduct() != null && item.getProduct().getId() == product.getId()) {
@@ -499,26 +526,235 @@ public class CustomerController {
         if (existingItem != null) {
             double newQty = existingItem.getQuantity() + quantity;
             if (newQty > product.getStock()) {
-                addToCartStatusLabel.setText("Not enough stock!");
-                addToCartStatusLabel.setStyle("-fx-text-fill: red;");
+                statusLabel.setText("Not enough stock for " + product.getName() + "!");
+                statusLabel.setStyle("-fx-text-fill: red;");
                 return;
             }
             existingItem.setQuantity(newQty);
+            // DB update via cartDAO
+            try {
+                cartDAO.updateQuantity(currentUser.getId(), product.getId(), newQty);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         } else {
             cartList.add(new CartItem(product, quantity));
+            // DB insert
+            try {
+                cartDAO.addToCart(currentUser.getId(), product.getId(), quantity);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
 
-        // Persist to database
-        try {
-            cartDAO.addToCart(currentUser.getId(), product.getId(), quantity);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+        cartTable.refresh();
+
+        updateCartTotalWithDiscount();
+        statusLabel.setText("Added " + quantity + " x " + product.getName());
+        statusLabel.setStyle("-fx-text-fill: #4CAF50;");
+
+        // Update only this product's card (not entire grid - performance optimization)
+        updateSingleProductCard(product);
+
+    }
+
+    /**
+     * Dynamic controls for product card:
+     * - If not in cart: [ Add to Cart ]
+     * - If in cart: [ delete/minus ] [ quantity ] [ plus ]
+     */
+    private void updateProductCardControls(Product product, VBox container) {
+        container.getChildren().clear();
+
+        // Check if product is in cart
+        CartItem cartItem = null;
+        for (CartItem item : cartList) {
+            if (item.getProduct().getId() == product.getId()) {
+                cartItem = item;
+                break;
+            }
+        }
+
+        if (cartItem == null) {
+            // Not in cart -> Show "Add to Cart" button (default size)
+            Button addBtn = new Button("Add to Cart");
+            addBtn.getStyleClass().add("button-primary");
+            addBtn.setStyle("-fx-font-size: 10px;");
+            addBtn.setPrefWidth(130);
+            addBtn.setPrefHeight(30);
+            addBtn.setOnAction(e -> addProductToCart(product, 1.0));
+            container.getChildren().add(addBtn);
+        } else {
+            // In cart -> Show Dynamic Controls
+            final CartItem finalCartItem = cartItem;
+            HBox controls = new HBox(5);
+            controls.setAlignment(Pos.CENTER);
+
+            // Left Button: Trash (if qty=1) or Minus (if qty>1)
+            Button leftBtn = new Button();
+            leftBtn.setPrefWidth(30);
+            leftBtn.setPrefHeight(30);
+            leftBtn.setMinWidth(30);
+            leftBtn.setMinHeight(30);
+            leftBtn.setMaxWidth(30);
+            leftBtn.setMaxHeight(30);
+
+            // Check if quantity is effectively 1 (or less)
+            boolean isSingle = finalCartItem.getQuantity() <= 1.0;
+
+            if (isSingle) {
+                leftBtn.setText("🗑"); // Trash icon
+                leftBtn.setStyle(
+                        "-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #EF4444; -fx-padding: 0;");
+            } else {
+                leftBtn.setText("-");
+                leftBtn.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 0;");
+                leftBtn.getStyleClass().add("button-secondary");
+            }
+
+            leftBtn.setOnAction(e -> handleDecrement(product));
+
+            // Center Label: Quantity
+            // Center: Editable Quantity Field
+            TextField qtyField = new TextField(String.valueOf((int) finalCartItem.getQuantity()));
+            qtyField.setStyle(
+                    "-fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: transparent; -fx-alignment: center; -fx-padding: 0; -fx-font-size: 13px;");
+            qtyField.setPrefWidth(30);
+            qtyField.setPrefHeight(30);
+            qtyField.setMinWidth(30);
+            qtyField.setMinHeight(30);
+            qtyField.setMaxWidth(30);
+            qtyField.setMaxHeight(30);
+
+            // Limit input to numbers only
+            qtyField.setTextFormatter(new TextFormatter<>(change -> {
+                String newText = change.getControlNewText();
+                if (newText.matches("[0-9]*")) {
+                    return change;
+                }
+                return null;
+            }));
+
+            // Handle Enter key
+            qtyField.setOnAction(event -> {
+                String input = qtyField.getText();
+                if (input.isEmpty()) {
+                    // Revert to current qty if empty
+                    qtyField.setText(String.valueOf((int) finalCartItem.getQuantity()));
+                    return;
+                }
+                try {
+                    int newQty = Integer.parseInt(input);
+                    handleQuantityUpdate(product, (double) newQty);
+                } catch (NumberFormatException ex) {
+                    // Revert
+                    qtyField.setText(String.valueOf((int) finalCartItem.getQuantity()));
+                }
+            });
+
+            // Right Button: Plus
+            Button rightBtn = new Button("+");
+            rightBtn.setPrefWidth(30);
+            rightBtn.setPrefHeight(30);
+            rightBtn.setMinWidth(30);
+            rightBtn.setMinHeight(30);
+            rightBtn.setMaxWidth(30);
+            rightBtn.setMaxHeight(30);
+            rightBtn.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 0;");
+            rightBtn.getStyleClass().add("button-secondary");
+            rightBtn.setOnAction(e -> handleIncrement(product));
+
+            controls.getChildren().addAll(leftBtn, qtyField, rightBtn);
+            container.getChildren().add(controls);
+        }
+    }
+
+    private void handleIncrement(Product product) {
+        addProductToCart(product, 1.0);
+    }
+
+    private void handleDecrement(Product product) {
+        CartItem existingItem = null;
+        for (CartItem item : cartList) {
+            if (item.getProduct().getId() == product.getId()) {
+                existingItem = item;
+                break;
+            }
+        }
+
+        if (existingItem == null)
+            return;
+
+        double currentQty = existingItem.getQuantity();
+        if (currentQty <= 1.0) {
+            // Remove item
+            cartList.remove(existingItem);
+            try {
+                cartDAO.removeFromCart(currentUser.getId(), product.getId());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            statusLabel.setText("Removed " + product.getName() + " from cart.");
+        } else {
+            // Decrease quantity
+            double newQty = currentQty - 1.0;
+            existingItem.setQuantity(newQty);
+            try {
+                cartDAO.updateQuantity(currentUser.getId(), product.getId(), newQty);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        cartTable.refresh();
+        updateCartTotalWithDiscount();
+        updateSingleProductCard(product); // Update only this card
+    }
+
+    private void handleQuantityUpdate(Product product, double newQty) {
+        CartItem existingItem = null;
+        for (CartItem item : cartList) {
+            if (item.getProduct().getId() == product.getId()) {
+                existingItem = item;
+                break;
+            }
+        }
+
+        if (existingItem == null)
+            return;
+
+        if (newQty <= 0) {
+            // Remove item
+            cartList.remove(existingItem);
+            try {
+                cartDAO.removeFromCart(currentUser.getId(), product.getId());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            statusLabel.setText("Removed " + product.getName() + " from cart.");
+        } else {
+            // Check stock
+            if (newQty > product.getStock()) {
+                statusLabel.setText("Not enough stock! Max: " + (int) product.getStock());
+                statusLabel.setStyle("-fx-text-fill: red;");
+                // Revert UI by refreshing
+                refreshShopGrid();
+                return;
+            }
+
+            // Update
+            existingItem.setQuantity(newQty);
+            try {
+                cartDAO.updateQuantity(currentUser.getId(), product.getId(), newQty);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            statusLabel.setText("Updated " + product.getName() + " to " + (int) newQty);
+            statusLabel.setStyle("-fx-text-fill: #4CAF50;");
         }
 
         cartTable.refresh();
         updateCartTotalWithDiscount();
-        addToCartStatusLabel.setText("Added " + quantity + " x " + product.getName());
-        addToCartStatusLabel.setStyle("-fx-text-fill: #4CAF50;");
+        updateSingleProductCard(product); // Update only this card
     }
 
     private void loadOrders() {
@@ -569,89 +805,7 @@ public class CustomerController {
         loadOrders();
     }
 
-    @FXML
-    public void handleAddToCart() {
-        // Use selectedProduct from grid view card click, or check quantity field
-        Product selected = selectedProduct;
-        String qtyStr = quantityField.getText();
-
-        if (selected == null) {
-            setLocalStatus(addToCartStatusLabel, "Click 'Add to Cart' on a product card.", "#FF9800");
-            return;
-        }
-
-        if (qtyStr.isEmpty()) {
-            qtyStr = "1"; // Default to 1 if no quantity specified
-        }
-
-        try {
-            double qty = Double.parseDouble(qtyStr);
-            if (qty <= 0) {
-                setLocalStatus(addToCartStatusLabel, "Quantity must be positive.", "red");
-                return;
-            }
-
-            // Validate quantity based on unit type
-            if (selected.isSoldByPiece()) {
-                // For piece-based products, only allow whole numbers
-                if (qty != Math.floor(qty)) {
-                    setLocalStatus(addToCartStatusLabel, "Whole numbers only!", "red");
-                    return;
-                }
-            }
-
-            if (qty > selected.getStock()) {
-                setLocalStatus(addToCartStatusLabel, "Not enough stock!", "red");
-                return;
-            }
-
-            // Check if already in cart
-            boolean exists = false;
-            for (CartItem item : cartList) {
-                if (item.getProduct().getId() == selected.getId()) {
-                    if (item.getQuantity() + qty > selected.getStock()) {
-                        setLocalStatus(addToCartStatusLabel, "Exceeds stock!", "red");
-                        return;
-                    }
-                    item.setQuantity(item.getQuantity() + qty);
-                    exists = true;
-                    break;
-                }
-            }
-
-            if (!exists) {
-                cartList.add(new CartItem(selected, qty));
-            }
-
-            // Persist to database
-            try {
-                cartDAO.addToCart(currentUser.getId(), selected.getId(), qty);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-
-            cartTable.refresh();
-            updateCartTotal();
-
-            // Check for threshold discount
-            CartItem addedItem = null;
-            for (CartItem item : cartList) {
-                if (item.getProduct().getId() == selected.getId()) {
-                    addedItem = item;
-                    break;
-                }
-            }
-            if (addedItem != null && addedItem.isDiscounted()) {
-                setLocalStatus(addToCartStatusLabel, "Added +10% OFF!", "#4CAF50");
-            } else {
-                setLocalStatus(addToCartStatusLabel, "Added!", "#4CAF50");
-            }
-            quantityField.clear();
-
-        } catch (NumberFormatException e) {
-            setLocalStatus(addToCartStatusLabel, "Invalid qty!", "red");
-        }
-    }
+    // handleAddToCart removed as it's now handled per card
 
     @FXML
     public void handleRemoveFromCart() {
@@ -1026,24 +1180,7 @@ public class CustomerController {
     /**
      * Update quantity label and promptText based on product unit type
      */
-    private void updateQuantityLabelForProduct(Product product) {
-        if (quantityLabel == null || quantityField == null)
-            return;
-
-        if (product == null) {
-            quantityLabel.setText("Quantity:");
-            quantityField.setPromptText("e.g. 1, 2.5");
-            return;
-        }
-
-        if (product.isSoldByPiece()) {
-            quantityLabel.setText("Pieces:");
-            quantityField.setPromptText("e.g. 1, 2, 3");
-        } else {
-            quantityLabel.setText("Kilograms:");
-            quantityField.setPromptText("e.g. 0.5, 1, 2.3");
-        }
-    }
+    // updateQuantityLabelForProduct removed
 
     @FXML
     public void handleLogout() {

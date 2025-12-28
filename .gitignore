@@ -8,3 +8,7 @@ lib/
 # System
 .DS_Store
 .vscode/
+*.jar
+lib/.DS_Store
+lib/
+.DS_Store

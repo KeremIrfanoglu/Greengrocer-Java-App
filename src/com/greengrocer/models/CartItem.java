@@ -2,13 +2,13 @@ package com.greengrocer.models;
 
 /**
  * Represents an item in the shopping cart.
- * Applies threshold-based pricing: 10% discount when stock is at or below
- * threshold.
+ * Applies threshold-based pricing: price doubles (2x) when stock is at or below
+ * threshold (scarcity pricing).
  */
 public class CartItem {
     private Product product;
     private double quantity;
-    private static final double THRESHOLD_DISCOUNT = 0.10; // 10% discount
+    private static final double THRESHOLD_MULTIPLIER = 2.0; // 2x price when low stock
 
     public CartItem(Product product, double quantity) {
         this.product = product;
@@ -37,34 +37,34 @@ public class CartItem {
 
     /**
      * Returns the effective price per unit.
-     * If stock is at or below threshold, applies 10% discount.
+     * If stock is at or below threshold, price is doubled (scarcity pricing).
      */
     public double getPrice() {
-        if (isDiscounted()) {
-            return product.getPrice() * (1 - THRESHOLD_DISCOUNT);
+        if (isPriceIncreased()) {
+            return product.getPrice() * THRESHOLD_MULTIPLIER;
         }
         return product.getPrice();
     }
 
     /**
-     * Returns the original price without discount.
+     * Returns the original price without increase.
      */
     public double getOriginalPrice() {
         return product.getPrice();
     }
 
     /**
-     * Checks if this product qualifies for threshold discount.
+     * Checks if this product has increased price due to low stock.
      */
-    public boolean isDiscounted() {
+    public boolean isPriceIncreased() {
         return product.getStock() <= product.getThreshold();
     }
 
     /**
-     * Returns the discount percentage (0-100).
+     * Returns the price increase percentage (0 or 100 for 2x).
      */
-    public double getDiscountPercent() {
-        return isDiscounted() ? THRESHOLD_DISCOUNT * 100 : 0;
+    public double getPriceIncreasePercent() {
+        return isPriceIncreased() ? 100 : 0;
     }
 
     public double getTotal() {

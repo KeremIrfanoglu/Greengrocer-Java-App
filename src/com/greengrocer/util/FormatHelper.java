@@ -19,11 +19,11 @@ public class FormatHelper {
         symbols.setGroupingSeparator(',');
         symbols.setDecimalSeparator('.');
 
-        // Use 2 decimal places for currency, with TL suffix
+        // Use 2 decimal places for currency/prices (e.g., 12.50 TL)
         currencyFormat = new DecimalFormat("#,##0.00' TL'", symbols);
 
-        // Use up to 2 decimal places for quantities (e.g. 1.5 kg)
-        numberFormat = new DecimalFormat("#,##0.##", symbols);
+        // Use 3 decimal places for quantities/weights (e.g., 1.500 kg)
+        numberFormat = new DecimalFormat("#,##0.000", symbols);
     }
 
     /**

@@ -4,10 +4,19 @@ import com.greengrocer.dao.ProductDAO;
 import com.greengrocer.dao.ReportDAO;
 import com.greengrocer.models.Product;
 import com.greengrocer.models.User;
+import com.greengrocer.dao.SupplierDAO;
+import com.greengrocer.dao.AnalyticsDAO;
+import com.greengrocer.models.Supplier;
+import com.greengrocer.models.CustomerAnalytics;
+import com.greengrocer.models.CarrierPerformance;
+import com.greengrocer.models.ProductSalesStats;
+import com.greengrocer.models.HourlyOrderStats;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
@@ -182,7 +191,76 @@ public class OwnerController {
     private TableColumn<Product, Double> colAlertDiff;
     @FXML
     private Label alertCountLabel;
+    // Supplier Fields
+    @FXML
+    private TextField supplierSearchField;
+    @FXML
+    private TableView<Supplier> supplierTable;
+    @FXML
+    private TableColumn<Supplier, Integer> colSupId;
+    @FXML
+    private TableColumn<Supplier, String> colSupName;
+    @FXML
+    private TableColumn<Supplier, String> colSupContact;
+    @FXML
+    private TableColumn<Supplier, String> colSupPhone;
+    @FXML
+    private TableColumn<Supplier, String> colSupEmail;
+    @FXML
+    private Label supplierStatusLabel;
 
+    // Customer Analytics Fields
+    @FXML
+    private TableView<CustomerAnalytics> analyticsTable;
+    @FXML
+    private TableColumn<CustomerAnalytics, String> colAnUsername;
+    @FXML
+    private TableColumn<CustomerAnalytics, String> colAnName;
+    @FXML
+    private TableColumn<CustomerAnalytics, String> colAnPhone;
+    @FXML
+    private TableColumn<CustomerAnalytics, Integer> colAnOrderCount;
+    @FXML
+    private TableColumn<CustomerAnalytics, Double> colAnTotalSpent;
+    @FXML
+    private Label analyticsStatusLabel;
+
+    // Advanced Analytic Fields
+    @FXML
+    private TabPane analyticsTabPane;
+
+    @FXML
+    private TableView<CarrierPerformance> carrierPerformanceTable;
+    @FXML
+    private TableColumn<CarrierPerformance, Integer> colCpId;
+    @FXML
+    private TableColumn<CarrierPerformance, String> colCpName;
+    @FXML
+    private TableColumn<CarrierPerformance, Integer> colCpDeliveries;
+
+    @FXML
+    private TableView<ProductSalesStats> topSellingTable;
+    @FXML
+    private TableColumn<ProductSalesStats, String> colProdName;
+    @FXML
+    private TableColumn<ProductSalesStats, Double> colProdQty;
+    @FXML
+    private TableColumn<ProductSalesStats, Double> colProdRev;
+
+    @FXML
+    private TableView<ProductSalesStats> deadStockTable;
+    @FXML
+    private TableColumn<ProductSalesStats, String> colDeadName;
+
+    @FXML
+    private BarChart<String, Number> heatmapChart;
+    @FXML
+    private CategoryAxis xAxis;
+    @FXML
+    private NumberAxis yAxis;
+
+    private SupplierDAO supplierDAO;
+    private AnalyticsDAO analyticsDAO;
     private com.greengrocer.dao.OrderDAO orderDAO;
     private com.greengrocer.dao.CouponDAO couponDAO;
 
@@ -252,6 +330,10 @@ public class OwnerController {
                         handleRefreshAllOrders();
                     } else if (tabText.contains("Alerts")) {
                         handleRefreshAlerts();
+                    } else if (tabText.contains("Suppliers")) {
+                        loadSuppliers();
+                    } else if (tabText.contains("Customer Analytics")) {
+                        loadCustomerAnalytics();
                     } else if (tabText.contains("Coupons")) {
                         loadCoupons();
                         loadCouponHistory();
@@ -312,6 +394,63 @@ public class OwnerController {
         orderStatusFilter.setValue("All");
 
         loadAllOrders();
+
+        // Setup Supplier Table
+        if (supplierTable != null) {
+            colSupId.setCellValueFactory(new PropertyValueFactory<>("id"));
+            colSupName.setCellValueFactory(new PropertyValueFactory<>("name"));
+            colSupContact.setCellValueFactory(new PropertyValueFactory<>("contactPerson"));
+            colSupPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
+            colSupEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+            loadSuppliers();
+        }
+
+        // Setup Analytics Tables
+        if (analyticsTabPane != null) {
+            setupAnalyticsTabs();
+        }
+    }
+
+    private void setupAnalyticsTabs() {
+        // Customer Columns
+        colAnUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
+        colAnName.setCellValueFactory(new PropertyValueFactory<>("fullName"));
+        colAnPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        colAnOrderCount.setCellValueFactory(new PropertyValueFactory<>("orderCount"));
+        colAnTotalSpent.setCellValueFactory(new PropertyValueFactory<>("totalSpent"));
+        colAnTotalSpent.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null)
+                    setText(null);
+                else
+                    setText(String.format("%.2f TL", price));
+            }
+        });
+
+        // Carrier Columns
+        colCpId.setCellValueFactory(new PropertyValueFactory<>("carrierId"));
+        colCpName.setCellValueFactory(new PropertyValueFactory<>("carrierName"));
+        colCpDeliveries.setCellValueFactory(new PropertyValueFactory<>("deliveryCount"));
+
+        // Load Initial Data
+        loadCustomerAnalytics();
+        loadCarrierAnalytics();
+        loadHeatmap();
+
+        // Add Listener to sub-tabs
+        analyticsTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab != null) {
+                String text = newTab.getText();
+                if (text.equals("Customers"))
+                    loadCustomerAnalytics();
+                else if (text.equals("Carriers"))
+                    loadCarrierAnalytics();
+                else if (text.equals("Peak Hours"))
+                    loadHeatmap();
+            }
+        });
     }
 
     @FXML
@@ -1846,6 +1985,266 @@ public class OwnerController {
         if (ownerMsgStatusLabel != null) {
             ownerMsgStatusLabel.setText(text);
             ownerMsgStatusLabel.setStyle("-fx-text-fill: " + color + ";");
+        }
+    }
+
+    // ==================== SUPPLIER MANAGEMENT ====================
+
+    @FXML
+    public void handleNewSupplier() {
+        showSupplierDialog(null);
+    }
+
+    @FXML
+    public void handleEditSupplier() {
+        Supplier selected = supplierTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            supplierStatusLabel.setText("Select a supplier to edit.");
+            supplierStatusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+        showSupplierDialog(selected);
+    }
+
+    @FXML
+    public void handleDeleteSupplier() {
+        Supplier selected = supplierTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            supplierStatusLabel.setText("Select a supplier to delete.");
+            supplierStatusLabel.setStyle("-fx-text-fill: red;");
+            return;
+        }
+
+        boolean confirm = com.greengrocer.util.StyledAlert.showConfirmation("Delete Supplier", null,
+                "Are you sure you want to delete " + selected.getName() + "?");
+        if (confirm) {
+            try {
+                if (supplierDAO.deleteSupplier(selected.getId())) {
+                    supplierStatusLabel.setText("Supplier deleted.");
+                    supplierStatusLabel.setStyle("-fx-text-fill: green;");
+                    loadSuppliers();
+                } else {
+                    supplierStatusLabel.setText("Failed to delete supplier.");
+                    supplierStatusLabel.setStyle("-fx-text-fill: red;");
+                }
+            } catch (SQLException e) {
+                supplierStatusLabel.setText("Database error: " + e.getMessage());
+                supplierStatusLabel.setStyle("-fx-text-fill: red;");
+            }
+        }
+    }
+
+    @FXML
+    public void handleSearchSuppliers() {
+        loadSuppliers();
+    }
+
+    private void loadSuppliers() {
+        if (supplierTable == null)
+            return;
+        try {
+            if (supplierDAO == null)
+                supplierDAO = new SupplierDAO();
+            ObservableList<Supplier> suppliers = FXCollections.observableArrayList(supplierDAO.getAllSuppliers());
+            String search = supplierSearchField.getText().toLowerCase().trim();
+            if (!search.isEmpty()) {
+                ObservableList<Supplier> filtered = FXCollections.observableArrayList();
+                for (Supplier s : suppliers) {
+                    if (s.getName().toLowerCase().contains(search) ||
+                            s.getContactPerson().toLowerCase().contains(search)) {
+                        filtered.add(s);
+                    }
+                }
+                supplierTable.setItems(filtered);
+            } else {
+                supplierTable.setItems(suppliers);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (supplierStatusLabel != null) {
+                supplierStatusLabel.setText("Error loading suppliers.");
+                supplierStatusLabel.setStyle("-fx-text-fill: red;");
+            }
+        }
+    }
+
+    private void showSupplierDialog(Supplier supplier) {
+        boolean isEdit = supplier != null;
+        Dialog<Supplier> dialog = new Dialog<>();
+        dialog.setTitle(isEdit ? "Edit Supplier" : "Add Supplier");
+        dialog.setHeaderText(isEdit ? "Update Supplier Details" : "Enter New Supplier Details");
+        com.greengrocer.util.StyleHelper.applyAppIcon(dialog);
+
+        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField name = new TextField();
+        name.setPromptText("Company Name");
+        TextField contact = new TextField();
+        contact.setPromptText("Contact Person");
+        TextField email = new TextField();
+        email.setPromptText("Email");
+        TextField phone = new TextField();
+        phone.setPromptText("Phone");
+        TextField address = new TextField();
+        address.setPromptText("Address");
+
+        if (isEdit) {
+            name.setText(supplier.getName());
+            contact.setText(supplier.getContactPerson());
+            email.setText(supplier.getEmail());
+            phone.setText(supplier.getPhone());
+            address.setText(supplier.getAddress());
+        }
+
+        grid.add(new Label("Company Name:"), 0, 0);
+        grid.add(name, 1, 0);
+        grid.add(new Label("Contact Person:"), 0, 1);
+        grid.add(contact, 1, 1);
+        grid.add(new Label("Email:"), 0, 2);
+        grid.add(email, 1, 2);
+        grid.add(new Label("Phone:"), 0, 3);
+        grid.add(phone, 1, 3);
+        grid.add(new Label("Address:"), 0, 4);
+        grid.add(address, 1, 4);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                if (isEdit) {
+                    supplier.setName(name.getText());
+                    supplier.setContactPerson(contact.getText());
+                    supplier.setEmail(email.getText());
+                    supplier.setPhone(phone.getText());
+                    supplier.setAddress(address.getText());
+                    return supplier;
+                } else {
+                    return new Supplier(name.getText(), contact.getText(), email.getText(), phone.getText(),
+                            address.getText());
+                }
+            }
+            return null;
+        });
+
+        Optional<Supplier> result = dialog.showAndWait();
+
+        result.ifPresent(newSupplier -> {
+            try {
+                if (supplierDAO == null)
+                    supplierDAO = new SupplierDAO();
+                boolean success;
+                if (isEdit) {
+                    success = supplierDAO.updateSupplier(newSupplier);
+                } else {
+                    success = supplierDAO.addSupplier(newSupplier);
+                }
+
+                if (success) {
+                    supplierStatusLabel.setText(isEdit ? "Supplier updated." : "Supplier added.");
+                    supplierStatusLabel.setStyle("-fx-text-fill: green;");
+                    loadSuppliers();
+                } else {
+                    supplierStatusLabel.setText("Operation failed.");
+                    supplierStatusLabel.setStyle("-fx-text-fill: red;");
+                }
+            } catch (SQLException e) {
+                supplierStatusLabel.setText("Database error: " + e.getMessage());
+                supplierStatusLabel.setStyle("-fx-text-fill: red;");
+            }
+        });
+    }
+
+    // ==================== CUSTOMER ANALYTICS ====================
+
+    @FXML
+    public void handleRefreshAnalytics() {
+        loadCustomerAnalytics();
+    }
+
+    private void loadCustomerAnalytics() {
+        if (analyticsTable == null)
+            return;
+        try {
+            java.util.List<CustomerAnalytics> data = userDAO.getCustomerAnalytics();
+            analyticsTable.setItems(FXCollections.observableArrayList(data));
+            if (analyticsStatusLabel != null) {
+                analyticsStatusLabel.setText("Analytics loaded.");
+                analyticsStatusLabel.setStyle("-fx-text-fill: green;");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (analyticsStatusLabel != null) {
+                analyticsStatusLabel.setText("Error loading analytics.");
+                analyticsStatusLabel.setStyle("-fx-text-fill: red;");
+            }
+        }
+    }
+
+    private void loadCarrierAnalytics() {
+        if (carrierPerformanceTable == null)
+            return;
+        try {
+            if (analyticsDAO == null)
+                analyticsDAO = new AnalyticsDAO();
+            java.util.List<CarrierPerformance> data = analyticsDAO.getCarrierPerformance();
+            carrierPerformanceTable.setItems(FXCollections.observableArrayList(data));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadProductAnalytics() {
+        if (topSellingTable == null || deadStockTable == null)
+            return;
+        try {
+            if (analyticsDAO == null)
+                analyticsDAO = new AnalyticsDAO();
+            java.util.List<ProductSalesStats> sales = analyticsDAO.getProductSalesAnalysis();
+            topSellingTable.setItems(FXCollections.observableArrayList(sales));
+
+            java.util.List<ProductSalesStats> dead = analyticsDAO.getDeadStock();
+            deadStockTable.setItems(FXCollections.observableArrayList(dead));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadHeatmap() {
+        if (heatmapChart == null)
+            return;
+        try {
+            if (analyticsDAO == null)
+                analyticsDAO = new AnalyticsDAO();
+            java.util.List<HourlyOrderStats> stats = analyticsDAO.getHourlyOrderStats();
+
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Orders per Hour");
+
+            // Initialize all 24 hours with 0
+            java.util.Map<Integer, Integer> hourMap = new java.util.HashMap<>();
+            for (int i = 0; i < 24; i++)
+                hourMap.put(i, 0);
+
+            for (HourlyOrderStats s : stats) {
+                hourMap.put(s.getHourOfDay(), s.getOrderCount());
+            }
+
+            for (int i = 0; i < 24; i++) {
+                String label = String.format("%02d:00", i);
+                series.getData().add(new XYChart.Data<>(label, hourMap.get(i)));
+            }
+
+            heatmapChart.getData().clear();
+            heatmapChart.getData().add(series);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 }
