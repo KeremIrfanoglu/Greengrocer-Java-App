@@ -434,28 +434,9 @@ public class OwnerController {
         colCpName.setCellValueFactory(new PropertyValueFactory<>("carrierName"));
         colCpDeliveries.setCellValueFactory(new PropertyValueFactory<>("deliveryCount"));
 
-        // Product Columns
-        colProdName.setCellValueFactory(new PropertyValueFactory<>("productName"));
-        colProdQty.setCellValueFactory(new PropertyValueFactory<>("quantitySold"));
-        colProdRev.setCellValueFactory(
-                tc -> new javafx.beans.property.SimpleDoubleProperty(tc.getValue().getRevenue()).asObject());
-        colProdRev.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double price, boolean empty) {
-                super.updateItem(price, empty);
-                if (empty || price == null)
-                    setText(null);
-                else
-                    setText(String.format("%.2f TL", price));
-            }
-        });
-
-        colDeadName.setCellValueFactory(new PropertyValueFactory<>("productName"));
-
         // Load Initial Data
         loadCustomerAnalytics();
         loadCarrierAnalytics();
-        loadProductAnalytics();
         loadHeatmap();
 
         // Add Listener to sub-tabs
@@ -466,8 +447,6 @@ public class OwnerController {
                     loadCustomerAnalytics();
                 else if (text.equals("Carriers"))
                     loadCarrierAnalytics();
-                else if (text.equals("Products"))
-                    loadProductAnalytics();
                 else if (text.equals("Peak Hours"))
                     loadHeatmap();
             }

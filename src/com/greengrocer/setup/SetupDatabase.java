@@ -75,13 +75,14 @@ public class SetupDatabase {
                                                 "FOREIGN KEY (customer_id) REFERENCES UserInfo(id), " +
                                                 "FOREIGN KEY (carrier_id) REFERENCES UserInfo(id))");
 
-                                // OrderItems
+                                // OrderItems (stores price and cost at time of purchase)
                                 stmt.executeUpdate("CREATE TABLE IF NOT EXISTS OrderItems (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
                                                 "order_id INT, " +
                                                 "product_id INT, " +
                                                 "quantity INT, " +
                                                 "price_at_purchase DOUBLE, " +
+                                                "cost_at_purchase DOUBLE, " +
                                                 "FOREIGN KEY (order_id) REFERENCES OrderInfo(id), " +
                                                 "FOREIGN KEY (product_id) REFERENCES ProductInfo(id))");
 

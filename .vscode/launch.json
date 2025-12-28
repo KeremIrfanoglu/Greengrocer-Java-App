@@ -6,7 +6,7 @@
             "name": "Launch Greengrocer",
             "request": "launch",
             "mainClass": "com.greengrocer.Main",
-            "vmArgs": "--module-path \"${workspaceFolder}/lib\" --add-modules javafx.controls,javafx.fxml"
+            "vmArgs": "--module-path \"${workspaceFolder}/lib\" --add-modules javafx.controls,javafx.fxml,javafx.media,javafx.web --enable-native-access=javafx.graphics,javafx.media -Djava.library.path=\"${workspaceFolder}/lib\" -Dprism.order=sw"
         },
         {
             "type": "java",

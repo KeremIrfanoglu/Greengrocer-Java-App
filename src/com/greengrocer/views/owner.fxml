@@ -251,39 +251,7 @@
                                </content>
                             </Tab>
 
-                            <!-- 3. PRODUCTS TAB -->
-                            <Tab text="Products">
-                               <content>
-                                  <VBox spacing="15" style="-fx-padding: 20;">
-                                     <children>
-                                        <SplitPane dividerPositions="0.6" VBox.vgrow="ALWAYS" orientation="HORIZONTAL">
-                                           <items>
-                                              <VBox spacing="10" style="-fx-padding: 10;">
-                                                 <Label text="Top Selling Products" style="-fx-font-weight: bold; -fx-text-fill: white;" />
-                                                 <TableView fx:id="topSellingTable" VBox.vgrow="ALWAYS">
-                                                    <columns>
-                                                       <TableColumn fx:id="colProdName" prefWidth="150" text="Product" />
-                                                       <TableColumn fx:id="colProdQty" prefWidth="80" text="Qty Sold" />
-                                                       <TableColumn fx:id="colProdRev" prefWidth="100" text="Revenue" />
-                                                    </columns>
-                                                 </TableView>
-                                              </VBox>
-                                              <VBox spacing="10" style="-fx-padding: 10;">
-                                                 <Label text="Dead Stock (Unsold)" style="-fx-font-weight: bold; -fx-text-fill: #EF4444;" />
-                                                 <TableView fx:id="deadStockTable" VBox.vgrow="ALWAYS">
-                                                    <columns>
-                                                       <TableColumn fx:id="colDeadName" prefWidth="200" text="Product" />
-                                                    </columns>
-                                                 </TableView>
-                                              </VBox>
-                                           </items>
-                                        </SplitPane>
-                                     </children>
-                                  </VBox>
-                               </content>
-                            </Tab>
-
-                            <!-- 4. PEAK HOURS TAB -->
+                            <!-- 3. PEAK HOURS TAB -->
                             <Tab text="Peak Hours">
                                <content>
                                   <VBox spacing="15" style="-fx-padding: 20;">

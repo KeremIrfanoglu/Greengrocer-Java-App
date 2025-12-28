@@ -31,14 +31,15 @@ public class AnalyticsDAO {
 
     public List<ProductSalesStats> getProductSalesAnalysis() throws SQLException {
         List<ProductSalesStats> list = new ArrayList<>();
-        // Note: Joining OrderItems with ProductInfo. Assuming OrderItems has
-        // product_id.
-        // Also assuming OrderItems table exists and links to ProductInfo.
-        // Adjusting query based on typical schema.
-        String sql = "SELECT p.name, SUM(oi.quantity) as total_qty, SUM(oi.price * oi.quantity) as total_rev " +
+        // Calculate revenue, cost, and quantities for each product
+        // Uses price_at_purchase and cost_at_purchase for accurate historical data
+        String sql = "SELECT p.name, " +
+                "COALESCE(SUM(oi.quantity), 0) as total_qty, " +
+                "COALESCE(SUM(oi.price_at_purchase * oi.quantity), 0) as total_rev, " +
+                "COALESCE(SUM(oi.cost_at_purchase * oi.quantity), 0) as total_cost " +
                 "FROM ProductInfo p " +
                 "LEFT JOIN OrderItems oi ON p.id = oi.product_id " +
-                "GROUP BY p.id " +
+                "GROUP BY p.id, p.name " +
                 "ORDER BY total_rev DESC";
 
         try (Connection conn = DatabaseAdapter.getConnection();
@@ -46,10 +47,10 @@ public class AnalyticsDAO {
                 ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 String name = rs.getString("name");
-                double qty = rs.getDouble("total_qty"); // quantity might be double for weight
-                // If quantity is null (no sales), it returns 0
+                double qty = rs.getDouble("total_qty");
                 double rev = rs.getDouble("total_rev");
-                list.add(new ProductSalesStats(name, qty, rev));
+                double cost = rs.getDouble("total_cost");
+                list.add(new ProductSalesStats(name, qty, rev, cost));
             }
         }
         return list;

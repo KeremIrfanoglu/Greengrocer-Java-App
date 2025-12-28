@@ -40,6 +40,10 @@ public class CustomerController {
     // Rating cache - loaded once, used for all cells
     private java.util.Map<Integer, com.greengrocer.models.CarrierRating> ratingCache = new java.util.HashMap<>();
 
+    // Favorites cache - loaded once, used for all product cards (performance
+    // optimization)
+    private java.util.Set<Integer> favoriteProductIds = new java.util.HashSet<>();
+
     @FXML
     private javafx.scene.control.TabPane mainTabPane;
     @FXML
@@ -54,6 +58,10 @@ public class CustomerController {
     private FlowPane shopFlowPane;
 
     private Product selectedProduct = null; // For grid view selection
+
+    // Product card cache - for efficient single-card updates instead of full grid
+    // refresh
+    private java.util.Map<Integer, VBox> productCardMap = new java.util.HashMap<>();
 
     @FXML
     private javafx.scene.control.ComboBox<String> filterTypeCombo;
@@ -306,9 +314,29 @@ public class CustomerController {
         colCartName.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductName()));
         colCartPrice
                 .setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getPrice()).asObject());
+        colCartPrice.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null)
+                    setText(null);
+                else
+                    setText(FormatHelper.formatCurrency(price));
+            }
+        });
         colCartQty.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         colCartTotal
                 .setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotal()).asObject());
+        colCartTotal.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double total, boolean empty) {
+                super.updateItem(total, empty);
+                if (empty || total == null)
+                    setText(null);
+                else
+                    setText(FormatHelper.formatCurrency(total));
+            }
+        });
 
         cartTable.setItems(cartList);
 
@@ -350,6 +378,11 @@ public class CustomerController {
             // Sort products by name alphabetically (A-Z)
             allProducts.sort((p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName()));
             productList = FXCollections.observableArrayList(allProducts);
+
+            // Load favorites once into cache (performance optimization)
+            favoriteProductIds.clear();
+            favoriteProductIds.addAll(favoritesDAO.getFavoriteProductIds(currentUser.getId()));
+
             refreshShopGrid();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -361,11 +394,33 @@ public class CustomerController {
         if (shopFlowPane == null)
             return;
         shopFlowPane.getChildren().clear();
+        productCardMap.clear();
 
-        for (
+        for (Product product : productList) {
+            VBox card = createShopCard(product);
+            productCardMap.put(product.getId(), card);
+            shopFlowPane.getChildren().add(card);
+        }
+    }
 
-        Product product : productList) {
-            shopFlowPane.getChildren().add(createShopCard(product));
+    /**
+     * Update only the single product card instead of refreshing entire grid.
+     * This provides much better performance for quantity changes.
+     */
+    private void updateSingleProductCard(Product product) {
+        VBox card = productCardMap.get(product.getId());
+        if (card == null)
+            return;
+
+        // Find the action container (last child before spacer, which is at index
+        // card.getChildren().size() - 2)
+        // ActionBox is the last element in the card
+        if (card.getChildren().size() > 1) {
+            javafx.scene.Node lastChild = card.getChildren().get(card.getChildren().size() - 1);
+            if (lastChild instanceof VBox) {
+                VBox actionBox = (VBox) lastChild;
+                updateProductCardControls(product, actionBox);
+            }
         }
     }
 
@@ -379,17 +434,13 @@ public class CustomerController {
         card.setPadding(new Insets(10));
         card.setAlignment(Pos.TOP_CENTER);
 
-        // Favorite star indicator with fixed height
+        // Favorite star indicator with fixed height (uses cached data - no DB query)
         Label favLabel = new Label();
         favLabel.setPrefHeight(16);
         favLabel.setMinHeight(16);
-        try {
-            if (favoritesDAO.isFavorite(currentUser.getId(), product.getId())) {
-                favLabel.setText("★");
-                favLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #FFD700;");
-            }
-        } catch (SQLException e) {
-            // Ignore
+        if (favoriteProductIds.contains(product.getId())) {
+            favLabel.setText("★");
+            favLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #FFD700;");
         }
 
         // Image container with fixed height
@@ -502,8 +553,8 @@ public class CustomerController {
         statusLabel.setText("Added " + quantity + " x " + product.getName());
         statusLabel.setStyle("-fx-text-fill: #4CAF50;");
 
-        // Refresh grid to show updated controls
-        refreshShopGrid();
+        // Update only this product's card (not entire grid - performance optimization)
+        updateSingleProductCard(product);
 
     }
 
@@ -656,7 +707,7 @@ public class CustomerController {
         }
         cartTable.refresh();
         updateCartTotalWithDiscount();
-        refreshShopGrid(); // Update UI buttons
+        updateSingleProductCard(product); // Update only this card
     }
 
     private void handleQuantityUpdate(Product product, double newQty) {
@@ -703,7 +754,7 @@ public class CustomerController {
 
         cartTable.refresh();
         updateCartTotalWithDiscount();
-        refreshShopGrid();
+        updateSingleProductCard(product); // Update only this card
     }
 
     private void loadOrders() {

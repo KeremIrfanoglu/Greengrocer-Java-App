@@ -39,19 +39,20 @@ public class OrderDAO {
                 throw new SQLException("Creating order failed, no ID obtained.");
             }
 
-            // 2. Insert Order Items and Update Stock
-            String itemQuery = "INSERT INTO OrderItems (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)";
+            // 2. Insert Order Items (with price and cost at purchase) and Update Stock
+            String itemQuery = "INSERT INTO OrderItems (order_id, product_id, quantity, price_at_purchase, cost_at_purchase) VALUES (?, ?, ?, ?, ?)";
             String stockQuery = "UPDATE ProductInfo SET stock = stock - ? WHERE id = ?";
 
             itemStmt = conn.prepareStatement(itemQuery);
             stockStmt = conn.prepareStatement(stockQuery);
 
             for (CartItem item : items) {
-                // Add Item
+                // Add Item with both price and cost at time of purchase
                 itemStmt.setInt(1, orderId);
                 itemStmt.setInt(2, item.getProduct().getId());
                 itemStmt.setDouble(3, item.getQuantity());
                 itemStmt.setDouble(4, item.getPrice());
+                itemStmt.setDouble(5, item.getProduct().getCostPrice()); // Store cost at purchase
                 itemStmt.addBatch();
 
                 // Update Stock
