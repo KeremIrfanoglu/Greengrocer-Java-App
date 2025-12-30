@@ -93,19 +93,28 @@ public class Product {
         return imageData;
     }
 
+    private Image cachedImage;
+
+    // ... existing constructor ...
+
     public void setImageData(byte[] imageData) {
         this.imageData = imageData;
+        this.cachedImage = null; // Invalidate cache
     }
 
     /**
      * Returns a JavaFX Image from the stored byte array.
-     * Returns null if no image data exists.
-     * Note: Image is loaded at original resolution. Use ImageView's
-     * fitWidth/fitHeight for display sizing.
+     * Caches the image after first load to prevent expensive re-decoding.
+     * Loads at a max width of 200px to optimize memory usage.
      */
     public Image getImage() {
+        if (cachedImage != null) {
+            return cachedImage;
+        }
         if (imageData != null && imageData.length > 0) {
-            return new Image(new ByteArrayInputStream(imageData));
+            // Load with requested width 200 to save memory, preserving aspect ratio
+            cachedImage = new Image(new ByteArrayInputStream(imageData), 200, 0, true, true);
+            return cachedImage;
         }
         return null;
     }

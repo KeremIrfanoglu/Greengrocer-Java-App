@@ -13,6 +13,10 @@ import com.greengrocer.models.CarrierPerformance;
 import com.greengrocer.models.CarrierRating;
 import com.greengrocer.models.ProductSalesStats;
 import com.greengrocer.models.HourlyOrderStats;
+import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -660,7 +664,7 @@ public class OwnerController {
         nameLabel.setAlignment(Pos.CENTER);
 
         // Type label
-        Label typeLabel = new Label(product.getType());
+        Label typeLabel = new Label(product.getType() + " (" + (product.isSoldByKg() ? "Kg" : "Piece") + ")");
         typeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #94A3B8;");
         typeLabel.setPrefHeight(18);
 
@@ -730,7 +734,22 @@ public class OwnerController {
                 "Beverages", "Snacks"));
         typeCombo.setPromptText("Select Type");
         typeCombo.setPrefWidth(220);
-        typeCombo.setStyle("-fx-background-color: #334155; -fx-text-fill: white; -fx-prompt-text-fill: #94A3B8;");
+        typeCombo.setStyle(
+                "-fx-background-color: #334155; -fx-text-fill: white; -fx-prompt-text-fill: #94A3B8; -fx-opacity: 1.0;");
+
+        typeCombo.setButtonCell(new javafx.scene.control.ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(typeCombo.getPromptText());
+                    setTextFill(javafx.scene.paint.Color.web("#94A3B8"));
+                } else {
+                    setText(item);
+                    setTextFill(javafx.scene.paint.Color.WHITE);
+                }
+            }
+        });
 
         TextField priceField = createStyledTextField("Price (₺)", 150);
         TextField costField = createStyledTextField("Cost Price", 150);
@@ -769,6 +788,49 @@ public class OwnerController {
             }
         });
 
+        // Main layout
+        javafx.scene.layout.VBox mainLayout = new javafx.scene.layout.VBox(15);
+        mainLayout.setPadding(new Insets(20));
+        mainLayout.setStyle("-fx-background-color: #1e293b;");
+
+        // Header with icon
+        Label headerLabel = new Label(isEdit ? "✏️ Edit Product Details" : "➕ Add New Product");
+        headerLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #F8FAFC;");
+
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(15);
+        grid.setVgap(12);
+        grid.setStyle("-fx-background-color: #334155; -fx-background-radius: 12; -fx-padding: 20;");
+
+        ComboBox<String> unitCombo = new ComboBox<>();
+        unitCombo.setItems(FXCollections.observableArrayList("Kg", "Piece"));
+        unitCombo.setValue("Piece"); // Default
+        unitCombo.setPrefWidth(220);
+        unitCombo.setStyle("-fx-background-color: #334155; -fx-text-fill: white; -fx-opacity: 1.0;");
+
+        unitCombo.setButtonCell(new javafx.scene.control.ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setTextFill(javafx.scene.paint.Color.WHITE);
+                }
+            }
+        });
+
+        // Auto-select unit based on type
+        typeCombo.setOnAction(e -> {
+            String selectedType = typeCombo.getValue();
+            if ("Fruit".equals(selectedType) || "Vegetable".equals(selectedType)) {
+                unitCombo.setValue("Kg");
+            } else {
+                unitCombo.setValue("Piece");
+            }
+        });
+
         // Pre-fill fields if editing
         if (isEdit) {
             nameField.setText(product.getName());
@@ -780,40 +842,33 @@ public class OwnerController {
             if (product.getImage() != null) {
                 previewImage.setImage(product.getImage());
             }
+            // Set unit type based on stored value (kg/pcs mapped to Kg/Piece)
+            if (product.isSoldByKg()) {
+                unitCombo.setValue("Kg");
+            } else {
+                unitCombo.setValue("Piece");
+            }
         }
-
-        // Main layout
-        javafx.scene.layout.VBox mainLayout = new javafx.scene.layout.VBox(15);
-        mainLayout.setPadding(new Insets(20));
-        mainLayout.setStyle("-fx-background-color: #1e293b;");
-
-        // Header with icon
-        Label headerLabel = new Label(isEdit ? "✏️ Edit Product Details" : "➕ Add New Product");
-        headerLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #F8FAFC;");
-
-        // Form grid
-        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
-        grid.setHgap(15);
-        grid.setVgap(12);
-        grid.setStyle("-fx-background-color: #334155; -fx-background-radius: 12; -fx-padding: 20;");
 
         grid.add(createStyledLabel("Name:"), 0, 0);
         grid.add(nameField, 1, 0);
         grid.add(createStyledLabel("Type:"), 0, 1);
         grid.add(typeCombo, 1, 1);
-        grid.add(createStyledLabel("Price (₺):"), 0, 2);
-        grid.add(priceField, 1, 2);
-        grid.add(createStyledLabel("Cost Price:"), 0, 3);
-        grid.add(costField, 1, 3);
-        grid.add(createStyledLabel("Stock:"), 0, 4);
-        grid.add(stockField, 1, 4);
-        grid.add(createStyledLabel("Threshold:"), 0, 5);
-        grid.add(thresholdField, 1, 5);
-        grid.add(createStyledLabel("Image:"), 0, 6);
+        grid.add(createStyledLabel("Unit Type:"), 0, 2);
+        grid.add(unitCombo, 1, 2);
+        grid.add(createStyledLabel("Price (₺):"), 0, 3);
+        grid.add(priceField, 1, 3);
+        grid.add(createStyledLabel("Cost Price:"), 0, 4);
+        grid.add(costField, 1, 4);
+        grid.add(createStyledLabel("Stock:"), 0, 5);
+        grid.add(stockField, 1, 5);
+        grid.add(createStyledLabel("Threshold:"), 0, 6);
+        grid.add(thresholdField, 1, 6);
+        grid.add(createStyledLabel("Image:"), 0, 7);
 
         javafx.scene.layout.VBox imageBox = new javafx.scene.layout.VBox(10, browseBtn, previewImage);
         imageBox.setAlignment(Pos.CENTER_LEFT);
-        grid.add(imageBox, 1, 6);
+        grid.add(imageBox, 1, 7);
 
         // Status label for validation messages
         Label dialogStatus = new Label();
@@ -889,12 +944,14 @@ public class OwnerController {
         saveBtn.setOnAction(e -> {
             String name = nameField.getText().trim();
             String type = typeCombo.getValue();
+            String unitType = unitCombo.getValue(); // Get selected unit
             String priceStr = priceField.getText().trim();
             String costStr = costField.getText().trim();
             String stockStr = stockField.getText().trim();
             String thresholdStr = thresholdField.getText().trim();
 
-            if (name.isEmpty() || type == null || priceStr.isEmpty() || stockStr.isEmpty() || thresholdStr.isEmpty()) {
+            if (name.isEmpty() || type == null || unitType == null || priceStr.isEmpty() || stockStr.isEmpty()
+                    || thresholdStr.isEmpty()) {
                 dialogStatus.setText("All fields are required.");
                 dialogStatus.setStyle("-fx-text-fill: #EF4444;");
                 return;
@@ -912,9 +969,31 @@ public class OwnerController {
                     return;
                 }
 
+                // Unit-based Stock Validation
+                if ("Piece".equalsIgnoreCase(unitType)) {
+                    if (stock % 1 != 0) {
+                        dialogStatus.setText("Stock for 'Piece' must be a whole number.");
+                        dialogStatus.setStyle("-fx-text-fill: #EF4444;");
+                        return;
+                    }
+                } else if ("Kg".equalsIgnoreCase(unitType)) {
+                    // Start of '1 decimal place' check
+                    // Allow e.g. 3.5 but NOT 3.55
+                    // Multiply by 10, check if integer (with epsilon)
+                    double multiplied = stock * 10;
+                    if (Math.abs(multiplied - Math.round(multiplied)) > 0.001) {
+                        dialogStatus.setText("Stock for 'Kg' can have at most 1 decimal place.");
+                        dialogStatus.setStyle("-fx-text-fill: #EF4444;");
+                        return;
+                    }
+                }
+
+                String dbUnitType = unitType.toLowerCase(); // "piece" or "kg"
+
                 if (isEdit) {
                     product.setName(name);
                     product.setType(type);
+                    product.setUnitType(dbUnitType); // Update unit type
                     product.setPrice(price);
                     product.setCostPrice(cost);
                     product.setStock(stock);
@@ -931,7 +1010,8 @@ public class OwnerController {
                 } else {
                     FileInputStream imageStream = selectedImage[0] != null ? new FileInputStream(selectedImage[0])
                             : null;
-                    if (productDAO.addProduct(name, type, price, cost, stock, threshold, imageStream, "kg")) {
+                    // Use dbUnitType instead of hardcoded string
+                    if (productDAO.addProduct(name, type, price, cost, stock, threshold, imageStream, dbUnitType)) {
                         statusLabel.setText("Product added successfully!");
                         statusLabel.setStyle("-fx-text-fill: #4CAF50;");
                         loadProducts();
@@ -939,17 +1019,11 @@ public class OwnerController {
                     }
                 }
             } catch (NumberFormatException ex) {
-                dialogStatus.setText("Invalid number format.");
+                dialogStatus.setText("Invalid numeric input.");
                 dialogStatus.setStyle("-fx-text-fill: #EF4444;");
-            } catch (SQLException ex) {
-                if (ex.getMessage().contains("already exists")) {
-                    dialogStatus.setText("Product name already exists!");
-                } else {
-                    dialogStatus.setText("Database error: " + ex.getMessage());
-                }
-                dialogStatus.setStyle("-fx-text-fill: #EF4444;");
-            } catch (Exception ex) {
-                dialogStatus.setText("Error: " + ex.getMessage());
+            } catch (IOException | SQLException ex) {
+                ex.printStackTrace();
+                dialogStatus.setText("Error saving product: " + ex.getMessage());
                 dialogStatus.setStyle("-fx-text-fill: #EF4444;");
             }
         });
@@ -1092,18 +1166,11 @@ public class OwnerController {
     }
 
     private void clearFields() {
-        prodNameField.clear();
-        prodTypeCombo.getSelectionModel().clearSelection();
-        prodPriceField.clear();
-        prodStockField.clear();
-        prodThresholdField.clear();
-        prodCostField.clear();
+        // UI fields are now handled in Dialogs. Only reset internal state.
         selectedImageFile = null;
         selectedProduct = null;
         selectedProductId = -1;
-        if (previewImageView != null) {
-            previewImageView.setImage(null);
-        }
+        // previewImageView is also part of old UI
     }
 
     // Carrier Management Methods
