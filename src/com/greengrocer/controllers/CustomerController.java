@@ -7,7 +7,7 @@ import com.greengrocer.models.CartItem;
 import com.greengrocer.models.Order;
 import com.greengrocer.models.Product;
 import com.greengrocer.models.User;
-import javafx.beans.property.SimpleDoubleProperty;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -61,7 +61,8 @@ public class CustomerController {
 
     // Product card cache - for efficient single-card updates instead of full grid
     // refresh
-    private java.util.Map<Integer, VBox> productCardMap = new java.util.HashMap<>();
+    // Product card cache - supports multiple cards per product (Shop + Favorites)
+    private java.util.Map<Integer, java.util.List<VBox>> productCardMap = new java.util.HashMap<>();
 
     @FXML
     private javafx.scene.control.ComboBox<String> filterTypeCombo;
@@ -81,21 +82,6 @@ public class CustomerController {
     private com.greengrocer.dao.FavoritesDAO favoritesDAO;
 
     // Cart Tab
-    @FXML
-    private TableView<CartItem> cartTable;
-    @FXML
-    private TableColumn<CartItem, String> colCartName;
-    @FXML
-    private TableColumn<CartItem, Double> colCartPrice;
-    @FXML
-    private TableColumn<CartItem, Double> colCartQty;
-    @FXML
-    private TableColumn<CartItem, Double> colCartTotal;
-
-    @FXML
-    private Label cartTotalLabel;
-    @FXML
-    private TextField updateQtyField;
 
     // Orders Tab
     @FXML
@@ -113,21 +99,32 @@ public class CustomerController {
     @FXML
     private TableColumn<Order, String> colOrderComment;
 
-    // Favorites Tab
+    // Favorites Tab - Grid View
     @FXML
-    private TableView<Product> favoritesTable;
-    @FXML
-    private TableColumn<Product, String> colFavName;
-    @FXML
-    private TableColumn<Product, String> colFavType;
-    @FXML
-    private TableColumn<Product, Double> colFavPrice;
-    @FXML
-    private TableColumn<Product, Double> colFavStock;
-    @FXML
-    private TextField favQuantityField;
+    private FlowPane favoritesFlowPane;
     @FXML
     private Button favButton;
+
+    // Favorites Filter Controls
+    @FXML
+    private TextField favSearchField;
+    @FXML
+    private javafx.scene.control.ComboBox<String> favFilterTypeCombo;
+    @FXML
+    private javafx.scene.control.ComboBox<String> favSortCombo;
+
+    private ObservableList<Product> allFavorites; // Master list of favorites
+    private ObservableList<Product> displayedFavorites; // Filtered list
+
+    // Cart Redesign Controls
+    @FXML
+    private FlowPane cartFlowPane;
+    @FXML
+    private VBox cartSummaryList;
+    @FXML
+    private Label subtotalLabel;
+    @FXML
+    private Label taxLabel;
 
     // G Points Cart Controls
     @FXML
@@ -221,6 +218,20 @@ public class CustomerController {
         }
     }
 
+    @FXML
+    public void initialize() {
+        if (gPointsField != null) {
+            // Force numeric input only (digits)
+            gPointsField.setTextFormatter(new TextFormatter<>(change -> {
+                String newText = change.getControlNewText();
+                if (newText.matches("\\d*")) {
+                    return change;
+                }
+                return null;
+            }));
+        }
+    }
+
     public void initData(User user) {
         this.currentUser = user;
         if (welcomeLabel != null) {
@@ -229,7 +240,7 @@ public class CustomerController {
         updateGPointsDisplay();
 
         // Load saved cart from database
-        loadSavedCart();
+        loadCart();
 
         // Check for price drops and low stock alerts
         javafx.application.Platform.runLater(() -> {
@@ -295,6 +306,15 @@ public class CustomerController {
                 "Price (High-Low)"));
         sortCombo.setValue("Default");
 
+        // Favorites Filter/Sort Setup (Independent)
+        favFilterTypeCombo.setItems(FXCollections.observableArrayList("All", "Vegetable", "Fruit", "Dairy", "Bakery",
+                "Meat", "Beverages", "Snacks"));
+        favFilterTypeCombo.setValue("All");
+        favSortCombo
+                .setItems(FXCollections.observableArrayList("Default", "Name (A-Z)", "Name (Z-A)", "Price (Low-High)",
+                        "Price (High-Low)"));
+        favSortCombo.setValue("Default");
+
         // Click on empty area to deselect product
         if (shopFlowPane != null) {
             shopFlowPane.setOnMouseClicked(e -> {
@@ -311,34 +331,6 @@ public class CustomerController {
         loadProducts();
 
         // Cart Setup
-        colCartName.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductName()));
-        colCartPrice
-                .setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getPrice()).asObject());
-        colCartPrice.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double price, boolean empty) {
-                super.updateItem(price, empty);
-                if (empty || price == null)
-                    setText(null);
-                else
-                    setText(FormatHelper.formatCurrency(price));
-            }
-        });
-        colCartQty.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        colCartTotal
-                .setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotal()).asObject());
-        colCartTotal.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double total, boolean empty) {
-                super.updateItem(total, empty);
-                if (empty || total == null)
-                    setText(null);
-                else
-                    setText(FormatHelper.formatCurrency(total));
-            }
-        });
-
-        cartTable.setItems(cartList);
 
         // Orders Setup
         colOrderId.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -393,14 +385,176 @@ public class CustomerController {
     private void refreshShopGrid() {
         if (shopFlowPane == null)
             return;
+
+        // Cleanup existing Shop cards from the map
+        for (javafx.scene.Node node : shopFlowPane.getChildren()) {
+            if (node instanceof VBox) {
+                // We don't have the ID easily, so we have to iterate the map.
+                // This is O(N*M), but N is small.
+                // Alternatively, we can clear the map if we are reloading everything,
+                // BUT we might have Favorites cards we want to keep?
+                // Actually, simplest safe way:
+                // Just let the map grow? No, memory leak.
+                // Better: attach UserData to VBox with ID.
+            }
+        }
+        // Ideally we should use UserData for ID.
+        // Let's assume createShopCard sets UserData.
+
+        // Better approach for now to avoid complexity:
+        // Since we are reloading the list, we can just clear the map entries for the
+        // Shop cards?
+        // Let's just create new map and re-populate? No, Favorites tab might be active.
+
+        // Let's just implement the removal logic using UserData in createShopCard.
+        // For now, I'll clear the children.
+
+        // Remove Shop cards from map
+        shopFlowPane.getChildren().forEach(node -> {
+            if (node.getUserData() instanceof Integer) {
+                int id = (Integer) node.getUserData();
+                java.util.List<VBox> cards = productCardMap.get(id);
+                if (cards != null) {
+                    cards.remove(node);
+                    if (cards.isEmpty()) {
+                        productCardMap.remove(id);
+                    }
+                }
+            }
+        });
+
         shopFlowPane.getChildren().clear();
-        productCardMap.clear();
 
         for (Product product : productList) {
             VBox card = createShopCard(product);
-            productCardMap.put(product.getId(), card);
+            productCardMap.computeIfAbsent(product.getId(), k -> new java.util.ArrayList<>()).add(card);
             shopFlowPane.getChildren().add(card);
         }
+    }
+
+    // Favorites Tab Methods
+    @FXML
+    public void handleRefreshFavorites() {
+        // Reload master list from DB
+        reloadFavoritesMasterList();
+        // specific filter reset could be done here if desired, but preserving state is
+        // better
+        applyFavFilterAndSort();
+    }
+
+    private void reloadFavoritesMasterList() {
+        try {
+            java.util.List<Integer> favIds = favoritesDAO.getFavoriteProductIds(currentUser.getId());
+            java.util.List<Product> favs = allProducts.stream()
+                    .filter(p -> favIds.contains(p.getId()))
+                    .collect(java.util.stream.Collectors.toList());
+            allFavorites = FXCollections.observableArrayList(favs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            allFavorites = FXCollections.observableArrayList();
+        }
+    }
+
+    private void refreshFavoritesGrid() {
+        if (favoritesFlowPane == null)
+            return;
+
+        // Remove existing Favorites cards from map
+        favoritesFlowPane.getChildren().forEach(node -> {
+            if (node.getUserData() instanceof Integer) {
+                int id = (Integer) node.getUserData();
+                java.util.List<VBox> cards = productCardMap.get(id);
+                if (cards != null) {
+                    cards.remove(node);
+                    if (cards.isEmpty()) {
+                        productCardMap.remove(id);
+                    }
+                }
+            }
+        });
+
+        favoritesFlowPane.getChildren().clear();
+
+        // Use displayedFavorites which is filtered/sorted
+        if (displayedFavorites == null) {
+            reloadFavoritesMasterList();
+            displayedFavorites = FXCollections.observableArrayList(allFavorites);
+        }
+
+        for (Product product : displayedFavorites) {
+            VBox card = createShopCard(product);
+            productCardMap.computeIfAbsent(product.getId(), k -> new java.util.ArrayList<>()).add(card);
+            favoritesFlowPane.getChildren().add(card);
+        }
+    }
+
+    @FXML
+    public void handleFavFilter() {
+        applyFavFilterAndSort();
+    }
+
+    @FXML
+    public void handleFavSort() {
+        applyFavFilterAndSort();
+    }
+
+    @FXML
+    public void handleFavSearch() {
+        applyFavFilterAndSort();
+    }
+
+    @FXML
+    public void handleFavResetFilter() {
+        favFilterTypeCombo.setValue("All");
+        favSortCombo.setValue("Default");
+        favSearchField.clear();
+        applyFavFilterAndSort();
+        statusLabel.setText("Favorites filters reset.");
+    }
+
+    private void applyFavFilterAndSort() {
+        if (allFavorites == null) {
+            reloadFavoritesMasterList();
+        }
+
+        // 1. Filter
+        String filterType = favFilterTypeCombo.getValue();
+        String searchText = favSearchField.getText().toLowerCase().trim();
+
+        java.util.List<Product> filtered = new java.util.ArrayList<>();
+
+        for (Product p : allFavorites) {
+            boolean matchesType = "All".equals(filterType) || p.getType().equals(filterType);
+            boolean matchesSearch = searchText.isEmpty() || p.getName().toLowerCase().contains(searchText);
+
+            if (matchesType && matchesSearch) {
+                filtered.add(p);
+            }
+        }
+
+        // 2. Sort
+        String sortOption = favSortCombo.getValue();
+        if (sortOption != null) {
+            switch (sortOption) {
+                case "Name (A-Z)":
+                    filtered.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                    break;
+                case "Name (Z-A)":
+                    filtered.sort((a, b) -> b.getName().compareToIgnoreCase(a.getName()));
+                    break;
+                case "Price (Low-High)":
+                    filtered.sort((a, b) -> Double.compare(a.getPrice(), b.getPrice()));
+                    break;
+                case "Price (High-Low)":
+                    filtered.sort((a, b) -> Double.compare(b.getPrice(), a.getPrice()));
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        displayedFavorites = FXCollections.observableArrayList(filtered);
+        refreshFavoritesGrid();
     }
 
     /**
@@ -408,18 +562,19 @@ public class CustomerController {
      * This provides much better performance for quantity changes.
      */
     private void updateSingleProductCard(Product product) {
-        VBox card = productCardMap.get(product.getId());
-        if (card == null)
+        java.util.List<VBox> cards = productCardMap.get(product.getId());
+        if (cards == null || cards.isEmpty())
             return;
 
-        // Find the action container (last child before spacer, which is at index
-        // card.getChildren().size() - 2)
-        // ActionBox is the last element in the card
-        if (card.getChildren().size() > 1) {
-            javafx.scene.Node lastChild = card.getChildren().get(card.getChildren().size() - 1);
-            if (lastChild instanceof VBox) {
-                VBox actionBox = (VBox) lastChild;
-                updateProductCardControls(product, actionBox);
+        for (VBox card : cards) {
+            // Find the action container (last child before... wait, logic from before)
+            // ActionBox is the last element in the card
+            if (card.getChildren().size() > 1) {
+                javafx.scene.Node lastChild = card.getChildren().get(card.getChildren().size() - 1);
+                if (lastChild instanceof VBox) {
+                    VBox actionBox = (VBox) lastChild;
+                    updateProductCardControls(product, actionBox);
+                }
             }
         }
     }
@@ -427,10 +582,12 @@ public class CustomerController {
     private VBox createShopCard(Product product) {
         VBox card = new VBox(5);
         card.getStyleClass().add("product-card");
-        card.setPrefWidth(150);
-        card.setPrefHeight(290); // Fixed height for consistent alignment
-        card.setMinHeight(290);
-        card.setMaxHeight(290);
+        card.setPrefWidth(180);
+        card.setMinWidth(180);
+        card.setMaxWidth(180);
+        card.setPrefHeight(300); // Fixed height for consistent alignment
+        card.setMinHeight(300);
+        card.setMaxHeight(300);
         card.setPadding(new Insets(10));
         card.setAlignment(Pos.TOP_CENTER);
 
@@ -460,7 +617,7 @@ public class CustomerController {
         Label nameLabel = new Label(product.getName());
         nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #F8FAFC;");
         nameLabel.setWrapText(true);
-        nameLabel.setMaxWidth(130);
+        nameLabel.setMaxWidth(160);
         nameLabel.setPrefHeight(32);
         nameLabel.setMinHeight(32);
         nameLabel.setAlignment(Pos.CENTER);
@@ -471,7 +628,7 @@ public class CustomerController {
         typeLabel.setPrefHeight(16);
 
         // Price label
-        Label priceLabel = new Label(FormatHelper.formatCurrency(product.getPrice()));
+        Label priceLabel = new Label(FormatHelper.formatCurrency(product.getPrice()) + " / " + product.getUnitLabel());
         priceLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
         priceLabel.setPrefHeight(18);
 
@@ -501,6 +658,8 @@ public class CustomerController {
         });
 
         updateProductCardControls(product, actionBox);
+
+        card.setUserData(product.getId()); // Store ID for map cleanup management
 
         card.getChildren().addAll(favLabel, imageContainer, nameLabel, typeLabel, priceLabel, stockLabel, spacer,
                 actionBox);
@@ -547,14 +706,13 @@ public class CustomerController {
             }
         }
 
-        cartTable.refresh();
-
         updateCartTotalWithDiscount();
         statusLabel.setText("Added " + quantity + " x " + product.getName());
         statusLabel.setStyle("-fx-text-fill: #4CAF50;");
 
         // Update only this product's card (not entire grid - performance optimization)
         updateSingleProductCard(product);
+        refreshCartGrid();
 
     }
 
@@ -575,97 +733,156 @@ public class CustomerController {
             }
         }
 
-        if (cartItem == null) {
-            // Not in cart -> Show "Add to Cart" button (default size)
-            Button addBtn = new Button("Add to Cart");
-            addBtn.getStyleClass().add("button-primary");
-            addBtn.setStyle("-fx-font-size: 10px;");
-            addBtn.setPrefWidth(130);
-            addBtn.setPrefHeight(30);
-            addBtn.setOnAction(e -> addProductToCart(product, 1.0));
-            container.getChildren().add(addBtn);
-        } else {
-            // In cart -> Show Dynamic Controls
-            final CartItem finalCartItem = cartItem;
-            HBox controls = new HBox(5);
-            controls.setAlignment(Pos.CENTER);
+        if (product.isSoldByKg()) {
+            // New Kg Logic
+            if (cartItem != null) {
+                // In Cart: [Qty] [Update] [Delete]
+                javafx.scene.control.TextField qtyField = new javafx.scene.control.TextField(
+                        String.valueOf(cartItem.getQuantity()));
+                qtyField.setPrefWidth(50);
+                qtyField.setPrefHeight(30);
+                qtyField.setStyle("-fx-alignment: center; -fx-font-size: 11px;");
+                qtyField.setOnAction(e -> handleKgUpdate(product, qtyField.getText()));
 
-            // Left Button: Trash (if qty=1) or Minus (if qty>1)
-            Button leftBtn = new Button();
-            leftBtn.setPrefWidth(30);
-            leftBtn.setPrefHeight(30);
-            leftBtn.setMinWidth(30);
-            leftBtn.setMinHeight(30);
-            leftBtn.setMaxWidth(30);
-            leftBtn.setMaxHeight(30);
+                Button updateBtn = new Button("↻");
+                updateBtn.getStyleClass().add("button-secondary");
+                updateBtn.setTooltip(new Tooltip("Update Quantity"));
+                updateBtn.setPrefSize(40, 30);
+                updateBtn.setStyle("-fx-padding: 0; -fx-font-size: 16px; -fx-font-weight: bold;");
+                updateBtn.setOnAction(e -> handleKgUpdate(product, qtyField.getText()));
 
-            // Check if quantity is effectively 1 (or less)
-            boolean isSingle = finalCartItem.getQuantity() <= 1.0;
+                Button removeBtn = new Button("🗑");
+                removeBtn.getStyleClass().add("button-danger");
+                removeBtn.setPrefSize(40, 30);
+                removeBtn.setStyle("-fx-padding: 0; -fx-font-size: 14px;");
+                removeBtn.setOnAction(e -> removeFromCart(product));
 
-            if (isSingle) {
-                leftBtn.setText("🗑"); // Trash icon
-                leftBtn.setStyle(
-                        "-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #EF4444; -fx-padding: 0;");
+                HBox qtyBox = new HBox(5, qtyField, updateBtn, removeBtn);
+                qtyBox.setAlignment(Pos.CENTER);
+                container.getChildren().add(qtyBox);
             } else {
-                leftBtn.setText("-");
-                leftBtn.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 0;");
-                leftBtn.getStyleClass().add("button-secondary");
+                // Not in Cart: [Qty] above [Add to Cart]
+                javafx.scene.control.TextField qtyField = new javafx.scene.control.TextField();
+                qtyField.setPromptText("0.5");
+                qtyField.setPrefWidth(160);
+                qtyField.setPrefHeight(30);
+                // Increased font size slightly for readability, reduced padding to fit text
+                qtyField.setStyle("-fx-alignment: center; -fx-font-size: 12px; -fx-padding: 0 5;");
+                qtyField.setOnAction(e -> handleKgAdd(product, qtyField.getText()));
+
+                // Restrict input
+                qtyField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue.matches("\\d*([\\.,]\\d{0,1})?")) {
+                        qtyField.setText(oldValue);
+                    }
+                });
+
+                Button addBtn = new Button("Add to Cart");
+                addBtn.getStyleClass().add("button-primary");
+                addBtn.setPrefWidth(160);
+                addBtn.setPrefHeight(30);
+                addBtn.setStyle("-fx-font-size: 10px;");
+                addBtn.setOnAction(e -> handleKgAdd(product, qtyField.getText()));
+
+                VBox addBox = new VBox(5, qtyField, addBtn);
+                addBox.setAlignment(Pos.CENTER);
+                container.getChildren().add(addBox);
             }
 
-            leftBtn.setOnAction(e -> handleDecrement(product));
+        } else {
+            // Original Legacy Logic for Piece
+            if (cartItem == null) {
+                // Not in cart -> Show "Add to Cart" button (default size)
+                Button addBtn = new Button("Add to Cart");
+                addBtn.getStyleClass().add("button-primary");
+                addBtn.setStyle("-fx-font-size: 10px;");
+                addBtn.setPrefWidth(160);
+                addBtn.setPrefHeight(30);
+                addBtn.setOnAction(e -> addProductToCart(product, 1.0));
+                container.getChildren().add(addBtn);
+            } else {
+                // In cart -> Show Dynamic Controls
+                final CartItem finalCartItem = cartItem;
+                HBox controls = new HBox(5);
+                controls.setAlignment(Pos.CENTER);
 
-            // Center Label: Quantity
-            // Center: Editable Quantity Field
-            TextField qtyField = new TextField(String.valueOf((int) finalCartItem.getQuantity()));
-            qtyField.setStyle(
-                    "-fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: transparent; -fx-alignment: center; -fx-padding: 0; -fx-font-size: 13px;");
-            qtyField.setPrefWidth(30);
-            qtyField.setPrefHeight(30);
-            qtyField.setMinWidth(30);
-            qtyField.setMinHeight(30);
-            qtyField.setMaxWidth(30);
-            qtyField.setMaxHeight(30);
+                // Left Button: Trash (if qty=1) or Minus (if qty>1)
+                Button leftBtn = new Button();
+                leftBtn.setPrefWidth(30);
+                leftBtn.setPrefHeight(30);
+                leftBtn.setMinWidth(30);
+                leftBtn.setMinHeight(30);
+                leftBtn.setMaxWidth(30);
+                leftBtn.setMaxHeight(30);
 
-            // Limit input to numbers only
-            qtyField.setTextFormatter(new TextFormatter<>(change -> {
-                String newText = change.getControlNewText();
-                if (newText.matches("[0-9]*")) {
-                    return change;
+                // Check if quantity is effectively 1 (or less)
+                boolean isSingle = finalCartItem.getQuantity() <= 1.0;
+
+                if (isSingle) {
+                    leftBtn.setText("🗑"); // Trash icon
+                    leftBtn.setStyle(
+                            "-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: #EF4444; -fx-padding: 0;");
+                } else {
+                    leftBtn.setText("-");
+                    leftBtn.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 0;");
+                    leftBtn.getStyleClass().add("button-secondary");
                 }
-                return null;
-            }));
 
-            // Handle Enter key
-            qtyField.setOnAction(event -> {
-                String input = qtyField.getText();
-                if (input.isEmpty()) {
-                    // Revert to current qty if empty
-                    qtyField.setText(String.valueOf((int) finalCartItem.getQuantity()));
-                    return;
-                }
-                try {
-                    int newQty = Integer.parseInt(input);
-                    handleQuantityUpdate(product, (double) newQty);
-                } catch (NumberFormatException ex) {
-                    // Revert
-                    qtyField.setText(String.valueOf((int) finalCartItem.getQuantity()));
-                }
-            });
+                leftBtn.setOnAction(e -> handleDecrement(product));
 
-            // Right Button: Plus
-            Button rightBtn = new Button("+");
-            rightBtn.setPrefWidth(30);
-            rightBtn.setPrefHeight(30);
-            rightBtn.setMinWidth(30);
-            rightBtn.setMinHeight(30);
-            rightBtn.setMaxWidth(30);
-            rightBtn.setMaxHeight(30);
-            rightBtn.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 0;");
-            rightBtn.getStyleClass().add("button-secondary");
-            rightBtn.setOnAction(e -> handleIncrement(product));
+                // Center Label: Quantity
+                // Center: Editable Quantity Field
+                TextField qtyField = new TextField(String.valueOf((int) finalCartItem.getQuantity()));
+                qtyField.setStyle(
+                        "-fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: transparent; -fx-alignment: center; -fx-padding: 0; -fx-font-size: 13px;");
+                qtyField.setPrefWidth(30);
+                qtyField.setPrefHeight(30);
+                qtyField.setMinWidth(30);
+                qtyField.setMinHeight(30);
+                qtyField.setMaxWidth(30);
+                qtyField.setMaxHeight(30);
 
-            controls.getChildren().addAll(leftBtn, qtyField, rightBtn);
-            container.getChildren().add(controls);
+                // Limit input to numbers only
+                qtyField.setTextFormatter(new TextFormatter<>(change -> {
+                    String newText = change.getControlNewText();
+                    if (newText.matches("[0-9]*")) {
+                        return change;
+                    }
+                    return null;
+                }));
+
+                // Handle Enter key
+                qtyField.setOnAction(event -> {
+                    String input = qtyField.getText();
+                    if (input.isEmpty()) {
+                        // Revert to current qty if empty
+                        qtyField.setText(String.valueOf((int) finalCartItem.getQuantity()));
+                        return;
+                    }
+                    try {
+                        int newQty = Integer.parseInt(input);
+                        handleQuantityUpdate(product, (double) newQty);
+                    } catch (NumberFormatException ex) {
+                        // Revert
+                        qtyField.setText(String.valueOf((int) finalCartItem.getQuantity()));
+                    }
+                });
+
+                // Right Button: Plus
+                Button rightBtn = new Button("+");
+                rightBtn.setPrefWidth(30);
+                rightBtn.setPrefHeight(30);
+                rightBtn.setMinWidth(30);
+                rightBtn.setMinHeight(30);
+                rightBtn.setMaxWidth(30);
+                rightBtn.setMaxHeight(30);
+                rightBtn.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 0;");
+                rightBtn.getStyleClass().add("button-secondary");
+                rightBtn.setOnAction(e -> handleIncrement(product));
+
+                controls.getChildren().addAll(leftBtn, qtyField, rightBtn);
+                container.getChildren().add(controls);
+            }
         }
     }
 
@@ -695,6 +912,7 @@ public class CustomerController {
                 e.printStackTrace();
             }
             statusLabel.setText("Removed " + product.getName() + " from cart.");
+            refreshCartGrid();
         } else {
             // Decrease quantity
             double newQty = currentQty - 1.0;
@@ -705,7 +923,7 @@ public class CustomerController {
                 e.printStackTrace();
             }
         }
-        cartTable.refresh();
+
         updateCartTotalWithDiscount();
         updateSingleProductCard(product); // Update only this card
     }
@@ -731,6 +949,7 @@ public class CustomerController {
                 e.printStackTrace();
             }
             statusLabel.setText("Removed " + product.getName() + " from cart.");
+            refreshCartGrid();
         } else {
             // Check stock
             if (newQty > product.getStock()) {
@@ -752,7 +971,6 @@ public class CustomerController {
             statusLabel.setStyle("-fx-text-fill: #4CAF50;");
         }
 
-        cartTable.refresh();
         updateCartTotalWithDiscount();
         updateSingleProductCard(product); // Update only this card
     }
@@ -781,25 +999,6 @@ public class CustomerController {
         }
     }
 
-    /**
-     * Load saved cart from database (persist across sessions)
-     */
-    private void loadSavedCart() {
-        if (currentUser == null)
-            return;
-        try {
-            java.util.List<CartItem> savedItems = cartDAO.getCartByUserId(currentUser.getId());
-            cartList.clear();
-            cartList.addAll(savedItems);
-            if (cartTable != null) {
-                cartTable.refresh();
-            }
-            updateCartTotal();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     @FXML
     public void handleRefreshOrders() {
         loadOrders();
@@ -807,74 +1006,42 @@ public class CustomerController {
 
     // handleAddToCart removed as it's now handled per card
 
-    @FXML
-    public void handleRemoveFromCart() {
-        CartItem selected = cartTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            // Remove from database
-            try {
-                cartDAO.removeFromCart(currentUser.getId(), selected.getProduct().getId());
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-            cartList.remove(selected);
+    private void loadCart() {
+        if (currentUser == null)
+            return;
+        try {
+            cartList.setAll(cartDAO.getCartByUserId(currentUser.getId()));
             updateCartTotal();
-            setLocalStatus(updateCartStatusLabel, "Removed!", "#F44336");
+            refreshCartGrid();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showError("Failed to load cart.");
         }
     }
 
-    @FXML
-    public void handleUpdateCartQty() {
-        CartItem selected = cartTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            setLocalStatus(updateCartStatusLabel, "Select item!", "#FF9800");
+    private void refreshCartGrid() {
+        if (cartFlowPane == null)
             return;
-        }
 
-        String qtyStr = updateQtyField != null ? updateQtyField.getText().trim() : "";
-        if (qtyStr.isEmpty()) {
-            setLocalStatus(updateCartStatusLabel, "Enter qty!", "#FF9800");
-            return;
-        }
-
-        try {
-            double newQty = Double.parseDouble(qtyStr);
-            if (newQty <= 0) {
-                setLocalStatus(updateCartStatusLabel, "Must be positive!", "red");
-                return;
+        // Cleanup
+        cartFlowPane.getChildren().forEach(node -> {
+            if (node.getUserData() instanceof Integer) {
+                int id = (Integer) node.getUserData();
+                java.util.List<VBox> cards = productCardMap.get(id);
+                if (cards != null)
+                    cards.remove(node);
             }
+        });
 
-            Product product = selected.getProduct();
+        cartFlowPane.getChildren().clear();
 
-            // Validate integer for piece-based products
-            if (product.isSoldByPiece() && newQty != Math.floor(newQty)) {
-                setLocalStatus(updateCartStatusLabel, "Whole numbers!", "red");
-                return;
-            }
+        for (CartItem item : cartList) {
+            // Re-use logic to create product card
+            VBox card = createShopCard(item.getProduct());
+            // Register card for updates
+            productCardMap.computeIfAbsent(item.getProduct().getId(), k -> new java.util.ArrayList<>()).add(card);
 
-            // Check stock
-            if (newQty > product.getStock()) {
-                setLocalStatus(updateCartStatusLabel, "Not enough stock!", "red");
-                return;
-            }
-
-            // Update local cart
-            selected.setQuantity(newQty);
-
-            // Update database
-            try {
-                cartDAO.updateQuantity(currentUser.getId(), product.getId(), newQty);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-
-            cartTable.refresh();
-            updateCartTotal();
-            updateQtyField.clear();
-            setLocalStatus(updateCartStatusLabel, "Updated!", "#4CAF50");
-
-        } catch (NumberFormatException e) {
-            setLocalStatus(updateCartStatusLabel, "Invalid qty!", "red");
+            cartFlowPane.getChildren().add(card);
         }
     }
 
@@ -948,8 +1115,11 @@ public class CustomerController {
         StringBuilder summary = new StringBuilder();
         summary.append("\n━━━━━━━━ ORDER SUMMARY ━━━━━━━━\n");
         for (CartItem item : cartList) {
-            summary.append(String.format("• %s x%.2f kg = %s\n",
-                    item.getProductName(), item.getQuantity(), FormatHelper.formatCurrency(item.getTotal())));
+            String qtyStr = item.getProduct().isSoldByKg() ? String.format("%.2f kg", item.getQuantity())
+                    : String.format("%d pc", (int) item.getQuantity());
+
+            summary.append(String.format("• %s x%s = %s\n",
+                    item.getProductName(), qtyStr, FormatHelper.formatCurrency(item.getTotal())));
         }
         summary.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
         summary.append("Subtotal: ").append(FormatHelper.formatCurrency(subtotal)).append("\n");
@@ -973,7 +1143,6 @@ public class CustomerController {
                 javafx.scene.control.ButtonType.CANCEL);
 
         // Convert result
-        final double finalTotalForLambda = finalTotal;
         dialog.setResultConverter(button -> {
             if (button == javafx.scene.control.ButtonType.OK) {
                 java.time.LocalDate date = datePicker.getValue();
@@ -1270,81 +1439,98 @@ public class CustomerController {
     }
 
     // Favorites Tab Methods
-    @FXML
-    public void handleRefreshFavorites() {
-        loadFavorites();
-    }
 
-    private void loadFavorites() {
+    // Obsolete favorites methods removed (handleAddFavToCart)
+
+    // ==================== KG UNIT HANDLERS ====================
+
+    private void handleKgAdd(Product product, String qtyText) {
         try {
-            // Setup columns
-            colFavName.setCellValueFactory(new PropertyValueFactory<>("name"));
-            colFavType.setCellValueFactory(new PropertyValueFactory<>("type"));
-            colFavPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
-            colFavStock.setCellValueFactory(new PropertyValueFactory<>("stock"));
-
-            java.util.List<Integer> favIds = favoritesDAO.getFavoriteProductIds(currentUser.getId());
-            java.util.List<Product> allProducts = productDAO.getAllProducts();
-            java.util.List<Product> favorites = allProducts.stream()
-                    .filter(p -> favIds.contains(p.getId()))
-                    .collect(java.util.stream.Collectors.toList());
-
-            favoritesTable.setItems(FXCollections.observableArrayList(favorites));
-        } catch (java.sql.SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
-    public void handleRemoveFavorite() {
-        Product selected = favoritesTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            statusLabel.setText("Select a favorite to remove.");
-            return;
-        }
-
-        try {
-            favoritesDAO.removeFavorite(currentUser.getId(), selected.getId());
-            statusLabel.setText(selected.getName() + " removed from favorites.");
-            statusLabel.setStyle("-fx-text-fill: orange;");
-            loadFavorites();
-        } catch (java.sql.SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
-    public void handleAddFavToCart() {
-        Product selected = favoritesTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            statusLabel.setText("Select a favorite product.");
-            return;
-        }
-
-        try {
-            double qty = Double.parseDouble(favQuantityField.getText());
-            if (qty <= 0 || qty > selected.getStock()) {
-                statusLabel.setText("Invalid quantity.");
+            double qty = parseKgQuantity(qtyText);
+            if (qty < 0.5) {
+                showError("Minimum quantity is 0.5 kg.");
                 return;
             }
+            if (qty > product.getStock()) {
+                showError("Not enough stock.");
+                return;
+            }
+            cartDAO.addToCart(currentUser.getId(), product.getId(), qty);
 
-            CartItem existing = cartList.stream()
-                    .filter(item -> item.getProduct().getId() == selected.getId())
-                    .findFirst().orElse(null);
-
-            if (existing != null) {
-                existing.setQuantity(existing.getQuantity() + qty);
-            } else {
-                cartList.add(new CartItem(selected, qty));
+            // Update local lists
+            boolean found = false;
+            for (CartItem item : cartList) {
+                if (item.getProduct().getId() == product.getId()) {
+                    item.setQuantity(item.getQuantity() + qty);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                cartList.add(new CartItem(product, qty));
             }
 
-            cartTable.refresh();
             updateCartTotal();
-            statusLabel.setText(selected.getName() + " added to cart!");
-            statusLabel.setStyle("-fx-text-fill: green;");
+            updateSingleProductCard(product);
+            statusLabel.setText("Added " + qty + " kg to cart.");
         } catch (NumberFormatException e) {
-            statusLabel.setText("Enter a valid quantity.");
+            showError("Invalid quantity.");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+    }
+
+    private void handleKgUpdate(Product product, String qtyText) {
+        try {
+            double qty = parseKgQuantity(qtyText);
+            if (qty < 0.5) {
+                showError("Minimum quantity is 0.5 kg.");
+                return;
+            }
+            if (qty > product.getStock()) {
+                showError("Not enough stock.");
+                return;
+            }
+            cartDAO.updateQuantity(currentUser.getId(), product.getId(), qty);
+
+            // Reload cart from DB to ensure UI sync
+            cartList.setAll(cartDAO.getCartByUserId(currentUser.getId()));
+
+            updateCartTotal();
+            updateSingleProductCard(product);
+            statusLabel.setText("Updated to " + qty + " kg.");
+        } catch (NumberFormatException e) {
+            showError("Invalid quantity.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private double parseKgQuantity(String text) {
+        if (text == null || text.trim().isEmpty())
+            return 0.5;
+        text = text.replace(',', '.');
+        return Double.parseDouble(text);
+    }
+
+    private void removeFromCart(Product product) {
+        try {
+            cartDAO.removeFromCart(currentUser.getId(), product.getId());
+
+            // local update
+            cartList.removeIf(item -> item.getProduct().getId() == product.getId());
+
+            updateCartTotal();
+            updateSingleProductCard(product);
+            refreshCartGrid();
+            statusLabel.setText("Removed " + product.getName() + " from cart.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showError(String msg) {
+        StyledAlert.showError("Error", null, msg);
     }
 
     // ==================== G POINTS METHODS ====================
@@ -1378,36 +1564,38 @@ public class CustomerController {
         if (pointsStr.isEmpty()) {
             gPointsToUse = 0;
             updateCartTotalWithDiscount();
+            statusLabel.setText("G Points removed.");
+            statusLabel.setStyle("-fx-text-fill: #aaa;");
             return;
         }
 
         try {
-            double requestedPoints = Double.parseDouble(pointsStr);
+            // Requirement provided: "Positive natural number"
+            int requestedPoints = Integer.parseInt(pointsStr);
             double availablePoints = currentUser.getGPoints();
             double cartTotal = getCartTotal();
 
-            // Can't use more points than available or more than cart total
-            if (requestedPoints > availablePoints) {
-                statusLabel.setText("Insufficient G Points! Available: " + String.format("%.0f", availablePoints));
+            if (requestedPoints <= 0) {
+                statusLabel.setText("Please enter a positive number!");
+                statusLabel.setStyle("-fx-text-fill: red;");
+                gPointsToUse = 0;
+            } else if (requestedPoints > availablePoints) {
+                statusLabel.setText("Insufficient G Points! Available: " + (int) availablePoints);
                 statusLabel.setStyle("-fx-text-fill: red;");
                 gPointsToUse = 0;
             } else if (requestedPoints > cartTotal) {
-                statusLabel.setText("Cannot use more points than the cart total!");
-                statusLabel.setStyle("-fx-text-fill: red;");
+                statusLabel.setText("Using max usable G Points.");
+                statusLabel.setStyle("-fx-text-fill: #4CAF50;");
                 gPointsToUse = cartTotal;
                 gPointsField.setText(String.format("%.0f", cartTotal));
-            } else if (requestedPoints < 0) {
-                statusLabel.setText("Invalid amount!");
-                statusLabel.setStyle("-fx-text-fill: red;");
-                gPointsToUse = 0;
             } else {
                 gPointsToUse = requestedPoints;
-                statusLabel.setText(String.format("%.0f G Points applied!", requestedPoints));
-                statusLabel.setStyle("-fx-text-fill: green;");
+                statusLabel.setText((int) requestedPoints + " G Points applied!");
+                statusLabel.setStyle("-fx-text-fill: #4CAF50;");
             }
             updateCartTotalWithDiscount();
         } catch (NumberFormatException e) {
-            statusLabel.setText("Invalid amount!");
+            statusLabel.setText("Invalid amount! Use numbers only.");
             statusLabel.setStyle("-fx-text-fill: red;");
             gPointsToUse = 0;
             updateCartTotalWithDiscount();
@@ -1423,42 +1611,82 @@ public class CustomerController {
     }
 
     private void updateCartTotalWithDiscount() {
-        double subtotal = getCartTotal();
-        double couponDiscountAmount = 0;
+        // 1. Calculate Subtotal & Populate Summary List
+        double subtotal = 0;
 
-        // Calculate coupon discount if applied
+        if (cartSummaryList != null) {
+            cartSummaryList.getChildren().clear();
+        }
+
+        if (cartList != null) {
+            for (CartItem item : cartList) {
+                double itemTotal = item.getTotal();
+                subtotal += itemTotal;
+
+                if (cartSummaryList != null) {
+                    javafx.scene.layout.HBox row = new javafx.scene.layout.HBox();
+                    row.setSpacing(10);
+                    row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+                    String qtyStr = item.getProduct().isSoldByKg() ? String.format("%.1f", item.getQuantity())
+                            : String.valueOf((int) item.getQuantity());
+                    Label name = new Label(
+                            item.getProduct().getName() + " x " + qtyStr + item.getProduct().getUnitLabel());
+                    name.setStyle("-fx-text-fill: white; -fx-wrap-text: true; -fx-font-size: 11px;");
+                    name.setPrefWidth(160);
+                    name.setWrapText(true);
+
+                    javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+                    javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+
+                    Label price = new Label(FormatHelper.formatCurrency(itemTotal));
+                    price.setStyle("-fx-text-fill: #ddd; -fx-alignment: CENTER-RIGHT; -fx-font-size: 11px;");
+
+                    row.getChildren().addAll(name, spacer, price);
+                    cartSummaryList.getChildren().add(row);
+                }
+            }
+        }
+
+        // 2. Calculate Discounts
+        double couponDiscountAmount = 0;
         if (appliedCoupon != null) {
             couponDiscountAmount = subtotal * (appliedCoupon.getDiscountPercent() / 100.0);
             couponDiscount = couponDiscountAmount;
         }
 
-        double afterDiscounts = subtotal - gPointsToUse - couponDiscountAmount;
+        double totalDiscount = gPointsToUse + couponDiscountAmount;
+        double afterDiscounts = subtotal - totalDiscount;
         if (afterDiscounts < 0)
             afterDiscounts = 0;
 
-        // Add 20% VAT
-        double vatRate = 0.20;
+        // 3. Calculate Tax (18%)
+        double vatRate = 0.18;
         double vatAmount = afterDiscounts * vatRate;
         double finalTotal = afterDiscounts + vatAmount;
 
-        if (discountLabel != null) {
-            StringBuilder discText = new StringBuilder();
-            discText.append("Subtotal: ").append(FormatHelper.formatCurrency(subtotal));
-            if (gPointsToUse > 0) {
-                discText.append(" | G Point: ").append(FormatHelper.formatCurrencyWithPrefix(gPointsToUse, "-"));
-            }
-            if (couponDiscountAmount > 0) {
-                discText.append(" | Coupon: ").append(FormatHelper.formatCurrencyWithPrefix(couponDiscountAmount, "-"));
-            }
-            discText.append(" | VAT: ").append(FormatHelper.formatCurrencyWithPrefix(vatAmount, "+"));
+        // 4. Update Labels
+        if (subtotalLabel != null) {
+            subtotalLabel.setText(FormatHelper.formatCurrency(subtotal));
+        }
 
-            discountLabel.setText(discText.toString());
-            discountLabel.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11px;");
+        if (discountLabel != null) {
+            if (totalDiscount > 0) {
+                discountLabel.setText("-" + FormatHelper.formatCurrency(totalDiscount));
+                discountLabel.setStyle("-fx-text-fill: #4CAF50;");
+            } else {
+                discountLabel.setText("0.00 TL");
+                discountLabel.setStyle("-fx-text-fill: #ddd;");
+            }
+        }
+
+        if (taxLabel != null) {
+            taxLabel.setText(FormatHelper.formatCurrency(vatAmount));
         }
 
         if (finalTotalLabel != null) {
-            finalTotalLabel.setText("Total: " + FormatHelper.formatCurrency(finalTotal));
-            finalTotalLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FFD700;");
+            finalTotalLabel.setText(FormatHelper.formatCurrency(finalTotal));
+            // finalTotalLabel styling is set in FXML
         }
     }
 
@@ -1557,7 +1785,7 @@ public class CustomerController {
         // Get order items
         try {
             java.sql.Connection conn = com.greengrocer.dao.DatabaseAdapter.getConnection();
-            String sql = "SELECT p.name, oi.quantity, oi.price_at_purchase FROM OrderItems oi " +
+            String sql = "SELECT p.name, p.unit_type, oi.quantity, oi.price_at_purchase FROM OrderItems oi " +
                     "JOIN ProductInfo p ON oi.product_id = p.id WHERE oi.order_id = ?";
             java.sql.PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, selected.getId());
@@ -1566,12 +1794,22 @@ public class CustomerController {
             double subtotal = 0;
             while (rs.next()) {
                 String productName = rs.getString("name");
+                String unitType = rs.getString("unit_type");
                 double quantity = rs.getDouble("quantity");
                 double unitPrice = rs.getDouble("price_at_purchase");
                 double lineTotal = quantity * unitPrice;
                 subtotal += lineTotal;
+
+                // Format quantity based on unit type
+                String qtyStr;
+                if ("piece".equalsIgnoreCase(unitType)) {
+                    qtyStr = String.format("%.0f", quantity); // x1
+                } else {
+                    qtyStr = String.format("%.2f", quantity); // x0.50
+                }
+
                 details.append("   • ").append(productName)
-                        .append(" x").append(String.format("%.0f", quantity))
+                        .append(" x").append(qtyStr)
                         .append(" @ ").append(FormatHelper.formatCurrency(unitPrice))
                         .append(" = ").append(FormatHelper.formatCurrency(lineTotal)).append("\n");
             }
