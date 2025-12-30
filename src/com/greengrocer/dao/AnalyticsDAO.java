@@ -11,11 +11,13 @@ public class AnalyticsDAO {
 
     public List<CarrierPerformance> getCarrierPerformance() throws SQLException {
         List<CarrierPerformance> list = new ArrayList<>();
-        String sql = "SELECT u.id, u.first_name, u.last_name, COUNT(o.id) as delivery_count " +
+        String sql = "SELECT u.id, u.first_name, u.last_name, " +
+                "(SELECT COUNT(*) FROM OrderInfo o WHERE o.carrier_id = u.id AND o.status = 'DELIVERED') as delivery_count, "
+                +
+                "(SELECT COALESCE(AVG(cr.rating), 0) FROM CarrierRatings cr WHERE cr.carrier_id = u.id) as avg_rating "
+                +
                 "FROM UserInfo u " +
-                "LEFT JOIN OrderInfo o ON u.id = o.carrier_id " +
-                "WHERE u.role = 'carrier' AND o.status = 'DELIVERED' " +
-                "GROUP BY u.id " +
+                "WHERE u.role = 'carrier' " +
                 "ORDER BY delivery_count DESC";
 
         try (Connection conn = DatabaseAdapter.getConnection();
@@ -23,7 +25,11 @@ public class AnalyticsDAO {
                 ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 String name = rs.getString("first_name") + " " + rs.getString("last_name");
-                list.add(new CarrierPerformance(rs.getInt("id"), name, rs.getInt("delivery_count")));
+                list.add(new CarrierPerformance(
+                        rs.getInt("id"),
+                        name,
+                        rs.getInt("delivery_count"),
+                        rs.getDouble("avg_rating")));
             }
         }
         return list;

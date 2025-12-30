@@ -236,16 +236,43 @@
                             <!-- 2. CARRIERS TAB -->
                             <Tab text="Carriers">
                                <content>
-                                  <VBox spacing="15" style="-fx-padding: 20;">
+                                  <VBox spacing="0" style="-fx-padding: 0;">
                                      <children>
-                                        <Label text="Carrier Performance Leaderboard" styleClass="section-title" />
-                                        <TableView fx:id="carrierPerformanceTable" VBox.vgrow="ALWAYS" styleClass="table-view">
-                                           <columns>
-                                              <TableColumn fx:id="colCpId" prefWidth="80" text="ID" />
-                                              <TableColumn fx:id="colCpName" prefWidth="200" text="Carrier Name" />
-                                              <TableColumn fx:id="colCpDeliveries" prefWidth="150" text="Deliveries Completed" />
-                                           </columns>
-                                        </TableView>
+                                        <SplitPane dividerPositions="0.6" VBox.vgrow="ALWAYS" orientation="HORIZONTAL">
+                                           <items>
+                                              <!-- LEFT: Leaderboard -->
+                                              <VBox spacing="15" style="-fx-padding: 20;">
+                                                 <children>
+                                                    <Label text="Carrier Performance Leaderboard" styleClass="section-title" />
+                                                    <TableView fx:id="carrierPerformanceTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                                                       <columns>
+                                                          <TableColumn fx:id="colCpId" prefWidth="50" text="ID" />
+                                                          <TableColumn fx:id="colCpName" prefWidth="150" text="Carrier Name" />
+                                                          <TableColumn fx:id="colCpDeliveries" prefWidth="100" text="Deliveries" />
+                                                          <TableColumn fx:id="colCpRating" prefWidth="80" text="Rating" />
+                                                       </columns>
+                                                    </TableView>
+                                                 </children>
+                                              </VBox>
+
+                                              <!-- RIGHT: Reviews -->
+                                              <VBox spacing="15" style="-fx-padding: 20;">
+                                                 <children>
+                                                    <Label fx:id="carrierReviewsLabel" text="Reviews" styleClass="section-title" />
+                                                    <TableView fx:id="carrierReviewsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                                                       <columns>
+                                                          <TableColumn fx:id="colReviewRating" prefWidth="60" text="Score" />
+                                                          <TableColumn fx:id="colReviewComment" prefWidth="200" text="Comment" />
+                                                          <TableColumn fx:id="colReviewDate" prefWidth="120" text="Date" />
+                                                       </columns>
+                                                       <placeholder>
+                                                          <Label text="Select a carrier to view reviews" />
+                                                       </placeholder>
+                                                    </TableView>
+                                                 </children>
+                                              </VBox>
+                                           </items>
+                                        </SplitPane>
                                      </children>
                                   </VBox>
                                </content>
@@ -423,7 +450,7 @@
                            <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 15; -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 0 0 1 0;">
                               <Label fx:id="ownerChatPartnerLabel" text="Select a conversation" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;" />
                               <Region HBox.hgrow="ALWAYS" />
-                              <Button onAction="#handleRefreshOwnerMessages" text="🔄" styleClass="button-secondary" style="-fx-font-size: 12px;" />
+
                            </HBox>
                            
                            <!-- Chat Messages Area -->
