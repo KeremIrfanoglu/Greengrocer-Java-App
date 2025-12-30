@@ -45,11 +45,11 @@
                                 <Label text="Orders Waiting for Pickup" styleClass="section-title" />
                                 <TableView fx:id="availableTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                                   <columns>
-                                    <TableColumn fx:id="colAvId" prefWidth="70" text="Order #" />
-                                    <TableColumn fx:id="colAvCustomer" prefWidth="120" text="Customer" />
-                                    <TableColumn fx:id="colAvDate" prefWidth="130" text="📅 Order Date" />
-                                    <TableColumn fx:id="colAvScheduled" prefWidth="130" text="🚚 Scheduled" />
-                                    <TableColumn fx:id="colAvTotal" prefWidth="80" text="💰 Total" />
+                                    <TableColumn fx:id="colAvId" prefWidth="100" text="Order #" />
+                                    <TableColumn fx:id="colAvCustomer" prefWidth="160" text="Customer" />
+                                    <TableColumn fx:id="colAvDate" prefWidth="170" text="📅 Order Date" />
+                                    <TableColumn fx:id="colAvScheduled" prefWidth="170" text="🚚 Scheduled" />
+                                    <TableColumn fx:id="colAvTotal" prefWidth="100" text="💰 Total" />
                                   </columns>
                                 </TableView>
                                 <Button onAction="#handleTakeOrder" styleClass="button-primary" text="✅ Take Selected Order" maxWidth="Infinity" />
@@ -91,11 +91,11 @@
                           
                           <TableView fx:id="deliveryTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                             <columns>
-                              <TableColumn fx:id="colDelId" prefWidth="80" text="Order #" />
-                              <TableColumn fx:id="colDelDate" prefWidth="150" text="📅 Order Date" />
-                              <TableColumn fx:id="colDelScheduled" prefWidth="150" text="🚚 Scheduled" />
-                              <TableColumn fx:id="colDelTotal" prefWidth="100" text="💰 Total" />
-                              <TableColumn fx:id="colDelStatus" prefWidth="100" text="📊 Status" />
+                              <TableColumn fx:id="colDelId" prefWidth="100" text="Order #" />
+                              <TableColumn fx:id="colDelDate" prefWidth="190" text="📅 Order Date" />
+                              <TableColumn fx:id="colDelScheduled" prefWidth="190" text="🚚 Scheduled" />
+                              <TableColumn fx:id="colDelTotal" prefWidth="130" text="💰 Total" />
+                              <TableColumn fx:id="colDelStatus" prefWidth="130" text="📊 Status" />
                             </columns>
                           </TableView>
                           
@@ -124,10 +124,10 @@
                           
                           <TableView fx:id="completedTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                             <columns>
-                              <TableColumn fx:id="colCompId" prefWidth="80" text="Order #" />
-                              <TableColumn fx:id="colCompDate" prefWidth="150" text="📅 Order Date" />
-                              <TableColumn fx:id="colCompDeliveryDate" prefWidth="150" text="🚚 Delivered" />
-                              <TableColumn fx:id="colCompTotal" prefWidth="100" text="💰 Total" />
+                              <TableColumn fx:id="colCompId" prefWidth="100" text="Order #" />
+                              <TableColumn fx:id="colCompDate" prefWidth="190" text="📅 Order Date" />
+                              <TableColumn fx:id="colCompDeliveryDate" prefWidth="190" text="🚚 Delivered" />
+                              <TableColumn fx:id="colCompTotal" prefWidth="130" text="💰 Total" />
                             </columns>
                           </TableView>
                        </children>
@@ -175,12 +175,12 @@
                           
                           <TableView fx:id="leaderboardTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                             <columns>
-                              <TableColumn fx:id="colRank" prefWidth="60" text="🏅" />
-                              <TableColumn fx:id="colCarrierName" prefWidth="180" text="👤 Carrier" />
-                              <TableColumn fx:id="colDeliveries" prefWidth="100" text="📦 Deliveries" />
-                              <TableColumn fx:id="colAvgRating" prefWidth="100" text="⭐ Rating" />
-                              <TableColumn fx:id="colRatingCount" prefWidth="80" text="Reviews" />
-                              <TableColumn fx:id="colTotalValue" prefWidth="120" text="💰 Total Value" />
+                              <TableColumn fx:id="colRank" prefWidth="80" text="🏅" />
+                              <TableColumn fx:id="colCarrierName" prefWidth="220" text="👤 Carrier" />
+                              <TableColumn fx:id="colDeliveries" prefWidth="130" text="📦 Deliveries" />
+                              <TableColumn fx:id="colAvgRating" prefWidth="130" text="⭐ Rating" />
+                              <TableColumn fx:id="colRatingCount" prefWidth="100" text="Reviews" />
+                              <TableColumn fx:id="colTotalValue" prefWidth="150" text="💰 Total Value" />
                             </columns>
                           </TableView>
                        </children>
@@ -244,7 +244,7 @@
                                     <HBox spacing="10" alignment="CENTER_LEFT">
                                        <TextField fx:id="manualMessageInput" promptText="Type a message..." HBox.hgrow="ALWAYS" 
                                                  style="-fx-control-inner-background: #0f172a; -fx-text-fill: #e2e8f0; -fx-background-color: #0f172a; -fx-border-color: #334155; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 8;" />
-                                       <Button onAction="#handleManualMessageSend" text="Send" styleClass="button-primary" prefWidth="80" style="-fx-background-radius: 20;" />
+                                       <Button onAction="#handleManualMessageSend" text="Send" styleClass="button-primary" prefWidth="100" style="-fx-background-radius: 20;" />
                                     </HBox>
                                 </VBox>
                              </children>

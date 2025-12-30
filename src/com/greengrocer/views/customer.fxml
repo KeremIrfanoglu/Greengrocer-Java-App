@@ -203,12 +203,12 @@
                             
                             <TableView fx:id="orderTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                               <columns>
-                                <TableColumn fx:id="colOrderId" prefWidth="70" text="Order #" />
-                                <TableColumn fx:id="colOrderDate" prefWidth="140" text="Date" />
-                                <TableColumn fx:id="colOrderTotal" prefWidth="90" text="Total" />
-                                <TableColumn fx:id="colOrderStatus" prefWidth="100" text="Status" />
-                                <TableColumn fx:id="colOrderRating" prefWidth="80" text="⭐ Rating" />
-                                <TableColumn fx:id="colOrderComment" prefWidth="150" text="💬 Comment" />
+                                <TableColumn fx:id="colOrderId" prefWidth="100" text="Order #" />
+                                <TableColumn fx:id="colOrderDate" prefWidth="180" text="Date" />
+                                <TableColumn fx:id="colOrderTotal" prefWidth="120" text="Total" />
+                                <TableColumn fx:id="colOrderStatus" prefWidth="130" text="Status" />
+                                <TableColumn fx:id="colOrderRating" prefWidth="110" text="⭐ Rating" />
+                                <TableColumn fx:id="colOrderComment" prefWidth="250" text="💬 Comment" />
                               </columns>
                             </TableView>
                             
@@ -242,6 +242,8 @@
                                   <Label text="Sort:" styleClass="text-label" />
                                   <ComboBox fx:id="favSortCombo" prefWidth="130" promptText="Default" onAction="#handleFavSort" styleClass="combo-box" />
                                   <Button onAction="#handleFavResetFilter" text="Reset" styleClass="button-secondary" />
+                                  <Region HBox.hgrow="ALWAYS" />
+                                  <Button fx:id="favRemoveButton" onAction="#handleAddToFavorites" text="Remove Favorite" styleClass="button-warning" visible="false" managed="false" />
                                </children>
                             </HBox>
                             
@@ -367,7 +369,6 @@
                                <HBox fx:id="chatHeader" spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 15; -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 0 0 1 0;">
                                   <Label fx:id="chatPartnerLabel" text="Select a conversation" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;" />
                                   <Region HBox.hgrow="ALWAYS" />
-                                  <Button onAction="#handleRefreshMessages" text="🔄" styleClass="button-secondary" style="-fx-font-size: 12px;" />
                                </HBox>
                                
                                <!-- Chat Messages Area -->
@@ -379,9 +380,9 @@
                                <!-- Message Input Area -->
                                <VBox spacing="10" style="-fx-padding: 15; -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 1 0 0 0;">
                                    <HBox spacing="10" alignment="CENTER_LEFT">
-                                      <TextArea fx:id="msgComposeArea" promptText="Type your message..." wrapText="true" prefRowCount="1" prefHeight="40" HBox.hgrow="ALWAYS"
+                                      <TextField fx:id="msgComposeArea" promptText="Type your message..." HBox.hgrow="ALWAYS"
                                                 style="-fx-control-inner-background: #0f172a; -fx-text-fill: #e2e8f0; -fx-background-color: #0f172a; -fx-border-color: #334155; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 8;" />
-                                      <Button onAction="#handleSendMessage" text="Send" styleClass="button-primary" prefWidth="120" prefHeight="40" style="-fx-font-size: 14px; -fx-background-radius: 20;" />
+                                      <Button onAction="#handleSendMessage" text="Send" styleClass="button-primary" prefWidth="100" style="-fx-background-radius: 20;" />
                                    </HBox>
                                   <Label fx:id="msgStatusLabel" text="" style="-fx-font-size: 11px;" />
                                </VBox>

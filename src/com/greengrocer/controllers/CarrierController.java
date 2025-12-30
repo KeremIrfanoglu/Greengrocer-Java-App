@@ -185,6 +185,18 @@ public class CarrierController {
                 }
             });
         }
+
+        // Enter-to-send for Carrier Messaging
+        if (manualMessageInput != null) {
+            manualMessageInput.setOnKeyPressed(event -> {
+                if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                    String text = manualMessageInput.getText().trim();
+                    if (!text.isEmpty()) {
+                        handleManualMessageSend();
+                    }
+                }
+            });
+        }
     }
 
     private void updateAverageRatingDisplay() {
@@ -210,16 +222,84 @@ public class CarrierController {
         colAvDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
         if (colAvScheduled != null) {
             colAvScheduled.setCellValueFactory(new PropertyValueFactory<>("deliveryDate"));
+            colAvScheduled.setCellFactory(column -> new TableCell<Order, java.sql.Timestamp>() {
+                @Override
+                protected void updateItem(java.sql.Timestamp item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(FormatHelper.formatDate(item));
+                    }
+                }
+            });
         }
+        colAvDate.setCellFactory(column -> new TableCell<Order, java.sql.Timestamp>() {
+
+            @Override
+            protected void updateItem(java.sql.Timestamp item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(FormatHelper.formatDate(item));
+                }
+            }
+        });
         colAvTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+        colAvTotal.setCellFactory(column -> new TableCell<Order, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(FormatHelper.formatCurrency(item));
+                }
+            }
+        });
 
         // Deliveries Table
         colDelId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colDelDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
         if (colDelScheduled != null) {
             colDelScheduled.setCellValueFactory(new PropertyValueFactory<>("deliveryDate"));
+            colDelScheduled.setCellFactory(column -> new TableCell<Order, java.sql.Timestamp>() {
+                @Override
+                protected void updateItem(java.sql.Timestamp item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(FormatHelper.formatDate(item));
+                    }
+                }
+            });
         }
+        colDelDate.setCellFactory(column -> new TableCell<Order, java.sql.Timestamp>() {
+            @Override
+            protected void updateItem(java.sql.Timestamp item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(FormatHelper.formatDate(item));
+                }
+            }
+        });
         colDelTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+        colDelTotal.setCellFactory(column -> new TableCell<Order, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(FormatHelper.formatCurrency(item));
+                }
+            }
+        });
+
         colDelStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
         // Highlight late deliveries
@@ -251,14 +331,84 @@ public class CarrierController {
         // Completed Table
         colCompId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colCompDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
+        colCompDate.setCellFactory(column -> new TableCell<Order, java.sql.Timestamp>() {
+            @Override
+            protected void updateItem(java.sql.Timestamp item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(FormatHelper.formatDate(item));
+                }
+            }
+        });
+
+        if (colCompDeliveryDate != null) {
+            colCompDeliveryDate.setCellValueFactory(new PropertyValueFactory<>("deliveredAt")); // Note: was
+                                                                                                // deliveryDate, but for
+                                                                                                // completed/deliveredAt
+                                                                                                // makes more sense or
+                                                                                                // keep consistency?
+                                                                                                // keeping what is there
+                                                                                                // or assuming
+                                                                                                // deliveredAt if it
+                                                                                                // exists
+            // Checking original code: "deliveryDate" was likely used or "deliveredAt".
+            // Logic: For completed orders, we probably want the actual completion time
+            // (deliveredAt) OR the scheduled time.
+            // Let's stick to whatever property was there or use deliveredAt if previously
+            // missing.
+            // Wait, previous code didn't explicitly set factory for colCompDeliveryDate in
+            // the snippet I saw?
+            // Actually I didn't see colCompDeliveryDate in the snippet of CarrierController
+            // I viewed (lines 150-250 only had colAv and colDel).
+            // Let's assume standard PropertyValueFactory usage. I will just add the cell
+            // factory.
+            colCompDeliveryDate.setCellFactory(column -> new TableCell<Order, java.sql.Timestamp>() {
+                @Override
+                protected void updateItem(java.sql.Timestamp item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(FormatHelper.formatDate(item));
+                    }
+                }
+            });
+        }
         if (colCompDeliveryDate != null) {
             colCompDeliveryDate.setCellValueFactory(new PropertyValueFactory<>("deliveredAt"));
         }
         colCompTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+        colCompTotal.setCellFactory(column -> new TableCell<Order, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(FormatHelper.formatCurrency(item));
+                }
+            }
+        });
 
         // Ratings Table
         if (ratingsTable != null) {
             colRatingOrder.setCellValueFactory(new PropertyValueFactory<>("orderId"));
+            if (colRatingDate != null) {
+                colRatingDate.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
+                colRatingDate.setCellFactory(column -> new TableCell<CarrierRating, java.sql.Timestamp>() {
+                    @Override
+                    protected void updateItem(java.sql.Timestamp item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                        } else {
+                            setText(FormatHelper.formatDate(item));
+                        }
+                    }
+                });
+            }
             colRatingCustomer.setCellValueFactory(new PropertyValueFactory<>("customerName"));
             colRatingStars.setCellValueFactory(cellData -> {
                 int rating = cellData.getValue().getRating();
@@ -498,7 +648,7 @@ public class CarrierController {
             javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(
                     new java.io.File("src/com/greengrocer/views/login.fxml").toURI().toURL());
             javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
-            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 960, 540));
+            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 1200, 750));
             stage.setTitle("Greengrocer Login");
             stage.centerOnScreen();
         } catch (Exception e) {
@@ -814,7 +964,7 @@ public class CarrierController {
                     } else {
                         com.greengrocer.models.Message lastMsg = latestMessageMap.get(item.getId());
                         int unreadCount = unreadMap.getOrDefault(item.getId(), 0);
-                        setGraphic(createOrderListCell(item, lastMsg, unreadCount));
+                        setGraphic(createOrderListCell(item, lastMsg, unreadCount, isSelected()));
                         setText(null);
                         setStyle("-fx-background-color: transparent; -fx-padding: 5;");
                     }
@@ -913,11 +1063,14 @@ public class CarrierController {
     }
 
     private javafx.scene.Node createOrderListCell(Order order, com.greengrocer.models.Message lastMsg,
-            int unreadCount) {
+            int unreadCount, boolean isSelected) {
         javafx.scene.layout.VBox card = new javafx.scene.layout.VBox(5);
         // Dark card style
+        String bgStyle = isSelected ? "-fx-background-color: #475569;" : "-fx-background-color: #334155;";
+        String borderStyle = isSelected ? "-fx-border-color: #4CAF50; -fx-border-width: 0 0 0 4;" : "";
         card.setStyle(
-                "-fx-background-color: #334155; -fx-background-radius: 10; -fx-padding: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2);");
+                bgStyle + " -fx-background-radius: 10; -fx-padding: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2); "
+                        + borderStyle);
 
         // Top Row: Title + Time
         javafx.scene.layout.HBox topRow = new javafx.scene.layout.HBox();

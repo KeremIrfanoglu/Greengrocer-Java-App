@@ -98,7 +98,7 @@ public class LoginController {
                         stage.setTitle("Group10 GreenGrocer - " +
                                 user.getRole().substring(0, 1).toUpperCase() + user.getRole().substring(1)
                                 + " Dashboard");
-                        stage.setScene(StyleHelper.createStyledScene(root, 960, 540));
+                        stage.setScene(StyleHelper.createStyledScene(root, 1200, 750));
 
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -123,7 +123,7 @@ public class LoginController {
             Stage stage = (Stage) usernameField.getScene().getWindow();
             Parent root = FXMLLoader.load(new java.io.File("src/com/greengrocer/views/register.fxml").toURI().toURL());
             stage.setTitle("Customer Registration");
-            stage.setScene(StyleHelper.createStyledScene(root, 960, 540));
+            stage.setScene(StyleHelper.createStyledScene(root, 1200, 750));
         } catch (Exception e) {
             e.printStackTrace();
             errorLabel.setText("Could not load registration form.");

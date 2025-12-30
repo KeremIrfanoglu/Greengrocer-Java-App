@@ -14,6 +14,8 @@ public class FormatHelper {
     private static final DecimalFormat currencyFormat;
     private static final DecimalFormat numberFormat;
 
+    private static final java.text.SimpleDateFormat DATE_FORMAT = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
+
     static {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         symbols.setGroupingSeparator(',');
@@ -24,6 +26,15 @@ public class FormatHelper {
 
         // Use 3 decimal places for quantities/weights (e.g., 1.500 kg)
         numberFormat = new DecimalFormat("#,##0.000", symbols);
+    }
+
+    /**
+     * Formats a date object to "dd/MM/yyyy HH:mm" string.
+     */
+    public static String formatDate(java.util.Date date) {
+        if (date == null)
+            return "-";
+        return DATE_FORMAT.format(date);
     }
 
     /**
