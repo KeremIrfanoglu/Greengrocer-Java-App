@@ -17,6 +17,8 @@ import java.sql.SQLException;
 
 import com.greengrocer.util.StyleHelper;
 import com.greengrocer.util.StyledAlert;
+import com.greengrocer.util.BackgroundMusicService;
+import javafx.scene.control.Button;
 
 public class LoginController {
 
@@ -26,6 +28,8 @@ public class LoginController {
     private PasswordField passwordField;
     @FXML
     private Label errorLabel;
+    @FXML
+    private Button musicToggleButton;
 
     private UserDAO userDAO;
 
@@ -133,6 +137,26 @@ public class LoginController {
 
     private void showAlert(String title, String content) {
         StyledAlert.showError(title, null, content);
+    }
+
+    /**
+     * Toggle background music mute state.
+     */
+    @FXML
+    public void handleToggleMusic() {
+        BackgroundMusicService music = BackgroundMusicService.getInstance();
+        music.toggleMute();
+        updateMusicButtonIcon();
+    }
+
+    private void updateMusicButtonIcon() {
+        if (musicToggleButton != null) {
+            if (BackgroundMusicService.getInstance().isMuted()) {
+                musicToggleButton.setText("🔇");
+            } else {
+                musicToggleButton.setText("🔊");
+            }
+        }
     }
 
     @FXML

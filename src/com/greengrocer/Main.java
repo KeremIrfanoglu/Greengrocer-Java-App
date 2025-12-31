@@ -6,6 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import com.greengrocer.util.StyleHelper;
+import com.greengrocer.util.BackgroundMusicService;
 
 import java.io.File;
 import java.net.URL;
@@ -17,6 +18,9 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        // Start background music
+        BackgroundMusicService.getInstance().play();
+
         // Load the Login FXML
         URL url = new File("src/com/greengrocer/views/login.fxml").toURI().toURL();
         Parent root = FXMLLoader.load(url);

@@ -13,6 +13,8 @@ import java.io.File;
 import java.sql.SQLException;
 
 import com.greengrocer.util.StyleHelper;
+import com.greengrocer.util.BackgroundMusicService;
+import javafx.scene.control.Button;
 
 public class RegisterController {
 
@@ -32,6 +34,8 @@ public class RegisterController {
     private TextField phoneField;
     @FXML
     private Label statusLabel;
+    @FXML
+    private Button musicToggleButton;
 
     private UserDAO userDAO;
 
@@ -254,6 +258,26 @@ public class RegisterController {
             stage.setScene(StyleHelper.createStyledScene(root, 1200, 750));
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Toggle background music mute state.
+     */
+    @FXML
+    public void handleToggleMusic() {
+        BackgroundMusicService music = BackgroundMusicService.getInstance();
+        music.toggleMute();
+        updateMusicButtonIcon();
+    }
+
+    private void updateMusicButtonIcon() {
+        if (musicToggleButton != null) {
+            if (BackgroundMusicService.getInstance().isMuted()) {
+                musicToggleButton.setText("🔇");
+            } else {
+                musicToggleButton.setText("🔊");
+            }
         }
     }
 }
