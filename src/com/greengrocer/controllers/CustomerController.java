@@ -342,6 +342,7 @@ public class CustomerController {
         colOrderDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
         colOrderDate.setCellFactory(
                 column -> new javafx.scene.control.TableCell<com.greengrocer.models.Order, java.sql.Timestamp>() {
+
                     @Override
                     protected void updateItem(java.sql.Timestamp item, boolean empty) {
                         super.updateItem(item, empty);
@@ -353,6 +354,18 @@ public class CustomerController {
                     }
                 });
         colOrderTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+        colOrderTotal
+                .setCellFactory(column -> new javafx.scene.control.TableCell<com.greengrocer.models.Order, Double>() {
+                    @Override
+                    protected void updateItem(Double item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                        } else {
+                            setText(com.greengrocer.util.FormatHelper.formatCurrency(item));
+                        }
+                    }
+                });
         colOrderStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
         // Rating column - uses cached data (no DB query per cell)
@@ -400,14 +413,12 @@ public class CustomerController {
             // Update UI on JavaFX Application Thread
             ProductLoadResult result = task.getValue();
             allProducts = FXCollections.observableArrayList(result.products);
-            productList = FXCollections.observableArrayList(allProducts);
-
             favoriteProductIds.clear();
             if (result.favorites != null) {
                 favoriteProductIds.addAll(result.favorites);
             }
 
-            refreshShopGrid();
+            applyFilterAndSort();
         });
 
         task.setOnFailed(e -> {
@@ -680,7 +691,14 @@ public class CustomerController {
         priceLabel.setPrefHeight(18);
 
         // Stock label
-        Label stockLabel = new Label("Stock: " + String.format("%.1f", product.getStock()));
+        String stockText;
+        if (product.isSoldByKg()) {
+            stockText = String.format("%.1f kg", product.getStock());
+        } else {
+            stockText = String.valueOf((int) product.getStock());
+        }
+        Label stockLabel = new Label("Stock: " + stockText);
+
         if (product.getStock() <= product.getThreshold()) {
             stockLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold; -fx-font-size: 10px;");
         } else {
@@ -790,6 +808,13 @@ public class CustomerController {
                 qtyField.setPrefHeight(30);
                 qtyField.setStyle("-fx-alignment: center; -fx-font-size: 11px;");
                 qtyField.setOnAction(e -> handleKgUpdate(product, qtyField.getText()));
+
+                // Restrict input (same as add-to-cart logic)
+                qtyField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue.matches("\\d*([\\.,]\\d{0,1})?")) {
+                        qtyField.setText(oldValue);
+                    }
+                });
 
                 Button updateBtn = new Button("↻");
                 updateBtn.getStyleClass().add("button-secondary");
@@ -1093,6 +1118,26 @@ public class CustomerController {
     }
 
     @FXML
+    public void handleClearCart() {
+        if (cartList.isEmpty()) {
+            return;
+        }
+        try {
+            cartDAO.clearCart(currentUser.getId());
+            cartList.clear();
+            refreshCartGrid();
+            refreshShopGrid();
+            updateCartTotal();
+            statusLabel.setText("Cart cleared.");
+            statusLabel.setStyle("-fx-text-fill: green;");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            statusLabel.setText("Error clearing cart.");
+            statusLabel.setStyle("-fx-text-fill: red;");
+        }
+    }
+
+    @FXML
     public void handleCheckout() {
         if (cartList.isEmpty()) {
             statusLabel.setText("Cart is empty.");
@@ -1362,6 +1407,11 @@ public class CustomerController {
         }
 
         for (Product p : allProducts) {
+            if (p.getStock() <= 0) {
+                // Out of stock products are hidden from customers
+                continue;
+            }
+
             if ("All".equals(filterType)) {
                 filtered.add(p);
             } else if ("Favorites".equals(filterType)) {
@@ -1396,7 +1446,9 @@ public class CustomerController {
         }
 
         productList = FXCollections.observableArrayList(filtered);
+
         refreshShopGrid();
+
     }
 
     /**
@@ -1420,7 +1472,7 @@ public class CustomerController {
             javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(
                     new java.io.File("src/com/greengrocer/views/login.fxml").toURI().toURL());
             javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
-            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 1200, 750));
+            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 960, 540));
             stage.setTitle("Greengrocer Login");
             stage.centerOnScreen();
         } catch (Exception e) {
@@ -1634,6 +1686,7 @@ public class CustomerController {
 
             updateCartTotal();
             updateSingleProductCard(product);
+            refreshCartGrid();
             statusLabel.setText("Added " + qty + " kg to cart.");
         } catch (NumberFormatException e) {
             showError("Invalid quantity.");

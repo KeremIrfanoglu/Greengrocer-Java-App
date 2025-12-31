@@ -97,6 +97,8 @@ public class CarrierController {
     private TableColumn<Order, Double> colDelTotal;
     @FXML
     private TableColumn<Order, String> colDelStatus;
+    @FXML
+    private Button statusUpdateBtn;
 
     // Completed Deliveries Tab
     @FXML
@@ -158,13 +160,8 @@ public class CarrierController {
         loadAvailableOrders();
         loadMyDeliveries();
         loadCompletedOrders();
-        loadAvailableOrders();
-        loadMyDeliveries();
-        loadCompletedOrders();
         setupCommunicationListeners(); // Initialize listeners once
         loadCommunicationTab();
-
-        // Tab change listener
         if (mainTabPane != null) {
             mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
                 if (newTab != null) {
@@ -328,6 +325,34 @@ public class CarrierController {
             }
         });
 
+        // Update Button Logic for Selection
+        deliveryTable.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (statusUpdateBtn == null)
+                return;
+
+            if (newVal == null) {
+                statusUpdateBtn.setText("📦 Update Status");
+                statusUpdateBtn.setDisable(true);
+                return;
+            }
+
+            statusUpdateBtn.setDisable(false);
+            String current = newVal.getStatus();
+            if ("Picked Up".equals(current)) {
+                statusUpdateBtn.setText("🚚 Delivering");
+                statusUpdateBtn.getStyleClass().removeAll("button-success", "button-accent");
+                if (!statusUpdateBtn.getStyleClass().contains("button-accent"))
+                    statusUpdateBtn.getStyleClass().add("button-accent");
+            } else if ("Delivering".equals(current)) {
+                statusUpdateBtn.setText("✅ Delivered");
+                statusUpdateBtn.getStyleClass().removeAll("button-accent", "button-success");
+                if (!statusUpdateBtn.getStyleClass().contains("button-success"))
+                    statusUpdateBtn.getStyleClass().add("button-success");
+            } else {
+                statusUpdateBtn.setText("📦 Update Status");
+            }
+        });
+
         // Completed Table
         colCompId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colCompDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
@@ -359,7 +384,7 @@ public class CarrierController {
             // Let's stick to whatever property was there or use deliveredAt if previously
             // missing.
             // Wait, previous code didn't explicitly set factory for colCompDeliveryDate in
-            // the snippet I saw?
+            // the snippet I saw (lines 150-250 only had colAv and colDel).
             // Actually I didn't see colCompDeliveryDate in the snippet of CarrierController
             // I viewed (lines 150-250 only had colAv and colDel).
             // Let's assume standard PropertyValueFactory usage. I will just add the cell
@@ -630,11 +655,35 @@ public class CarrierController {
 
                     loadMyDeliveries();
                     loadCompletedOrders();
+
+                    // Clear selection or re-select if needed. Here we clear since item moves to
+                    // completed
+                    deliveryTable.getSelectionModel().clearSelection();
+                    if (statusUpdateBtn != null) {
+                        statusUpdateBtn.setText("📦 Update Status");
+                        statusUpdateBtn.setDisable(true);
+                    }
+
                 } else {
                     if (statusLabel != null)
                         statusLabel.setText("Failed to complete delivery.");
                 }
             }
+
+            // Refresh selection state if still in list
+            if (deliveryTable.getSelectionModel().getSelectedItem() != null) {
+                // Trigger listener manually or let observable fire
+                Order updated = orderDAO.getOrderById(selected.getId()); // improved refresh
+                if (updated != null && "Delivering".equals(updated.getStatus())) {
+                    // Force refresh of item in table
+                    int index = deliveryTable.getItems().indexOf(selected);
+                    if (index >= 0) {
+                        deliveryTable.getItems().set(index, updated);
+                        deliveryTable.getSelectionModel().select(index);
+                    }
+                }
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
             if (statusLabel != null)
@@ -648,7 +697,7 @@ public class CarrierController {
             javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(
                     new java.io.File("src/com/greengrocer/views/login.fxml").toURI().toURL());
             javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
-            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 1200, 750));
+            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 960, 540));
             stage.setTitle("Greengrocer Login");
             stage.centerOnScreen();
         } catch (Exception e) {

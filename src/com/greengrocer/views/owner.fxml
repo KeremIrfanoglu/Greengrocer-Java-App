@@ -368,9 +368,9 @@
                        <HBox spacing="15" alignment="CENTER_LEFT" styleClass="glass-card-small">
                           <children>
                              <Label text="New Coupon:" styleClass="section-title" />
-                             <TextField fx:id="couponCodeField" prefWidth="120" promptText="Code (e.g. SAVE20)" styleClass="text-field" />
-                             <TextField fx:id="couponDiscountField" prefWidth="80" promptText="Discount (%)" styleClass="text-field" />
-                             <TextField fx:id="couponMaxUsesField" prefWidth="80" promptText="Max Uses" styleClass="text-field" />
+                             <TextField fx:id="couponCodeField" prefWidth="200" promptText="Code (e.g. SAVE20)" styleClass="text-field" />
+                             <TextField fx:id="couponDiscountField" prefWidth="100" promptText="Discount (%)" styleClass="text-field" />
+                             <TextField fx:id="couponMaxUsesField" prefWidth="100" promptText="Max Uses" styleClass="text-field" />
                              <Button onAction="#handleCreateCoupon" text="Create" styleClass="button-primary" />
                              <Label fx:id="couponStatusLabel" styleClass="status-success" />
                           </children>
