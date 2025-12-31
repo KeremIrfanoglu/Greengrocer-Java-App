@@ -462,4 +462,24 @@ public class OrderDAO {
         }
         return sb.toString();
     }
+
+    public Order getOrderById(int orderId) throws SQLException {
+        String query = "SELECT * FROM OrderInfo WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, orderId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Order(
+                            rs.getInt("id"),
+                            rs.getInt("customer_id"),
+                            rs.getInt("carrier_id"),
+                            rs.getTimestamp("order_date"),
+                            rs.getString("status"),
+                            rs.getDouble("total_amount"));
+                }
+            }
+        }
+        return null;
+    }
 }

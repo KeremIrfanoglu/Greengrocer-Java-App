@@ -89,7 +89,7 @@ public class CustomerController {
     @FXML
     private TableColumn<Order, Integer> colOrderId;
     @FXML
-    private TableColumn<Order, String> colOrderDate;
+    private TableColumn<Order, java.sql.Timestamp> colOrderDate;
     @FXML
     private TableColumn<Order, Double> colOrderTotal;
     @FXML
@@ -104,6 +104,8 @@ public class CustomerController {
     private FlowPane favoritesFlowPane;
     @FXML
     private Button favButton;
+    @FXML
+    private Button favRemoveButton; // New button for Favorites tab
 
     // Favorites Filter Controls
     @FXML
@@ -198,23 +200,14 @@ public class CustomerController {
         if (deliveryTimeCombo == null)
             return;
 
-        javafx.collections.ObservableList<String> timeSlots = FXCollections.observableArrayList();
-        int currentHour = java.time.LocalTime.now().getHour();
         java.time.LocalDate selectedDate = deliveryDatePicker != null ? deliveryDatePicker.getValue() : null;
-        boolean isToday = selectedDate != null && selectedDate.equals(java.time.LocalDate.now());
-
-        for (int h = 9; h <= 21; h++) {
-            // If today is selected, only show future hours
-            if (isToday && h <= currentHour)
-                continue;
-            timeSlots.add(String.format("%02d:00", h));
-        }
-
-        deliveryTimeCombo.setItems(timeSlots);
+        deliveryTimeCombo.setItems(FXCollections.observableArrayList(getAvailableTimeSlots(selectedDate)));
 
         // Set default value
-        if (!timeSlots.isEmpty()) {
-            deliveryTimeCombo.setValue(timeSlots.get(0));
+        if (!deliveryTimeCombo.getItems().isEmpty()) {
+            deliveryTimeCombo.setValue(deliveryTimeCombo.getItems().get(0));
+        } else {
+            deliveryTimeCombo.setValue(null);
         }
     }
 
@@ -229,6 +222,18 @@ public class CustomerController {
                 }
                 return null;
             }));
+        }
+
+        // Enter-to-send for Messaging
+        if (msgComposeArea != null) {
+            msgComposeArea.setOnKeyPressed(event -> {
+                if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                    String text = msgComposeArea.getText().trim();
+                    if (!text.isEmpty()) {
+                        handleSendMessage();
+                    }
+                }
+            });
         }
     }
 
@@ -335,6 +340,18 @@ public class CustomerController {
         // Orders Setup
         colOrderId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colOrderDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
+        colOrderDate.setCellFactory(
+                column -> new javafx.scene.control.TableCell<com.greengrocer.models.Order, java.sql.Timestamp>() {
+                    @Override
+                    protected void updateItem(java.sql.Timestamp item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                        } else {
+                            setText(com.greengrocer.util.FormatHelper.formatDate(item));
+                        }
+                    }
+                });
         colOrderTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         colOrderStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
@@ -365,21 +382,41 @@ public class CustomerController {
     }
 
     private void loadProducts() {
-        try {
-            allProducts = FXCollections.observableArrayList(productDAO.getAllProducts());
-            // Sort products by name alphabetically (A-Z)
-            allProducts.sort((p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName()));
+        // Run database operations in background to prevent UI lag
+        javafx.concurrent.Task<ProductLoadResult> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected ProductLoadResult call() throws Exception {
+                // heavy lifting in background
+                java.util.List<Product> products = productDAO.getAllProducts();
+                // Sort
+                products.sort((p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName()));
+
+                java.util.List<Integer> favs = favoritesDAO.getFavoriteProductIds(currentUser.getId());
+                return new ProductLoadResult(products, favs);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            // Update UI on JavaFX Application Thread
+            ProductLoadResult result = task.getValue();
+            allProducts = FXCollections.observableArrayList(result.products);
             productList = FXCollections.observableArrayList(allProducts);
 
-            // Load favorites once into cache (performance optimization)
             favoriteProductIds.clear();
-            favoriteProductIds.addAll(favoritesDAO.getFavoriteProductIds(currentUser.getId()));
+            if (result.favorites != null) {
+                favoriteProductIds.addAll(result.favorites);
+            }
 
             refreshShopGrid();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            statusLabel.setText("Error loading products.");
-        }
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            ex.printStackTrace();
+            statusLabel.setText("Error loading products: " + ex.getMessage());
+        });
+
+        new Thread(task).start();
     }
 
     private void refreshShopGrid() {
@@ -628,8 +665,18 @@ public class CustomerController {
         typeLabel.setPrefHeight(16);
 
         // Price label
-        Label priceLabel = new Label(FormatHelper.formatCurrency(product.getPrice()) + " / " + product.getUnitLabel());
-        priceLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
+        // Price label
+        double displayPrice = product.getPrice();
+        String priceStyle = "-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;";
+
+        // Scarcity Pricing Logic
+        if (product.getStock() <= product.getThreshold()) {
+            displayPrice *= 2.0; // Show doubled price
+            priceStyle = "-fx-text-fill: #FF9800; -fx-font-weight: bold; -fx-font-size: 13px;"; // Orange warning
+        }
+
+        Label priceLabel = new Label(FormatHelper.formatCurrency(displayPrice) + " / " + product.getUnitLabel());
+        priceLabel.setStyle(priceStyle);
         priceLabel.setPrefHeight(18);
 
         // Stock label
@@ -1096,10 +1143,25 @@ public class CustomerController {
 
         // Time slot selection
         javafx.scene.control.ComboBox<String> timeCombo = new javafx.scene.control.ComboBox<>();
-        timeCombo.getItems().addAll(
-                "09:00 - 11:00", "11:00 - 13:00", "13:00 - 15:00",
-                "15:00 - 17:00", "17:00 - 19:00", "19:00 - 21:00");
-        timeCombo.setValue("11:00 - 13:00");
+
+        // Initial population
+        timeCombo.setItems(FXCollections.observableArrayList(getAvailableTimeSlots(datePicker.getValue())));
+
+        // Update on date change
+        datePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                timeCombo.setItems(FXCollections.observableArrayList(getAvailableTimeSlots(newVal)));
+                if (!timeCombo.getItems().isEmpty()) {
+                    timeCombo.setValue(timeCombo.getItems().get(0));
+                } else {
+                    timeCombo.setValue(null);
+                }
+            }
+        });
+
+        if (!timeCombo.getItems().isEmpty()) {
+            timeCombo.setValue(timeCombo.getItems().get(0));
+        }
 
         // Layout
         javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
@@ -1243,6 +1305,7 @@ public class CustomerController {
                 if (couponStatusLabel != null)
                     couponStatusLabel.setText("");
                 updateCartTotal();
+                refreshCartGrid();
                 updateGPointsDisplay();
                 loadOrders();
                 loadProducts();
@@ -1357,7 +1420,7 @@ public class CustomerController {
             javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(
                     new java.io.File("src/com/greengrocer/views/login.fxml").toURI().toURL());
             javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
-            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 960, 540));
+            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 1200, 750));
             stage.setTitle("Greengrocer Login");
             stage.centerOnScreen();
         } catch (Exception e) {
@@ -1389,17 +1452,32 @@ public class CustomerController {
         }
 
         try {
+            boolean isNowFav = false;
             if (favoritesDAO.isFavorite(currentUser.getId(), selected.getId())) {
                 // Already favorite, remove it
                 favoritesDAO.removeFavorite(currentUser.getId(), selected.getId());
                 statusLabel.setText(selected.getName() + " removed from favorites.");
                 statusLabel.setStyle("-fx-text-fill: orange;");
+
+                // Update local list
+                favoriteProductIds.remove(Integer.valueOf(selected.getId()));
+                isNowFav = false;
             } else {
                 // Add to favorites
                 favoritesDAO.addFavorite(currentUser.getId(), selected.getId());
                 statusLabel.setText(selected.getName() + " added to favorites!");
                 statusLabel.setStyle("-fx-text-fill: green;");
+
+                // Update local list
+                if (!favoriteProductIds.contains(selected.getId())) {
+                    favoriteProductIds.add(selected.getId());
+                }
+                isNowFav = true;
             }
+
+            // Instant UI Update
+            updateProductCardVisuals(selected.getId(), isNowFav);
+
         } catch (java.sql.SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Database error.");
@@ -1408,31 +1486,115 @@ public class CustomerController {
         updateFavButton();
     }
 
+    private void updateProductCardVisuals(int productId, boolean isFav) {
+        // Update Shop Grid
+        if (shopFlowPane != null) {
+            for (javafx.scene.Node node : shopFlowPane.getChildren()) {
+                if (node instanceof VBox && Integer.valueOf(productId).equals(node.getUserData())) {
+                    updateCardStar((VBox) node, isFav);
+                }
+            }
+        }
+
+        // Update Favorites Grid
+        if (favoritesFlowPane != null) {
+            // For favorites tab, usually we might want to refresh, but for instant feedback
+            // let's toggle too.
+            // If we untoggled it, it will disappear next refresh.
+            for (javafx.scene.Node node : favoritesFlowPane.getChildren()) {
+                if (node instanceof VBox && Integer.valueOf(productId).equals(node.getUserData())) {
+                    updateCardStar((VBox) node, isFav);
+                }
+            }
+        }
+    }
+
+    private void updateCardStar(VBox card, boolean isFav) {
+        if (card.getChildren().isEmpty())
+            return;
+        javafx.scene.Node node = card.getChildren().get(0);
+        if (node instanceof Label) {
+            Label favLabel = (Label) node;
+            if (isFav) {
+                favLabel.setText("★");
+                favLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #FFD700;");
+            } else {
+                favLabel.setText("");
+            }
+        }
+    }
+
+    // Update favorite button text based on selection
     // Update favorite button text based on selection
     private void updateFavButton() {
         Product selected = selectedProduct;
-        if (favButton == null)
-            return;
 
-        if (selected == null) {
-            // No product selected - hide button
+        // Hide both buttons initially
+        if (favButton != null) {
             favButton.setVisible(false);
             favButton.setManaged(false);
+        }
+        if (favRemoveButton != null) {
+            favRemoveButton.setVisible(false);
+            favRemoveButton.setManaged(false);
+        }
+
+        if (selected == null) {
             return;
         }
 
-        // Product selected - show button
-        favButton.setVisible(true);
-        favButton.setManaged(true);
-
         try {
-            if (favoritesDAO.isFavorite(currentUser.getId(), selected.getId())) {
-                favButton.setText("Remove Favorite");
-                favButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
-            } else {
-                favButton.setText("Add Favorite");
-                favButton.setStyle("-fx-background-color: #FFC107;");
+            boolean isFav = favoritesDAO.isFavorite(currentUser.getId(), selected.getId());
+
+            // Check which tab is active to decide which button to show logic
+            // But simpler: just update both if they participate in the scene
+
+            // Logic for Shop Tab Button (Add/Remove)
+            if (favButton != null) {
+                favButton.setVisible(true);
+                favButton.setManaged(true);
+                if (isFav) {
+                    favButton.setText("Remove Favorite");
+                    favButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
+                } else {
+                    favButton.setText("Add Favorite");
+                    favButton.setStyle("-fx-background-color: #FFC107;");
+                }
             }
+
+            // Logic for Favorites Tab Button (Only Remove makes sense usually, OR
+            // Add/Remove if we want consistency)
+            // User asked for "Remove Favourite tuşu".
+            // Let's make it behave identical to the other button for consistency (Toggle)
+            if (favRemoveButton != null) {
+                // Only show if we are in Favorites tab?
+                // Or let the visibility be handled like the other one?
+                // The prompt implies it should be visible when an item is selected in Favorites
+                // tab.
+                // Since selectedProduct is global, if I select in Favorites, this triggers.
+
+                // However, favRemoveButton is inside the Favorites tab toolbar.
+                // We should only show it if the user is viewing Favorites?
+                // Actually, `selectedProduct` is shared.
+
+                // Let's checking if the button is relevant.
+                // For now, simple toggle logic is best.
+
+                favRemoveButton.setVisible(true);
+                favRemoveButton.setManaged(true);
+
+                if (isFav) {
+                    favRemoveButton.setText("Remove Favorite");
+                    favRemoveButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
+                    favRemoveButton.setDisable(false);
+                } else {
+                    // If not favorite (e.g. removed), in Favorites tab,
+                    // maybe we still want to allow adding it back?
+                    favRemoveButton.setText("Add Favorite");
+                    favRemoveButton.setStyle("-fx-background-color: #FFC107;");
+                }
+            }
+
         } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }
@@ -2281,7 +2443,7 @@ public class CustomerController {
     @FXML
     private Label chatPartnerLabel;
     @FXML
-    private TextArea msgComposeArea;
+    private TextField msgComposeArea;
     @FXML
     private Label msgStatusLabel;
     @FXML
@@ -2438,7 +2600,12 @@ public class CustomerController {
     private HBox createConversationItem(String subject, com.greengrocer.models.Message lastMessage, int unreadCount) {
         HBox item = new HBox(10);
         item.setAlignment(Pos.CENTER_LEFT);
-        item.setStyle("-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;");
+
+        boolean isSelected = subject.equals(currentConversationSubject);
+        String bgStyle = isSelected ? "-fx-background-color: #475569;" : "-fx-background-color: #334155;";
+        String borderStyle = isSelected ? "-fx-border-color: #4CAF50; -fx-border-width: 0 0 0 4;" : "";
+
+        item.setStyle("-fx-padding: 12; " + bgStyle + " -fx-background-radius: 8; -fx-cursor: hand; " + borderStyle);
 
         VBox textContent = new VBox(3);
         textContent.setMaxWidth(180);
@@ -2499,10 +2666,24 @@ public class CustomerController {
         });
 
         // Hover effect
-        item.setOnMouseEntered(e -> item.setStyle(
-                "-fx-padding: 12; -fx-background-color: #475569; -fx-background-radius: 8; -fx-cursor: hand;"));
-        item.setOnMouseExited(e -> item.setStyle(
-                "-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;"));
+        item.setOnMouseEntered(e -> {
+            boolean selected = subject.equals(currentConversationSubject);
+            if (!selected) {
+                item.setStyle(
+                        "-fx-padding: 12; -fx-background-color: #475569; -fx-background-radius: 8; -fx-cursor: hand;");
+            }
+        });
+        item.setOnMouseExited(e -> {
+            boolean selected = subject.equals(currentConversationSubject);
+            if (!selected) {
+                item.setStyle(
+                        "-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;");
+            } else {
+                // Restore selected style
+                item.setStyle(
+                        "-fx-padding: 12; -fx-background-color: #475569; -fx-background-radius: 8; -fx-cursor: hand; -fx-border-color: #4CAF50; -fx-border-width: 0 0 0 4;");
+            }
+        });
 
         return item;
     }
@@ -2616,6 +2797,26 @@ public class CustomerController {
             return;
         }
 
+        // Restrict messaging if order is delivered
+        if (currentConversationSubject.startsWith("[Order #")) {
+            try {
+                int endIdx = currentConversationSubject.indexOf("]");
+                if (endIdx != -1) {
+                    String idStr = currentConversationSubject.substring(8, endIdx);
+                    int orderId = Integer.parseInt(idStr);
+                    Order order = orderDAO.getOrderById(orderId);
+                    if (order != null && "Delivered".equalsIgnoreCase(order.getStatus())) {
+                        setMsgStatus("Cannot send: Order is Delivered.", "red");
+                        com.greengrocer.util.StyledAlert.showError("Order Completed", "Action Restricted",
+                                "You cannot send messages for a delivered order.");
+                        return;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         try {
             String subject = "Re: " + currentConversationSubject;
             com.greengrocer.models.Message message = new com.greengrocer.models.Message(
@@ -2660,6 +2861,40 @@ public class CustomerController {
         if (msgStatusLabel != null) {
             msgStatusLabel.setText(text);
             msgStatusLabel.setStyle("-fx-text-fill: " + color + ";");
+        }
+    }
+
+    private java.util.List<String> getAvailableTimeSlots(java.time.LocalDate date) {
+        java.util.List<String> slots = new java.util.ArrayList<>();
+        if (date == null)
+            return slots;
+
+        boolean isToday = date.equals(java.time.LocalDate.now());
+        java.time.LocalTime now = java.time.LocalTime.now();
+
+        for (int h = 9; h < 21; h += 2) {
+            java.time.LocalTime slotEnd = java.time.LocalTime.of(h + 2, 0);
+
+            if (isToday) {
+                // strict validation: now < slotEnd - 30m
+                java.time.LocalTime cutoff = slotEnd.minusMinutes(30);
+                if (now.isAfter(cutoff)) {
+                    continue;
+                }
+            }
+            slots.add(String.format("%02d:00 - %02d:00", h, h + 2));
+        }
+        return slots;
+    }
+
+    // Helper class for async loading
+    private static class ProductLoadResult {
+        final java.util.List<Product> products;
+        final java.util.List<Integer> favorites;
+
+        public ProductLoadResult(java.util.List<Product> products, java.util.List<Integer> favorites) {
+            this.products = products;
+            this.favorites = favorites;
         }
     }
 }

@@ -169,7 +169,7 @@ public class OwnerController {
     @FXML
     private TableColumn<com.greengrocer.models.Order, Integer> colAllOrderCarrier;
     @FXML
-    private TableColumn<com.greengrocer.models.Order, String> colAllOrderDate;
+    private TableColumn<com.greengrocer.models.Order, java.sql.Timestamp> colAllOrderDate;
     @FXML
     private TableColumn<com.greengrocer.models.Order, Double> colAllOrderTotal;
     @FXML
@@ -362,7 +362,7 @@ public class OwnerController {
                     } else if (tabText.contains("Coupons")) {
                         loadCoupons();
                         loadCouponHistory();
-                    } else if (tabText.contains("Messages")) {
+                    } else if (tabText.contains("Customer Chats")) {
                         handleRefreshOwnerMessages();
                     }
                 }
@@ -411,6 +411,17 @@ public class OwnerController {
         colAllOrderCustomer.setCellValueFactory(new PropertyValueFactory<>("customerId"));
         colAllOrderCarrier.setCellValueFactory(new PropertyValueFactory<>("carrierId"));
         colAllOrderDate.setCellValueFactory(new PropertyValueFactory<>("orderDate"));
+        colAllOrderDate.setCellFactory(column -> new TableCell<com.greengrocer.models.Order, java.sql.Timestamp>() {
+            @Override
+            protected void updateItem(java.sql.Timestamp item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(FormatHelper.formatDate(item));
+                }
+            }
+        });
         colAllOrderTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         colAllOrderStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
@@ -433,6 +444,18 @@ public class OwnerController {
         // Setup Analytics Tables
         if (analyticsTabPane != null) {
             setupAnalyticsTabs();
+        }
+
+        // Enter-to-send for Owner Messaging
+        if (ownerMsgComposeArea != null) {
+            ownerMsgComposeArea.setOnKeyPressed(event -> {
+                if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                    String text = ownerMsgComposeArea.getText().trim();
+                    if (!text.isEmpty()) {
+                        handleOwnerSendMessage();
+                    }
+                }
+            });
         }
     }
 
@@ -489,8 +512,7 @@ public class OwnerController {
             colReviewDate.setCellValueFactory(cellData -> {
                 if (cellData.getValue().getCreatedAt() != null) {
                     return new javafx.beans.property.SimpleStringProperty(
-                            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-                                    .format(cellData.getValue().getCreatedAt().toLocalDateTime()));
+                            FormatHelper.formatDate(cellData.getValue().getCreatedAt()));
                 }
                 return new javafx.beans.property.SimpleStringProperty("");
             });
@@ -1571,7 +1593,7 @@ public class OwnerController {
             javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(
                     new java.io.File("src/com/greengrocer/views/login.fxml").toURI().toURL());
             javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
-            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 960, 540));
+            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 1200, 750));
             stage.setTitle("Greengrocer Login");
             stage.centerOnScreen();
         } catch (Exception e) {
@@ -1819,7 +1841,7 @@ public class OwnerController {
     @FXML
     private Label ownerChatPartnerLabel;
     @FXML
-    private TextArea ownerReplyArea;
+    private TextField ownerMsgComposeArea;
     @FXML
     private Label ownerMsgStatusLabel;
     @FXML
@@ -1889,7 +1911,12 @@ public class OwnerController {
             com.greengrocer.models.Message lastMessage, int unreadCount) {
         javafx.scene.layout.HBox item = new javafx.scene.layout.HBox(10);
         item.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        item.setStyle("-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;");
+
+        boolean isSelected = subject.equals(ownerCurrentConversationSubject);
+        String bgStyle = isSelected ? "-fx-background-color: #475569;" : "-fx-background-color: #334155;";
+        String borderStyle = isSelected ? "-fx-border-color: #4CAF50; -fx-border-width: 0 0 0 4;" : "";
+
+        item.setStyle("-fx-padding: 12; " + bgStyle + " -fx-background-radius: 8; -fx-cursor: hand; " + borderStyle);
 
         javafx.scene.layout.VBox textContent = new javafx.scene.layout.VBox(3);
         textContent.setMaxWidth(180);
@@ -1954,11 +1981,25 @@ public class OwnerController {
             loadOwnerChatMessages();
             loadOwnerConversations(); // Refresh to clear unread badge
         });
-
-        item.setOnMouseEntered(e -> item.setStyle(
-                "-fx-padding: 12; -fx-background-color: #475569; -fx-background-radius: 8; -fx-cursor: hand;"));
-        item.setOnMouseExited(e -> item.setStyle(
-                "-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;"));
+        // Hover effect
+        item.setOnMouseEntered(e -> {
+            boolean selected = subject.equals(ownerCurrentConversationSubject);
+            if (!selected) {
+                item.setStyle(
+                        "-fx-padding: 12; -fx-background-color: #475569; -fx-background-radius: 8; -fx-cursor: hand;");
+            }
+        });
+        item.setOnMouseExited(e -> {
+            boolean selected = subject.equals(ownerCurrentConversationSubject);
+            if (!selected) {
+                item.setStyle(
+                        "-fx-padding: 12; -fx-background-color: #334155; -fx-background-radius: 8; -fx-cursor: hand;");
+            } else {
+                // Restore selected style
+                item.setStyle(
+                        "-fx-padding: 12; -fx-background-color: #475569; -fx-background-radius: 8; -fx-cursor: hand; -fx-border-color: #4CAF50; -fx-border-width: 0 0 0 4;");
+            }
+        });
 
         return item;
     }
@@ -2054,7 +2095,7 @@ public class OwnerController {
         if (currentUser == null)
             return;
 
-        String content = ownerReplyArea != null ? ownerReplyArea.getText().trim() : "";
+        String content = ownerMsgComposeArea != null ? ownerMsgComposeArea.getText().trim() : "";
 
         if (content.isEmpty()) {
             setOwnerMsgStatus("Type a message.", "red");
@@ -2072,7 +2113,7 @@ public class OwnerController {
                     currentUser.getId(), ownerCurrentChatPartnerId, subject, content);
 
             if (messageDAO.sendMessage(message)) {
-                ownerReplyArea.clear();
+                ownerMsgComposeArea.clear();
                 loadOwnerChatMessages();
                 loadOwnerConversations();
             } else {

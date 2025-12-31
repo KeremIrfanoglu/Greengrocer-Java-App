@@ -251,7 +251,7 @@ public class RegisterController {
             // Use File URI for consistency
             Parent root = FXMLLoader.load(new File("src/com/greengrocer/views/login.fxml").toURI().toURL());
             stage.setTitle("Greengrocer Login");
-            stage.setScene(StyleHelper.createStyledScene(root, 960, 540));
+            stage.setScene(StyleHelper.createStyledScene(root, 1200, 750));
         } catch (Exception e) {
             e.printStackTrace();
         }

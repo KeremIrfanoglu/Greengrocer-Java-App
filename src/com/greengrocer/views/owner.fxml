@@ -104,11 +104,11 @@
                     
                     <TableView fx:id="carrierTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                        <columns>
-                          <TableColumn fx:id="colCarrId" prefWidth="60" text="ID" />
-                          <TableColumn fx:id="colCarrUsername" prefWidth="120" text="Username" />
-                          <TableColumn fx:id="colCarrName" prefWidth="120" text="Name" />
-                          <TableColumn fx:id="colCarrSurname" prefWidth="120" text="Surname" />
-                          <TableColumn fx:id="colCarrPhone" prefWidth="120" text="Phone" />
+                          <TableColumn fx:id="colCarrId" prefWidth="80" text="ID" />
+                          <TableColumn fx:id="colCarrUsername" prefWidth="160" text="Username" />
+                          <TableColumn fx:id="colCarrName" prefWidth="160" text="Name" />
+                          <TableColumn fx:id="colCarrSurname" prefWidth="160" text="Surname" />
+                          <TableColumn fx:id="colCarrPhone" prefWidth="160" text="Phone" />
                        </columns>
                     </TableView>
                     
@@ -221,11 +221,11 @@
                                         </HBox>
                                         <TableView fx:id="analyticsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                                            <columns>
-                                              <TableColumn fx:id="colAnUsername" prefWidth="120" text="Username" />
-                                              <TableColumn fx:id="colAnName" prefWidth="150" text="Full Name" />
-                                              <TableColumn fx:id="colAnPhone" prefWidth="120" text="Phone" />
-                                              <TableColumn fx:id="colAnOrderCount" prefWidth="100" text="Orders" />
-                                              <TableColumn fx:id="colAnTotalSpent" prefWidth="120" text="Total Spent" />
+                                              <TableColumn fx:id="colAnUsername" prefWidth="160" text="Username" />
+                                              <TableColumn fx:id="colAnName" prefWidth="200" text="Full Name" />
+                                              <TableColumn fx:id="colAnPhone" prefWidth="160" text="Phone" />
+                                              <TableColumn fx:id="colAnOrderCount" prefWidth="130" text="Orders" />
+                                              <TableColumn fx:id="colAnTotalSpent" prefWidth="160" text="Total Spent" />
                                            </columns>
                                         </TableView>
                                      </children>
@@ -246,10 +246,10 @@
                                                     <Label text="Carrier Performance Leaderboard" styleClass="section-title" />
                                                     <TableView fx:id="carrierPerformanceTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                                                        <columns>
-                                                          <TableColumn fx:id="colCpId" prefWidth="50" text="ID" />
-                                                          <TableColumn fx:id="colCpName" prefWidth="150" text="Carrier Name" />
-                                                          <TableColumn fx:id="colCpDeliveries" prefWidth="100" text="Deliveries" />
-                                                          <TableColumn fx:id="colCpRating" prefWidth="80" text="Rating" />
+                                                          <TableColumn fx:id="colCpId" prefWidth="80" text="ID" />
+                                                          <TableColumn fx:id="colCpName" prefWidth="200" text="Carrier Name" />
+                                                          <TableColumn fx:id="colCpDeliveries" prefWidth="130" text="Deliveries" />
+                                                          <TableColumn fx:id="colCpRating" prefWidth="100" text="Rating" />
                                                        </columns>
                                                     </TableView>
                                                  </children>
@@ -261,9 +261,9 @@
                                                     <Label fx:id="carrierReviewsLabel" text="Reviews" styleClass="section-title" />
                                                     <TableView fx:id="carrierReviewsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                                                        <columns>
-                                                          <TableColumn fx:id="colReviewRating" prefWidth="60" text="Score" />
-                                                          <TableColumn fx:id="colReviewComment" prefWidth="200" text="Comment" />
-                                                          <TableColumn fx:id="colReviewDate" prefWidth="120" text="Date" />
+                                                          <TableColumn fx:id="colReviewRating" prefWidth="80" text="Score" />
+                                                          <TableColumn fx:id="colReviewComment" prefWidth="300" text="Comment" />
+                                                          <TableColumn fx:id="colReviewDate" prefWidth="160" text="Date" />
                                                        </columns>
                                                        <placeholder>
                                                           <Label text="Select a carrier to view reviews" />
@@ -317,12 +317,12 @@
                       
                       <TableView fx:id="allOrdersTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                         <columns>
-                          <TableColumn fx:id="colAllOrderId" prefWidth="80" text="Order #" />
-                          <TableColumn fx:id="colAllOrderCustomer" prefWidth="100" text="Customer" />
-                          <TableColumn fx:id="colAllOrderCarrier" prefWidth="100" text="Carrier" />
-                          <TableColumn fx:id="colAllOrderDate" prefWidth="150" text="Date" />
-                          <TableColumn fx:id="colAllOrderTotal" prefWidth="100" text="Total" />
-                          <TableColumn fx:id="colAllOrderStatus" prefWidth="100" text="Status" />
+                          <TableColumn fx:id="colAllOrderId" prefWidth="100" text="Order #" />
+                          <TableColumn fx:id="colAllOrderCustomer" prefWidth="150" text="Customer" />
+                          <TableColumn fx:id="colAllOrderCarrier" prefWidth="150" text="Carrier" />
+                          <TableColumn fx:id="colAllOrderDate" prefWidth="190" text="Date" />
+                          <TableColumn fx:id="colAllOrderTotal" prefWidth="130" text="Total" />
+                          <TableColumn fx:id="colAllOrderStatus" prefWidth="130" text="Status" />
                         </columns>
                       </TableView>
                       
@@ -346,12 +346,12 @@
                       
                       <TableView fx:id="alertsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                          <columns>
-                            <TableColumn fx:id="colAlertId" prefWidth="60" text="ID" />
-                            <TableColumn fx:id="colAlertName" prefWidth="180" text="Product" />
-                            <TableColumn fx:id="colAlertType" prefWidth="100" text="Type" />
-                            <TableColumn fx:id="colAlertStock" prefWidth="100" text="Stock" />
-                            <TableColumn fx:id="colAlertThreshold" prefWidth="100" text="Threshold" />
-                            <TableColumn fx:id="colAlertDiff" prefWidth="100" text="Shortage" />
+                            <TableColumn fx:id="colAlertId" prefWidth="80" text="ID" />
+                            <TableColumn fx:id="colAlertName" prefWidth="240" text="Product" />
+                            <TableColumn fx:id="colAlertType" prefWidth="130" text="Type" />
+                            <TableColumn fx:id="colAlertStock" prefWidth="130" text="Stock" />
+                            <TableColumn fx:id="colAlertThreshold" prefWidth="130" text="Threshold" />
+                            <TableColumn fx:id="colAlertDiff" prefWidth="130" text="Shortage" />
                          </columns>
                       </TableView>
                    </children>
@@ -384,11 +384,11 @@
                                    <Label text="Active Coupons" styleClass="section-title" />
                                    <TableView fx:id="couponTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                                       <columns>
-                                         <TableColumn fx:id="colCouponCode" prefWidth="100" text="Code" />
-                                         <TableColumn fx:id="colCouponDiscount" prefWidth="80" text="Discount" />
-                                         <TableColumn fx:id="colCouponMaxUses" prefWidth="80" text="Max" />
-                                         <TableColumn fx:id="colCouponCurrentUses" prefWidth="80" text="Uses" />
-                                         <TableColumn fx:id="colCouponActive" prefWidth="60" text="Active" />
+                                         <TableColumn fx:id="colCouponCode" prefWidth="140" text="Code" />
+                                         <TableColumn fx:id="colCouponDiscount" prefWidth="110" text="Discount" />
+                                         <TableColumn fx:id="colCouponMaxUses" prefWidth="110" text="Max" />
+                                         <TableColumn fx:id="colCouponCurrentUses" prefWidth="110" text="Uses" />
+                                         <TableColumn fx:id="colCouponActive" prefWidth="90" text="Active" />
                                       </columns>
                                    </TableView>
                                    <HBox spacing="10">
@@ -407,10 +407,10 @@
                                    <Label text="Usage History" styleClass="section-title" />
                                    <TableView fx:id="couponHistoryTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                                       <columns>
-                                         <TableColumn fx:id="colHistoryCode" prefWidth="80" text="Coupon" />
-                                         <TableColumn fx:id="colHistoryDate" prefWidth="130" text="Date" />
-                                         <TableColumn fx:id="colHistoryUser" prefWidth="100" text="User" />
-                                         <TableColumn fx:id="colHistoryAmount" prefWidth="80" text="Discount" />
+                                         <TableColumn fx:id="colHistoryCode" prefWidth="110" text="Coupon" />
+                                         <TableColumn fx:id="colHistoryDate" prefWidth="170" text="Date" />
+                                         <TableColumn fx:id="colHistoryUser" prefWidth="140" text="User" />
+                                         <TableColumn fx:id="colHistoryAmount" prefWidth="110" text="Discount" />
                                       </columns>
                                    </TableView>
                                 </children>
@@ -423,7 +423,7 @@
             </Tab>
             
             <!-- MESSAGES TAB - WhatsApp Style Chat -->
-            <Tab text="📬 Messages">
+            <Tab text="📬 Customer Chats">
                <content>
                   <HBox spacing="0" style="-fx-padding: 0;">
                      <!-- Left Panel: Conversation List -->
@@ -462,9 +462,9 @@
                            <!-- Message Input Area -->
                            <VBox spacing="10" style="-fx-padding: 15; -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 1 0 0 0;">
                               <HBox spacing="10" alignment="CENTER_LEFT">
-                                 <TextArea fx:id="ownerReplyArea" promptText="Type your reply..." wrapText="true" prefRowCount="1" prefHeight="40" HBox.hgrow="ALWAYS"
-                                           style="-fx-control-inner-background: #0f172a; -fx-text-fill: #e2e8f0; -fx-background-color: #0f172a; -fx-border-color: #334155; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 8;" />
-                                  <Button onAction="#handleOwnerSendMessage" text="Send" styleClass="button-primary" prefWidth="120" prefHeight="40" style="-fx-font-size: 14px; -fx-background-radius: 20;" />
+                                      <TextField fx:id="ownerMsgComposeArea" promptText="Type your message..." HBox.hgrow="ALWAYS"
+                                                style="-fx-control-inner-background: #0f172a; -fx-text-fill: #e2e8f0; -fx-background-color: #0f172a; -fx-border-color: #334155; -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 8;" />
+                                      <Button onAction="#handleOwnerSendMessage" text="Send" styleClass="button-primary" prefWidth="100" style="-fx-background-radius: 20;" />
                               </HBox>
                               <Label fx:id="ownerMsgStatusLabel" text="" style="-fx-font-size: 11px;" />
                            </VBox>

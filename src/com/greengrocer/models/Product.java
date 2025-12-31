@@ -138,13 +138,13 @@ public class Product {
      * Check if product is sold by piece (integer quantities only)
      */
     public boolean isSoldByPiece() {
-        return "pcs".equalsIgnoreCase(unitType);
+        return "piece".equalsIgnoreCase(unitType) || "pcs".equalsIgnoreCase(unitType);
     }
 
     /**
      * Get display unit label
      */
     public String getUnitLabel() {
-        return isSoldByPiece() ? "pcs" : "kg";
+        return isSoldByPiece() ? "pc" : "kg";
     }
 }
