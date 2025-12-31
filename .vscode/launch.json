@@ -3,6 +3,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "SchemaUpdate",
+            "request": "launch",
+            "mainClass": "com.greengrocer.setup.SchemaUpdate",
+            "projectName": "OOP-Project-3_dc4c4ae"
+        },
+        {
+            "type": "java",
             "name": "Launch Greengrocer",
             "request": "launch",
             "mainClass": "com.greengrocer.Main",
