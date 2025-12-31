@@ -1138,6 +1138,9 @@ public class CustomerController {
     }
 
     @FXML
+    private javafx.scene.control.Button checkoutButton;
+
+    @FXML
     public void handleCheckout() {
         if (cartList.isEmpty()) {
             statusLabel.setText("Cart is empty.");
@@ -1145,16 +1148,6 @@ public class CustomerController {
         }
 
         double subtotal = getCartTotal();
-
-        // Minimum cart value requirement
-        double MINIMUM_CART_VALUE = 20.0;
-        if (subtotal < MINIMUM_CART_VALUE) {
-            statusLabel.setText(
-                    String.format("Minimum order is TL%.2f. Your cart: TL%.2f", MINIMUM_CART_VALUE, subtotal));
-            statusLabel.setStyle("-fx-text-fill: #FF9800;");
-            return;
-        }
-
         double couponDiscountAmount = appliedCoupon != null ? subtotal * (appliedCoupon.getDiscountPercent() / 100.0)
                 : 0;
         double afterDiscounts = subtotal - gPointsToUse - couponDiscountAmount;
@@ -1164,6 +1157,15 @@ public class CustomerController {
         // Calculate VAT
         double vatAmount = afterDiscounts * 0.20;
         double finalTotal = afterDiscounts + vatAmount;
+
+        // Minimum cart value requirement (Based on Final Total)
+        double MINIMUM_CART_VALUE = 20.0;
+        if (finalTotal < MINIMUM_CART_VALUE) {
+            statusLabel.setText(
+                    String.format("Minimum order is TL%.2f. Your total: TL%.2f", MINIMUM_CART_VALUE, finalTotal));
+            statusLabel.setStyle("-fx-text-fill: #FF9800;");
+            return;
+        }
 
         // Show delivery date/time selection dialog
         javafx.scene.control.Dialog<java.time.LocalDateTime> dialog = new javafx.scene.control.Dialog<>();
@@ -1281,7 +1283,7 @@ public class CustomerController {
 
             // Create order with the subtotal and delivery date
             java.sql.Timestamp deliveryTimestamp = java.sql.Timestamp.valueOf(deliveryDateTime);
-            int orderId = orderDAO.createOrder(currentUser.getId(), new java.util.ArrayList<>(cartList), subtotal,
+            int orderId = orderDAO.createOrder(currentUser.getId(), new java.util.ArrayList<>(cartList), finalTotal,
                     deliveryTimestamp);
             if (orderId > 0) {
                 // Award G Points based on actual payment (1/5 of finalTotal)
@@ -1875,8 +1877,8 @@ public class CustomerController {
         if (afterDiscounts < 0)
             afterDiscounts = 0;
 
-        // 3. Calculate Tax (18%)
-        double vatRate = 0.18;
+        // 3. Calculate Tax (20%)
+        double vatRate = 0.20;
         double vatAmount = afterDiscounts * vatRate;
         double finalTotal = afterDiscounts + vatAmount;
 
@@ -1902,6 +1904,22 @@ public class CustomerController {
         if (finalTotalLabel != null) {
             finalTotalLabel.setText(FormatHelper.formatCurrency(finalTotal));
             // finalTotalLabel styling is set in FXML
+        }
+        // 5. Update Checkout Button State
+        if (checkoutButton != null) {
+            double MINIMUM_CART_VALUE = 20.0;
+            if (cartList.isEmpty()) {
+                checkoutButton.setDisable(true);
+                statusLabel.setText(""); // Clear status if empty
+            } else if (finalTotal < MINIMUM_CART_VALUE) {
+                checkoutButton.setDisable(true);
+                statusLabel.setText(
+                        String.format("Minimum order TL%.2f (Current: TL%.2f)", MINIMUM_CART_VALUE, finalTotal));
+                statusLabel.setStyle("-fx-text-fill: #FF9800;");
+            } else {
+                checkoutButton.setDisable(false);
+                statusLabel.setText(""); // Clear warning
+            }
         }
     }
 
@@ -2042,19 +2060,28 @@ public class CustomerController {
             couponStmt.setInt(1, selected.getId());
             java.sql.ResultSet couponRs = couponStmt.executeQuery();
 
+            double couponDiscount = 0;
             if (couponRs.next()) {
                 String couponCode = couponRs.getString("code");
-                double discountAmount = couponRs.getDouble("discount_amount");
+                couponDiscount = couponRs.getDouble("discount_amount");
                 details.append("   Coupon Used: ").append(couponCode).append("\n");
                 details.append("   Coupon Discount: ")
-                        .append(FormatHelper.formatCurrencyWithPrefix(discountAmount, "-")).append("\n");
+                        .append(FormatHelper.formatCurrencyWithPrefix(couponDiscount, "-")).append("\n");
             }
             couponRs.close();
             couponStmt.close();
 
+            // Calculate VAT
+            double taxableAmount = subtotal - couponDiscount;
+            if (taxableAmount < 0)
+                taxableAmount = 0;
+            double vatAmount = taxableAmount * 0.20;
+            details.append("   VAT (20%): ").append(FormatHelper.formatCurrency(vatAmount)).append("\n");
+
             // Calculate G Points (estimated - 5% of order total)
+            // Calculate G Points (estimated - 20% of order total, matching UserDAO logic)
             double totalAmount = selected.getTotalAmount();
-            double gPointsEarned = totalAmount * 0.05;
+            double gPointsEarned = totalAmount / 5.0;
             details.append("   G Points Earned: +").append(String.format("%.0f", gPointsEarned)).append(" points\n");
 
             details.append("\n   ━━━━━━━━━━━━━━━━━━━━━━━━\n");

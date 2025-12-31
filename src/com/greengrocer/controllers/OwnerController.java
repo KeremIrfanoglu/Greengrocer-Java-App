@@ -373,12 +373,25 @@ public class OwnerController {
                     } else if (tabText.contains("Coupons")) {
                         loadCoupons();
                         loadCouponHistory();
-                    } else if (tabText.contains("Customer Chats")) {
+                    } else if (tabText.contains("Messages")) {
                         handleRefreshOwnerMessages();
                     }
                 }
             });
         }
+
+        // Background auto-refresh for messages (every 5 seconds)
+        javafx.animation.Timeline msgTimeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(5), e -> {
+                    if (mainTabPane != null && mainTabPane.getSelectionModel().getSelectedItem() != null) {
+                        String tabText = mainTabPane.getSelectionModel().getSelectedItem().getText();
+                        if (tabText != null && tabText.contains("Messages")) {
+                            handleRefreshOwnerMessages();
+                        }
+                    }
+                }));
+        msgTimeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        msgTimeline.play();
 
         // Grid View is now used - no table setup needed
 
