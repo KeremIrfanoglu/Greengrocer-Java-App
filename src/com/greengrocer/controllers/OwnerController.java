@@ -239,13 +239,17 @@ public class OwnerController {
     @FXML
     private TableView<CarrierPerformance> carrierPerformanceTable;
     @FXML
-    private TableColumn<CarrierPerformance, Integer> colCpId;
+    private TableColumn<CarrierPerformance, Integer> colCpRank;
     @FXML
     private TableColumn<CarrierPerformance, String> colCpName;
     @FXML
     private TableColumn<CarrierPerformance, Integer> colCpDeliveries;
     @FXML
     private TableColumn<CarrierPerformance, Double> colCpRating;
+    @FXML
+    private TableColumn<CarrierPerformance, Integer> colCpReviews;
+    @FXML
+    private TableColumn<CarrierPerformance, Double> colCpValue;
 
     // Reviews Table Fields
     @FXML
@@ -327,6 +331,13 @@ public class OwnerController {
         this.supplierDAO = new SupplierDAO();
         this.analyticsDAO = new AnalyticsDAO();
         this.carrierRatingDAO = new CarrierRatingDAO();
+    }
+
+    public void initialize() {
+        if (productTypeChart != null) {
+            productTypeChart.setLabelsVisible(false);
+            productTypeChart.setLegendVisible(true);
+        }
     }
 
     public void initData(User user) {
@@ -478,7 +489,18 @@ public class OwnerController {
         });
 
         // Carrier Columns
-        colCpId.setCellValueFactory(new PropertyValueFactory<>("carrierId"));
+        colCpRank.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(String.valueOf(getIndex() + 1));
+                }
+            }
+        });
+
         colCpName.setCellValueFactory(new PropertyValueFactory<>("carrierName"));
         colCpDeliveries.setCellValueFactory(new PropertyValueFactory<>("deliveryCount"));
         colCpRating.setCellValueFactory(new PropertyValueFactory<>("averageRating"));
@@ -489,7 +511,21 @@ public class OwnerController {
                 if (empty || rating == null)
                     setText(null);
                 else
-                    setText(String.format("%.1f / 5.0", rating));
+                    setText(String.format("%.1f ★", rating));
+            }
+        });
+
+        colCpReviews.setCellValueFactory(new PropertyValueFactory<>("reviewCount"));
+
+        colCpValue.setCellValueFactory(new PropertyValueFactory<>("totalValue"));
+        colCpValue.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double value, boolean empty) {
+                super.updateItem(value, empty);
+                if (empty || value == null)
+                    setText(null);
+                else
+                    setText(FormatHelper.formatCurrency(value));
             }
         });
 
@@ -1347,7 +1383,7 @@ public class OwnerController {
                         entry.getValue()));
             }
             productTypeChart.setData(pieData);
-            productTypeChart.setLabelsVisible(true);
+            productTypeChart.setLabelsVisible(false);
             productTypeChart.setLegendSide(Side.RIGHT); // Move legend to side to prevent overlapping with labels
             productTypeChart.setStartAngle(90); // Adjust start angle for better label distribution
 

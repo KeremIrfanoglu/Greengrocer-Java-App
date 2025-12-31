@@ -14,11 +14,15 @@ public class AnalyticsDAO {
         String sql = "SELECT u.id, u.first_name, u.last_name, " +
                 "(SELECT COUNT(*) FROM OrderInfo o WHERE o.carrier_id = u.id AND o.status = 'DELIVERED') as delivery_count, "
                 +
-                "(SELECT COALESCE(AVG(cr.rating), 0) FROM CarrierRatings cr WHERE cr.carrier_id = u.id) as avg_rating "
+                "(SELECT COALESCE(SUM(o.total_amount), 0) FROM OrderInfo o WHERE o.carrier_id = u.id AND o.status = 'DELIVERED') as total_value, "
+                +
+                "(SELECT COALESCE(AVG(cr.rating), 0) FROM CarrierRatings cr WHERE cr.carrier_id = u.id) as avg_rating, "
+                +
+                "(SELECT COUNT(*) FROM CarrierRatings cr WHERE cr.carrier_id = u.id) as review_count "
                 +
                 "FROM UserInfo u " +
                 "WHERE u.role = 'carrier' " +
-                "ORDER BY delivery_count DESC";
+                "ORDER BY avg_rating DESC, delivery_count DESC";
 
         try (Connection conn = DatabaseAdapter.getConnection();
                 Statement stmt = conn.createStatement();
@@ -29,7 +33,9 @@ public class AnalyticsDAO {
                         rs.getInt("id"),
                         name,
                         rs.getInt("delivery_count"),
-                        rs.getDouble("avg_rating")));
+                        rs.getDouble("avg_rating"),
+                        rs.getInt("review_count"),
+                        rs.getDouble("total_value")));
             }
         }
         return list;

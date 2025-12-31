@@ -6,11 +6,17 @@ public class CarrierPerformance {
     private int deliveryCount;
     private double averageRating;
 
-    public CarrierPerformance(int carrierId, String carrierName, int deliveryCount, double averageRating) {
+    private int reviewCount;
+    private double totalValue;
+
+    public CarrierPerformance(int carrierId, String carrierName, int deliveryCount, double averageRating,
+            int reviewCount, double totalValue) {
         this.carrierId = carrierId;
         this.carrierName = carrierName;
         this.deliveryCount = deliveryCount;
         this.averageRating = averageRating;
+        this.reviewCount = reviewCount;
+        this.totalValue = totalValue;
     }
 
     public int getCarrierId() {
@@ -27,5 +33,13 @@ public class CarrierPerformance {
 
     public double getAverageRating() {
         return averageRating;
+    }
+
+    public int getReviewCount() {
+        return reviewCount;
+    }
+
+    public double getTotalValue() {
+        return totalValue;
     }
 }
