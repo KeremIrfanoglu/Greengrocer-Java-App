@@ -171,7 +171,7 @@
                                        <Label fx:id="discountLabel" text="0.00 TL" style="-fx-text-fill: #4CAF50;" />
                                     </HBox>
                                     <HBox>
-                                       <Label text="Tax (18%):" style="-fx-text-fill: #aaa;" />
+                                       <Label text="Tax (20%):" style="-fx-text-fill: #aaa;" />
                                        <Region HBox.hgrow="ALWAYS" />
                                        <Label fx:id="taxLabel" text="0.00 TL" style="-fx-text-fill: #ddd;" />
                                     </HBox>
@@ -183,7 +183,10 @@
                                     </HBox>
                                  </VBox>
                                  
-                                 <Button onAction="#handleCheckout" text="Checkout" styleClass="button-primary" maxWidth="Infinity" style="-fx-padding: 12;" />
+                                 <HBox spacing="10">
+                                     <Button onAction="#handleClearCart" text="🗑 Clear" styleClass="button-danger" minWidth="80" style="-fx-padding: 12;" />
+                                     <Button fx:id="checkoutButton" onAction="#handleCheckout" text="Checkout" styleClass="button-primary" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-padding: 12;" />
+                                  </HBox>
                               </children>
                            </VBox>
                         </children>

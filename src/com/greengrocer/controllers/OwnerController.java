@@ -373,12 +373,25 @@ public class OwnerController {
                     } else if (tabText.contains("Coupons")) {
                         loadCoupons();
                         loadCouponHistory();
-                    } else if (tabText.contains("Customer Chats")) {
+                    } else if (tabText.contains("Messages")) {
                         handleRefreshOwnerMessages();
                     }
                 }
             });
         }
+
+        // Background auto-refresh for messages (every 5 seconds)
+        javafx.animation.Timeline msgTimeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(5), e -> {
+                    if (mainTabPane != null && mainTabPane.getSelectionModel().getSelectedItem() != null) {
+                        String tabText = mainTabPane.getSelectionModel().getSelectedItem().getText();
+                        if (tabText != null && tabText.contains("Messages")) {
+                            handleRefreshOwnerMessages();
+                        }
+                    }
+                }));
+        msgTimeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        msgTimeline.play();
 
         // Grid View is now used - no table setup needed
 
@@ -434,6 +447,17 @@ public class OwnerController {
             }
         });
         colAllOrderTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+        colAllOrderTotal.setCellFactory(column -> new TableCell<com.greengrocer.models.Order, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(FormatHelper.formatCurrency(item));
+                }
+            }
+        });
         colAllOrderStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
         orderStatusFilter
@@ -732,7 +756,14 @@ public class OwnerController {
         priceLabel.setPrefHeight(20);
 
         // Stock label
-        Label stockLabel = new Label("Stock: " + String.format("%.1f", product.getStock()));
+        String stockText;
+        if (product.isSoldByKg()) {
+            stockText = String.format("%.1f kg", product.getStock());
+        } else {
+            stockText = String.valueOf((int) product.getStock());
+        }
+        Label stockLabel = new Label("Stock: " + stockText);
+
         if (product.getStock() <= product.getThreshold()) {
             stockLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold;");
         } else {
@@ -1207,17 +1238,13 @@ public class OwnerController {
                     loadProducts();
                 } else {
                     statusLabel.setText("Delete failed.");
-                    statusLabel.setStyle("-fx-text-fill: red;");
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
                 // Check if it's a foreign key constraint error
-                String msg = e.getMessage().toLowerCase();
-                if (msg.contains("foreign key") || msg.contains("constraint")) {
-                    statusLabel.setText("Cannot delete: Product has order history.");
-                } else {
-                    statusLabel.setText("Database error: " + e.getMessage());
-                }
+                // String msg = e.getMessage().toLowerCase(); // This line was commented out or
+                // intended to be part of an if block
+                statusLabel.setText("DB Error: " + e.getMessage()); // TEMPORARY DEBUG
                 statusLabel.setStyle("-fx-text-fill: red;");
             }
         }
@@ -1629,7 +1656,7 @@ public class OwnerController {
             javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(
                     new java.io.File("src/com/greengrocer/views/login.fxml").toURI().toURL());
             javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
-            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 1200, 750));
+            stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 960, 540));
             stage.setTitle("Greengrocer Login");
             stage.centerOnScreen();
         } catch (Exception e) {

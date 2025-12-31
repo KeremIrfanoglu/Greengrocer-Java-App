@@ -22,7 +22,7 @@ public class Main extends Application {
         Parent root = FXMLLoader.load(url);
 
         primaryStage.setTitle("Greengrocer Login");
-        Scene scene = new Scene(root, 1200, 750);
+        Scene scene = new Scene(root, 960, 540);
 
         // Load CSS stylesheet
         URL cssUrl = new File("src/com/greengrocer/views/styles.css").toURI().toURL();
@@ -30,6 +30,7 @@ public class Main extends Application {
 
         primaryStage.setScene(scene);
         StyleHelper.applyAppIcon(primaryStage);
+        primaryStage.centerOnScreen();
         primaryStage.show();
     }
 

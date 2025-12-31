@@ -99,6 +99,7 @@ public class LoginController {
                                 user.getRole().substring(0, 1).toUpperCase() + user.getRole().substring(1)
                                 + " Dashboard");
                         stage.setScene(StyleHelper.createStyledScene(root, 1200, 750));
+                        stage.centerOnScreen();
 
                     } catch (IOException e) {
                         e.printStackTrace();
