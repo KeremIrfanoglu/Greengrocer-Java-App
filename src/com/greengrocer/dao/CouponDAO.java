@@ -6,7 +6,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO for managing discount coupons
+ * Data Access Object for managing discount coupons.
+ * Handles coupon creation, validation, application, and usage tracking.
+ * 
+ * <p>
+ * Features:
+ * </p>
+ * <ul>
+ * <li>Create/update/delete coupons</li>
+ * <li>Validate coupon codes</li>
+ * <li>Track usage limits and current usage</li>
+ * <li>Prevent duplicate usage per user</li>
+ * <li>Usage history reporting</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see Coupon
  */
 public class CouponDAO {
 

@@ -1,4 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    owner.fxml - Owner/Admin Dashboard
+    
+    Description: Comprehensive management dashboard for store owner/admin.
+                 Provides full control over products, carriers, orders, reports, and analytics.
+    
+    Controller: com.greengrocer.controllers.OwnerController
+    
+    Tabs:
+    - Products: Add/edit/delete products with image support, search/filter/sort
+    - Carriers: Manage carrier accounts (recruit/fire)
+    - Reports: Sales charts, revenue analysis, profit/loss tables
+    - Analytics: Customer analytics, carrier performance, peak hours
+    - Orders: View and manage all orders
+    - Stock Alerts: Low stock product warnings
+    - Coupons: Create and manage discount coupons
+    - Messages: Communicate with customers
+    
+    @author Group10
+    @version 1.0
+-->
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.chart.BarChart?>

@@ -7,8 +7,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Data Access Object for persistent shopping cart.
+ * Data Access Object for persistent shopping cart management.
  * Stores cart items in database so they persist after logout/app close.
+ * 
+ * <p>
+ * Key features:
+ * </p>
+ * <ul>
+ * <li>Load cart items by user ID</li>
+ * <li>Add/update items with upsert support</li>
+ * <li>Remove individual items</li>
+ * <li>Clear entire cart after checkout</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see CartItem
+ * @see Product
  */
 public class CartDAO {
 

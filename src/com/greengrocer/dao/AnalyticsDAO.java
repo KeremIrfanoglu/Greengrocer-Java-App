@@ -7,6 +7,27 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data Access Object for advanced analytics operations.
+ * Provides detailed business intelligence data including carrier performance,
+ * product sales analysis, dead stock identification, and peak hours analysis.
+ * 
+ * <p>
+ * Analytics available:
+ * </p>
+ * <ul>
+ * <li>Carrier Performance: delivery count, ratings, total value</li>
+ * <li>Product Sales Analysis: quantity sold, revenue, cost per product</li>
+ * <li>Dead Stock: products with no sales history</li>
+ * <li>Peak Hours: order distribution by hour of day</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see CarrierPerformance
+ * @see ProductSalesStats
+ * @see HourlyOrderStats
+ */
 public class AnalyticsDAO {
 
     public List<CarrierPerformance> getCarrierPerformance() throws SQLException {

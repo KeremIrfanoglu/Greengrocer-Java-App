@@ -5,6 +5,19 @@ import java.util.ArrayList;
 import java.util.List;
 import com.greengrocer.models.Supplier;
 
+/**
+ * Data Access Object for Supplier management.
+ * Handles CRUD operations for supplier records.
+ * 
+ * <p>
+ * Suppliers provide products to the greengrocer and this DAO
+ * manages their contact information and business details.
+ * </p>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see Supplier
+ */
 public class SupplierDAO {
 
     public boolean addSupplier(Supplier supplier) throws SQLException {

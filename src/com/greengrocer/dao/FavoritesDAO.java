@@ -4,6 +4,23 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data Access Object for customer favorites management.
+ * Handles adding, removing, and querying favorite products for customers.
+ * 
+ * <p>
+ * Features:
+ * </p>
+ * <ul>
+ * <li>Add products to favorites</li>
+ * <li>Remove products from favorites</li>
+ * <li>Check if a product is favorited</li>
+ * <li>Retrieve all favorite product IDs for a customer</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ */
 public class FavoritesDAO {
 
     /**

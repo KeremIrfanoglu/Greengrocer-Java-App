@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    carrier.fxml - Carrier Dashboard
+    
+    Description: Dashboard for delivery carriers. Manages order pickup, delivery tracking,
+                 status updates, ratings, and leaderboard.
+    
+    Controller: com.greengrocer.controllers.CarrierController
+    
+    Tabs:
+    - Available Orders: View and claim pending orders for delivery
+    - My Deliveries: Manage active deliveries with status updates
+    - Completed: View delivery history
+    - My Ratings: View customer ratings and feedback
+    - Leaderboard: Compare performance with other carriers
+    - Communication: Send messages to customers about deliveries
+    
+    @author Group10
+    @version 1.0
+-->
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>

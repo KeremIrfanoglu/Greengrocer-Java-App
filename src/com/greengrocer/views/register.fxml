@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    register.fxml - Customer Registration Screen
+    
+    Description: Registration form for new customer account creation.
+                 Collects user information with comprehensive validation.
+    
+    Controller: com.greengrocer.controllers.RegisterController
+    
+    Features:
+    - Username, password, and confirm password fields
+    - First name, last name, address, phone inputs
+    - Input validation with error feedback
+    - Navigation back to login screen
+    - Background music toggle
+    
+    Validation:
+    - Username: 3-20 chars, lowercase alphanumeric
+    - Password: Min 6 chars, 1 uppercase, 1 number
+    - Name: 2-50 chars, letters only
+    - Phone: Turkish/international formats
+    
+    @author Group10
+    @version 1.0
+-->
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>

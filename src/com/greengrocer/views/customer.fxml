@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    customer.fxml - Customer Dashboard
+    
+    Description: Main dashboard for customer users. Provides shopping, cart management,
+                 order tracking, favorites, profile management, and messaging features.
+    
+    Controller: com.greengrocer.controllers.CustomerController
+    
+    Tabs:
+    - Shop: Browse products with search, filter, sort; add to cart
+    - Cart: View cart items, apply coupons/G-Points, schedule delivery, checkout
+    - My Orders: View order history, track status, rate carriers, download invoices
+    - Favorites: View and manage favorite products
+    - Profile: Update personal info, change password
+    - Messages: Communicate with store owner
+    
+    @author Group10
+    @version 1.0
+-->
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>

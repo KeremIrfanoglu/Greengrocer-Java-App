@@ -7,7 +7,22 @@ import java.util.List;
 
 /**
  * Data Access Object for Message operations.
- * Handles customer-owner messaging feature.
+ * Handles in-app messaging between customers, carriers, and owner.
+ * 
+ * <p>
+ * Features:
+ * </p>
+ * <ul>
+ * <li>Send messages between users</li>
+ * <li>Inbox and sent message retrieval</li>
+ * <li>Unread message counting</li>
+ * <li>Mark messages as read</li>
+ * <li>Message deletion</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see Message
  */
 public class MessageDAO {
 

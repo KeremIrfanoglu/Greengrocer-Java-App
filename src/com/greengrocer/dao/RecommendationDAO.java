@@ -6,8 +6,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO for product recommendations - "Customers who bought this also bought"
- * Analyzes past orders to find products frequently bought together
+ * Data Access Object for product recommendations.
+ * Implements "Customers who bought this also bought" functionality
+ * by analyzing past order patterns to find frequently co-purchased products.
+ * 
+ * <p>
+ * Recommendation strategies:
+ * </p>
+ * <ul>
+ * <li>Also-bought analysis: products frequently in same orders</li>
+ * <li>Top-selling fallback: popular products when no co-purchase data</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see Product
  */
 public class RecommendationDAO {
 

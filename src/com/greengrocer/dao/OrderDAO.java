@@ -6,6 +6,28 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data Access Object for Order operations.
+ * Handles order creation, status management, delivery tracking,
+ * and invoice storage with transactional support.
+ * 
+ * <p>
+ * Key responsibilities:
+ * </p>
+ * <ul>
+ * <li>Order creation with automatic stock deduction (transactional)</li>
+ * <li>Order status lifecycle: Pending → Picked Up → Delivering → Delivered</li>
+ * <li>Order cancellation with stock restoration</li>
+ * <li>Invoice PDF storage and retrieval</li>
+ * <li>Delivery assignment to carriers</li>
+ * <li>Order filtering by customer, carrier, or status</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see Order
+ * @see CartItem
+ */
 public class OrderDAO {
 
     public int createOrder(int customerId, List<CartItem> items, double totalAmount, java.sql.Timestamp deliveryDate)

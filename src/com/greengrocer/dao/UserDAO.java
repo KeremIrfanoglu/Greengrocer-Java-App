@@ -9,6 +9,29 @@ import java.sql.SQLException;
 
 import java.sql.Statement;
 
+/**
+ * Data Access Object for User operations.
+ * Handles user authentication, registration, profile management, password
+ * changes,
+ * and G-Points (loyalty points) management.
+ * 
+ * <p>
+ * Key responsibilities:
+ * </p>
+ * <ul>
+ * <li>User authentication with password hashing support</li>
+ * <li>User registration for new customers</li>
+ * <li>Profile information updates</li>
+ * <li>Password management with secure hashing</li>
+ * <li>G-Points balance management (earn/spend loyalty points)</li>
+ * <li>Customer analytics retrieval for owner dashboard</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see User
+ * @see PasswordUtils
+ */
 public class UserDAO {
 
     public User authenticate(String username, String password) throws SQLException {

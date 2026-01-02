@@ -6,6 +6,26 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data Access Object for Product operations.
+ * Handles all CRUD operations for products including image storage,
+ * stock management, and duplicate name validation.
+ * 
+ * <p>
+ * Key features:
+ * </p>
+ * <ul>
+ * <li>Product CRUD operations with image BLOB support</li>
+ * <li>Duplicate product name validation</li>
+ * <li>Safe product deletion with FK constraint handling</li>
+ * <li>Support for both kg-based and piece-based products</li>
+ * <li>Cost price tracking for profit/loss analysis</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see Product
+ */
 public class ProductDAO {
 
     public List<Product> getAllProducts() throws SQLException {

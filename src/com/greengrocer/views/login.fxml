@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    login.fxml - Login Screen
+    
+    Description: Main entry point of the application. Provides user authentication
+                 with username/password fields and navigation to registration.
+    
+    Controller: com.greengrocer.controllers.LoginController
+    
+    Features:
+    - Username and password input fields
+    - Login authentication
+    - Navigation to registration screen
+    - "Forgot Password" functionality
+    - Background music toggle
+    
+    @author Group10
+    @version 1.0
+-->
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>

@@ -4,6 +4,26 @@ import java.sql.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Data Access Object for generating business reports.
+ * Provides methods for sales analytics, revenue tracking, profit/loss analysis,
+ * and carrier performance metrics.
+ * 
+ * <p>
+ * Report Types:
+ * </p>
+ * <ul>
+ * <li>Sales by product type (pie chart data)</li>
+ * <li>Daily/Weekly/Monthly revenue trends</li>
+ * <li>Profit/Loss per product</li>
+ * <li>Cost analysis with margin calculation</li>
+ * <li>Inventory cost valuation</li>
+ * <li>Carrier leaderboard</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ */
 public class ReportDAO {
 
     /**

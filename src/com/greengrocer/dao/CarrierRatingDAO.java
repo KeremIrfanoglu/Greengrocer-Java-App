@@ -7,7 +7,22 @@ import java.util.List;
 
 /**
  * Data Access Object for carrier ratings.
- * Handles rating creation and retrieval operations.
+ * Handles rating creation, retrieval, and carrier leaderboard generation.
+ * 
+ * <p>
+ * Features:
+ * </p>
+ * <ul>
+ * <li>Rate carriers after delivery completion</li>
+ * <li>Check if order has already been rated</li>
+ * <li>Calculate average ratings per carrier</li>
+ * <li>Retrieve ratings list for display</li>
+ * <li>Generate carrier leaderboard with rankings</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see CarrierRating
  */
 public class CarrierRatingDAO {
 
