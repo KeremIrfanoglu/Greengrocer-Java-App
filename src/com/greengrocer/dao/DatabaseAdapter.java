@@ -23,7 +23,7 @@ import java.sql.SQLException;
  */
 public class DatabaseAdapter {
     private static final String DB_URL = System.getenv().getOrDefault("DB_URL",
-            "jdbc:mysql://localhost:3306/cmpe343_project");
+            "jdbc:mysql://localhost:3306/cmpe343_project?useUnicode=true&characterEncoding=UTF-8&blobSendChunkSize=1048576&useSSL=false&allowPublicKeyRetrieval=true");
     private static final String USER = System.getenv().getOrDefault("DB_USER", "myuser");
     private static final String PASS = System.getenv().getOrDefault("DB_PASS", "1234");
 

@@ -1,7 +1,6 @@
 package com.greengrocer.models;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import javafx.scene.image.Image;
 
 /**
@@ -135,15 +134,73 @@ public class Product {
      * Returns a JavaFX Image from the stored byte array.
      * Caches the image after first load to prevent expensive re-decoding.
      * Loads at a max width of 200px to optimize memory usage.
+     * Includes automatic recovery for UTF-8 double-encoded corrupted data.
      */
     public Image getImage() {
         if (cachedImage != null) {
             return cachedImage;
         }
         if (imageData != null && imageData.length > 0) {
-            // Load with requested width 200 to save memory, preserving aspect ratio
-            cachedImage = new Image(new ByteArrayInputStream(imageData), 200, 0, true, true);
-            return cachedImage;
+            try {
+                // First, try loading the image directly
+                Image img = new Image(new ByteArrayInputStream(imageData), 200, 0, true, true);
+
+                // If direct load fails, try to recover from UTF-8 double-encoding corruption
+                if (img.isError()) {
+                    byte[] recoveredData = tryRecoverCorruptedData(imageData);
+                    if (recoveredData != null) {
+                        img = new Image(new ByteArrayInputStream(recoveredData), 200, 0, true, true);
+                        if (!img.isError()) {
+                            cachedImage = img;
+                            return cachedImage;
+                        }
+                    }
+                    return null;
+                }
+
+                cachedImage = img;
+                return cachedImage;
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Attempts to recover image data that was corrupted by UTF-8 double-encoding.
+     * This happens when binary data is incorrectly treated as ISO-8859-1 text
+     * and then encoded to UTF-8, causing bytes like FF to become C3 BF.
+     */
+    private byte[] tryRecoverCorruptedData(byte[] corruptedData) {
+        try {
+            // Convert bytes to string using UTF-8 (how it was incorrectly encoded)
+            String asUtf8 = new String(corruptedData, java.nio.charset.StandardCharsets.UTF_8);
+            // Convert back to bytes using ISO-8859-1 (the original binary values)
+            byte[] recovered = asUtf8.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+
+            // Validate that recovered data looks like an image
+            if (recovered.length > 4) {
+                // Check for JPEG magic bytes (FF D8 FF)
+                if ((recovered[0] & 0xFF) == 0xFF && (recovered[1] & 0xFF) == 0xD8 && (recovered[2] & 0xFF) == 0xFF) {
+                    return recovered;
+                }
+                // Check for PNG magic bytes (89 50 4E 47)
+                if ((recovered[0] & 0xFF) == 0x89 && recovered[1] == 'P' && recovered[2] == 'N'
+                        && recovered[3] == 'G') {
+                    return recovered;
+                }
+                // Check for GIF magic bytes
+                if (recovered[0] == 'G' && recovered[1] == 'I' && recovered[2] == 'F') {
+                    return recovered;
+                }
+                // Check for BMP magic bytes
+                if (recovered[0] == 'B' && recovered[1] == 'M') {
+                    return recovered;
+                }
+            }
+        } catch (Exception e) {
+            // Recovery failed
         }
         return null;
     }
