@@ -29,6 +29,9 @@ public class CartDAO {
 
     /**
      * Load cart items for a specific user
+     * 
+     * @param userId The ID of the user whose cart to load
+     * @return A list of CartItems
      */
     public List<CartItem> getCartByUserId(int userId) throws SQLException {
         List<CartItem> items = new ArrayList<>();
@@ -78,6 +81,11 @@ public class CartDAO {
 
     /**
      * Add or update item in cart
+     * 
+     * @param userId    The ID of the user
+     * @param productId The ID of the product
+     * @param quantity  The quantity to add
+     * @return true if successful
      */
     public boolean addToCart(int userId, int productId, double quantity) throws SQLException {
         // Use INSERT ... ON DUPLICATE KEY UPDATE for upsert
@@ -95,6 +103,11 @@ public class CartDAO {
 
     /**
      * Update quantity for item in cart
+     * 
+     * @param userId      The ID of the user
+     * @param productId   The ID of the product
+     * @param newQuantity The new quantity value
+     * @return true if successful
      */
     public boolean updateQuantity(int userId, int productId, double newQuantity) throws SQLException {
         String query = "UPDATE Cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
@@ -109,6 +122,10 @@ public class CartDAO {
 
     /**
      * Remove item from cart
+     * 
+     * @param userId    The ID of the user
+     * @param productId The ID of the product
+     * @return true if successful
      */
     public boolean removeFromCart(int userId, int productId) throws SQLException {
         String query = "DELETE FROM Cart WHERE user_id = ? AND product_id = ?";
@@ -122,6 +139,9 @@ public class CartDAO {
 
     /**
      * Clear entire cart for user (after successful checkout)
+     * 
+     * @param userId The ID of the user
+     * @return true if successful
      */
     public boolean clearCart(int userId) throws SQLException {
         String query = "DELETE FROM Cart WHERE user_id = ?";
