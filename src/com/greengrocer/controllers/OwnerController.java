@@ -518,10 +518,10 @@ public class OwnerController {
         }
 
         // Enter-to-send for Owner Messaging
-        if (ownerMsgComposeArea != null) {
-            ownerMsgComposeArea.setOnKeyPressed(event -> {
+        if (ownerReplyArea != null) {
+            ownerReplyArea.setOnKeyPressed(event -> {
                 if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
-                    String text = ownerMsgComposeArea.getText().trim();
+                    String text = ownerReplyArea.getText().trim();
                     if (!text.isEmpty()) {
                         handleOwnerSendMessage();
                     }
@@ -1986,7 +1986,7 @@ public class OwnerController {
     @FXML
     private Label ownerChatPartnerLabel;
     @FXML
-    private TextField ownerMsgComposeArea;
+    private TextArea ownerReplyArea;
     @FXML
     private Label ownerMsgStatusLabel;
     @FXML
@@ -2240,10 +2240,10 @@ public class OwnerController {
         if (currentUser == null)
             return;
 
-        String content = ownerMsgComposeArea != null ? ownerMsgComposeArea.getText().trim() : "";
+        String content = ownerReplyArea != null ? ownerReplyArea.getText().trim() : "";
 
         if (content.isEmpty()) {
-            setOwnerMsgStatus("Type a message.", "red");
+            setOwnerMsgStatus("Message cannot be empty!", "red");
             return;
         }
 
@@ -2258,7 +2258,7 @@ public class OwnerController {
                     currentUser.getId(), ownerCurrentChatPartnerId, subject, content);
 
             if (messageDAO.sendMessage(message)) {
-                ownerMsgComposeArea.clear();
+                ownerReplyArea.clear();
                 loadOwnerChatMessages();
                 loadOwnerConversations();
             } else {
