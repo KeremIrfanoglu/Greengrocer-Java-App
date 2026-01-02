@@ -435,3 +435,29 @@
     -fx-text-fill: -fx-primary;
     -fx-border-color: -fx-primary;
 }
+
+/* ============= PIE CHART LEGEND FIX ============= */
+.chart-legend {
+    -fx-background-color: transparent;
+    -fx-padding: 5;
+}
+
+.chart-legend-item {
+    -fx-text-fill: -fx-text-primary;
+}
+
+.chart-legend-item-symbol {
+    -fx-background-radius: 4;
+    -fx-padding: 4;
+}
+
+.chart-pie-label {
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 11px;
+}
+
+/* Make legend text smaller to fit in container */
+.chart-legend-item>.label {
+    -fx-font-size: 11px;
+    -fx-text-fill: -fx-text-primary;
+}

@@ -133,8 +133,8 @@ public class ReportDAO {
         String query = """
                 SELECT p.name,
                        SUM(oi.quantity * oi.price_at_purchase) as revenue,
-                       SUM(oi.quantity * COALESCE(p.cost_price, 0)) as cost,
-                       SUM(oi.quantity * (oi.price_at_purchase - COALESCE(p.cost_price, 0))) as profit
+                       SUM(oi.quantity * COALESCE(oi.cost_at_purchase, p.cost_price, 0)) as cost,
+                       SUM(oi.quantity * (oi.price_at_purchase - COALESCE(oi.cost_at_purchase, p.cost_price, 0))) as profit
                 FROM OrderItems oi
                 JOIN ProductInfo p ON oi.product_id = p.id
                 GROUP BY p.id, p.name
@@ -227,7 +227,7 @@ public class ReportDAO {
      */
     public double getTotalProfit() throws SQLException {
         String query = """
-                SELECT COALESCE(SUM(oi.quantity * (oi.price_at_purchase - COALESCE(p.cost_price, 0))), 0) as profit
+                SELECT COALESCE(SUM(oi.quantity * (oi.price_at_purchase - COALESCE(oi.cost_at_purchase, p.cost_price, 0))), 0) as profit
                 FROM OrderItems oi
                 JOIN ProductInfo p ON oi.product_id = p.id
                 """;
