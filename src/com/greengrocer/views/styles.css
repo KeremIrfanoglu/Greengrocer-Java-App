@@ -436,28 +436,69 @@
     -fx-border-color: -fx-primary;
 }
 
-/* ============= PIE CHART LEGEND FIX ============= */
+/* ============= CHARTS ============= */
+.chart {
+    -fx-padding: 10px;
+    -fx-background-color: transparent;
+}
+
+.chart-content {
+    -fx-padding: 10px;
+}
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: #334155;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: #334155;
+}
+
+.chart-alternative-column-fill {
+    -fx-fill: transparent;
+    -fx-stroke: transparent;
+}
+
+.axis {
+    -fx-font-size: 1.0em;
+    -fx-tick-label-fill: -fx-text-primary;
+    -fx-tick-mark-stroke: -fx-text-primary;
+}
+
+.axis:top {
+    -fx-border-color: transparent transparent -fx-bg-light transparent;
+}
+
+.axis:right {
+    -fx-border-color: transparent transparent transparent -fx-bg-light;
+}
+
+.axis:bottom {
+    -fx-border-color: -fx-bg-light transparent transparent transparent;
+}
+
+.axis:left {
+    -fx-border-color: transparent -fx-bg-light transparent transparent;
+}
+
+.axis-label {
+    -fx-text-fill: -fx-text-primary;
+}
+
 .chart-legend {
     -fx-background-color: transparent;
-    -fx-padding: 5;
+    -fx-padding: 10px;
 }
 
 .chart-legend-item {
     -fx-text-fill: -fx-text-primary;
 }
 
-.chart-legend-item-symbol {
-    -fx-background-radius: 4;
-    -fx-padding: 4;
-}
-
-.chart-pie-label {
+.chart-title {
     -fx-text-fill: -fx-text-primary;
-    -fx-font-size: 11px;
-}
-
-/* Make legend text smaller to fit in container */
-.chart-legend-item>.label {
-    -fx-font-size: 11px;
-    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 1.4em;
 }
