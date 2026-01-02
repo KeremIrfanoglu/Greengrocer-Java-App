@@ -90,7 +90,6 @@ public class LoginController {
      * Validates user credentials and redirects to the appropriate dashboard
      * based on the user's role (customer, carrier, or owner).
      * 
-     * @throws SQLException if database access fails
      */
     @FXML
     public void handleLogin() {
