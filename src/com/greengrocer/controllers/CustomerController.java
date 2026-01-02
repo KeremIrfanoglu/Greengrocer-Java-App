@@ -53,6 +53,8 @@ public class CustomerController {
     private Label statusLabel;
     @FXML
     private Label gPointsLabel; // G Points balance display
+    @FXML
+    private Label usernameLabel; // Username display in top right corner
 
     // Shop Tab - Grid View
     @FXML
@@ -244,6 +246,9 @@ public class CustomerController {
         this.currentUser = user;
         if (welcomeLabel != null) {
             welcomeLabel.setText("Welcome, " + user.getFirstName());
+        }
+        if (usernameLabel != null) {
+            usernameLabel.setText("@" + user.getUsername());
         }
         updateGPointsDisplay();
 
