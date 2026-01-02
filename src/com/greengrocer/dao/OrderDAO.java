@@ -298,12 +298,27 @@ public class OrderDAO {
     }
 
     public boolean updateOrderStatus(int orderId, String status) throws SQLException {
-        String query = "UPDATE OrderInfo SET status = ? WHERE id = ?";
+        String query;
+
+        // If marking as Delivered, also set the delivered_at timestamp
+        if ("Delivered".equals(status)) {
+            query = "UPDATE OrderInfo SET status = ?, delivered_at = ? WHERE id = ?";
+        } else {
+            query = "UPDATE OrderInfo SET status = ? WHERE id = ?";
+        }
+
         try (Connection conn = DatabaseAdapter.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, status);
-            stmt.setInt(2, orderId);
+
+            if ("Delivered".equals(status)) {
+                stmt.setTimestamp(2, new java.sql.Timestamp(System.currentTimeMillis()));
+                stmt.setInt(3, orderId);
+            } else {
+                stmt.setInt(2, orderId);
+            }
+
             return stmt.executeUpdate() > 0;
         }
     }

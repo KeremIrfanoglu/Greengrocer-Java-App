@@ -63,7 +63,7 @@ public class SplashController {
     public void initialize() {
         try {
             // Load video from assets
-            File videoFile = new File("src/com/greengrocer/assets/SSH.mp4");
+            File videoFile = new File("src/com/greengrocer/assets/intro.mp4");
             if (!videoFile.exists()) {
                 System.out.println("Splash video not found, skipping to login...");
                 // Delay navigation slightly to let stage be set

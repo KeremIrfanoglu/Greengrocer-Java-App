@@ -1,0 +1,100 @@
+==============================================================
+          GROUP 10 - GREENGROCER APPLICATION
+              CMPE 343 - OOP Project 3
+==============================================================
+
+HOW TO RUN THE APPLICATION
+--------------------------
+
+PREREQUISITES:
+1. Java JDK 17 or higher installed
+2. JavaFX SDK 21 or higher
+3. MySQL Server running (version 8.0+)
+4. MySQL Connector/J library (included in lib folder)
+
+STEP-BY-STEP INSTRUCTIONS:
+
+1. DATABASE SETUP
+   - Start your MySQL server
+   - Create a new database named "cmpe343_project"
+   - Import the provided Group10.sql file:
+     mysql -u root -p cmpe343_project < Group10.sql
+   - Or manually run the SQL file in MySQL Workbench
+
+2. CONFIGURE DATABASE CONNECTION
+   - Open src/com/greengrocer/util/DatabaseAdapter.java
+   - Update the following if needed:
+     * DB_URL = "jdbc:mysql://localhost:3306/cmpe343_project"
+     * DB_USER = "root"
+     * DB_PASSWORD = "your_password"
+
+3. RUN THE APPLICATION
+   Using IDE (IntelliJ/Eclipse):
+   - Open the project folder
+   - Add JavaFX SDK to project libraries
+   - Add MySQL Connector/J to classpath
+   - Run Main.java (com.greengrocer.Main)
+
+4. DEFAULT LOGIN CREDENTIALS
+   - Customer: username = "cust"    password = "Cust123"
+   - Carrier:  username = "carr"    password = "Carr123"
+   - Owner:    username = "own"     password = "Own123"
+
+5. FEATURES BY USER ROLE
+
+   CUSTOMER:
+   - Browse products with search, filter by category, and sort options
+   - View product details, images, and prices
+   - Add products to cart (kg or piece based)
+   - Quantity validation (minimum 0.5 kg, stock check)
+   - View and manage shopping cart
+   - Apply discount coupons at checkout
+   - Use G-Points (loyalty points) for discounts
+   - Schedule delivery date and time (within 48 hours)
+   - View order summary before purchase
+   - Minimum cart value enforcement (₺20)
+   - PDF invoice generation and download
+   - View order history and track status
+   - Cancel orders within 30 minutes (if Pending)
+   - Rate and comment on carriers after delivery
+   - Add/remove products from favorites
+   - Update profile information
+   - Change password
+   - Send messages to store owner
+   - "Also Bought" product recommendations
+
+   CARRIER:
+   - View available orders waiting for pickup
+   - Take/select orders to deliver
+   - View order details (customer, address, products)
+   - Update delivery status (Picked Up → Delivering → Delivered)
+   - Cannot deliver before scheduled delivery time
+   - View completed deliveries
+   - View personal ratings and comments from customers
+   - See average rating score
+   - Communicate with store owner
+
+   OWNER:
+   - Add new products with images
+   - Edit product details (name, price, cost, stock, threshold)
+   - Delete products
+   - Set low stock threshold (price doubles when stock ≤ threshold)
+   - Employ new carriers
+   - Fire existing carriers
+   - View all orders and their status
+   - View and reply to customer messages
+   - Create and manage discount coupons
+   - Set loyalty program standards (G-Points)
+   - View carrier ratings and performance
+   - View reports and analytics:
+     * Sales by category (pie chart)
+     * Revenue trends (daily/weekly/monthly bar chart)
+     * Profit/loss per product
+     * Cost analysis
+     * Total revenue, orders, and profit summaries
+   - View customer and carrier analytics
+   - Peak hours analysis
+
+==============================================================
+For questions, contact Group 10.
+==============================================================
