@@ -112,11 +112,33 @@ public class UserDAO {
     }
 
     public boolean deleteUser(int id) throws SQLException {
-        String query = "DELETE FROM UserInfo WHERE id = ?";
-        try (Connection conn = DatabaseAdapter.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, id);
-            return stmt.executeUpdate() > 0;
+        // Transactional delete to handle constraints
+        String unassignOrders = "UPDATE OrderInfo SET carrier_id = NULL WHERE carrier_id = ?";
+        String deleteUser = "DELETE FROM UserInfo WHERE id = ?";
+
+        try (Connection conn = DatabaseAdapter.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                // 1. Unassign orders first (fix FK constraint)
+                try (PreparedStatement stmt = conn.prepareStatement(unassignOrders)) {
+                    stmt.setInt(1, id);
+                    stmt.executeUpdate();
+                }
+
+                // 2. Delete the user
+                try (PreparedStatement stmt = conn.prepareStatement(deleteUser)) {
+                    stmt.setInt(1, id);
+                    int affected = stmt.executeUpdate();
+
+                    conn.commit();
+                    return affected > 0;
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         }
     }
 

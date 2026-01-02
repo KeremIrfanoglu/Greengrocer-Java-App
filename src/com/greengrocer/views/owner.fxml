@@ -121,6 +121,7 @@
                           <TextField fx:id="carrSurnameField" promptText="Surname" prefWidth="100" styleClass="text-field" />
                           <TextField fx:id="carrPhoneField" promptText="Phone" prefWidth="100" styleClass="text-field" />
                           <Button onAction="#handleAddCarrier" text="Recruit" styleClass="button-primary" />
+                          <Label fx:id="carrierStatusLabel" styleClass="status-success" />
                        </children>
                     </HBox>
                     

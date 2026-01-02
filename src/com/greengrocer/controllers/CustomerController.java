@@ -1339,6 +1339,17 @@ public class CustomerController {
                 double pointsEarned = finalTotal / 5.0;
                 userDAO.addGPoints(currentUser.getId(), finalTotal);
 
+                // Record coupon usage if a coupon was applied
+                if (appliedCoupon != null && couponDiscountAmount > 0) {
+                    try {
+                        couponDAO.applyCoupon(appliedCoupon.getId(), currentUser.getId(), orderId,
+                                couponDiscountAmount);
+                        System.out.println("[DEBUG] Coupon usage recorded: " + appliedCoupon.getCode());
+                    } catch (SQLException ex) {
+                        System.err.println("Failed to record coupon usage: " + ex.getMessage());
+                    }
+                }
+
                 // Generate and save invoice
                 byte[] invoiceData = com.greengrocer.util.InvoiceGenerator.generateInvoiceBytes(
                         currentUser, new java.util.ArrayList<>(cartList),
