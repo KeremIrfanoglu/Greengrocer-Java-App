@@ -2468,6 +2468,8 @@ public class OwnerController {
         if (analyticsTable == null)
             return;
         try {
+            if (userDAO == null)
+                userDAO = new com.greengrocer.dao.UserDAO();
             java.util.List<CustomerAnalytics> data = userDAO.getCustomerAnalytics();
             analyticsTable.setItems(FXCollections.observableArrayList(data));
             if (analyticsStatusLabel != null) {
