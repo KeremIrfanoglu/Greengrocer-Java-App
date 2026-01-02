@@ -107,15 +107,17 @@ public class BackgroundMusicService {
      * When unmuted, volume returns to default.
      */
     public void toggleMute() {
-        if (mediaPlayer == null)
-            return;
-
         muted = !muted;
-        if (muted) {
-            mediaPlayer.setVolume(0);
-        } else {
-            mediaPlayer.setVolume(DEFAULT_VOLUME);
+
+        if (mediaPlayer != null) {
+            if (muted) {
+                mediaPlayer.setVolume(0);
+            } else {
+                mediaPlayer.setVolume(DEFAULT_VOLUME);
+            }
         }
+
+        System.out.println("🔊 Music muted: " + muted);
     }
 
     /**

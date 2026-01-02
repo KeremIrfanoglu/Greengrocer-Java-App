@@ -37,6 +37,12 @@ public class LoginController {
         this.userDAO = new UserDAO();
     }
 
+    @FXML
+    public void initialize() {
+        // Update music button icon to reflect current mute state
+        updateMusicButtonIcon();
+    }
+
     /**
      * Handle Enter key press in username field - moves focus to password field
      */
@@ -144,18 +150,24 @@ public class LoginController {
      */
     @FXML
     public void handleToggleMusic() {
+        System.out.println("🎵 LoginController: handleToggleMusic called!");
         BackgroundMusicService music = BackgroundMusicService.getInstance();
         music.toggleMute();
         updateMusicButtonIcon();
     }
 
     private void updateMusicButtonIcon() {
+        System.out.println("🎵 LoginController: updateMusicButtonIcon called, button=" + musicToggleButton);
         if (musicToggleButton != null) {
             if (BackgroundMusicService.getInstance().isMuted()) {
                 musicToggleButton.setText("🔇");
+                System.out.println("🎵 LoginController: Set to MUTED icon");
             } else {
                 musicToggleButton.setText("🔊");
+                System.out.println("🎵 LoginController: Set to UNMUTED icon");
             }
+        } else {
+            System.out.println("🎵 LoginController: musicToggleButton is NULL!");
         }
     }
 

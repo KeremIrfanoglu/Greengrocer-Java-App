@@ -257,7 +257,15 @@ public class CustomerController {
 
         // Initialize delivery date/time picker with validation
         if (deliveryDatePicker != null) {
-            deliveryDatePicker.setValue(java.time.LocalDate.now().plusDays(1)); // Default: tomorrow
+            // Set default date to the earliest available (today if slots available,
+            // otherwise tomorrow)
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.util.List<String> todaySlots = getAvailableTimeSlots(today);
+            if (!todaySlots.isEmpty()) {
+                deliveryDatePicker.setValue(today); // Today has available slots
+            } else {
+                deliveryDatePicker.setValue(today.plusDays(1)); // Default: tomorrow
+            }
 
             // Block past dates
             deliveryDatePicker.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
@@ -2257,6 +2265,9 @@ public class CustomerController {
                     String stars = "⭐".repeat(rating);
                     statusLabel.setText("Thank you! Rated: " + stars);
                     statusLabel.setStyle("-fx-text-fill: green;");
+
+                    // Refresh the order table to show the new rating immediately
+                    loadOrders();
                 }
             }
         } catch (SQLException e) {
