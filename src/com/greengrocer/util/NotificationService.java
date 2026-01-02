@@ -125,7 +125,7 @@ public class NotificationService {
                     .append(" left!\n");
         }
 
-        StyledAlert.showWarning("Low Stock Alert!", "Your favorite products are running low!", message.toString());
+        StyledAlert.showError("Low Stock Alert!", null, message.toString());
     }
 
     /**

@@ -215,6 +215,12 @@ public class StyledAlert {
                 "-fx-border-radius: 10;" +
                 "-fx-background-radius: 10;");
         styleButtons(dp, ERROR_COLOR);
+
+        // Make error text red as requested
+        Node content = dp.lookup(".content");
+        if (content != null) {
+            content.setStyle("-fx-text-fill: " + ERROR_COLOR + ";" + "-fx-font-size: 13px;");
+        }
     }
 
     /**

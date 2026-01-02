@@ -528,12 +528,30 @@ public class OwnerController {
         }
     }
 
+    /**
+     * Helper to add currency formatting to a TableColumn.
+     */
+    private <T> void formatCurrencyColumn(TableColumn<T, Double> column) {
+        column.setCellFactory(col -> new TableCell<T, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(FormatHelper.formatCurrency(item));
+                }
+            }
+        });
+    }
+
     private void setupAnalyticsTabs() {
         // Customer Columns
         colAnUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
         colAnName.setCellValueFactory(new PropertyValueFactory<>("fullName"));
         colAnPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
         colAnOrderCount.setCellValueFactory(new PropertyValueFactory<>("orderCount"));
+        colAnTotalSpent.setCellValueFactory(new PropertyValueFactory<>("totalSpent"));
         colAnTotalSpent.setCellValueFactory(new PropertyValueFactory<>("totalSpent"));
         colAnTotalSpent.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -542,7 +560,7 @@ public class OwnerController {
                 if (empty || price == null)
                     setText(null);
                 else
-                    setText(String.format("%.2f TL", price));
+                    setText(FormatHelper.formatCurrency(price));
             }
         });
 
@@ -656,7 +674,7 @@ public class OwnerController {
         } catch (SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Error loading products.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1184,7 +1202,7 @@ public class OwnerController {
         selectedImageFile = fileChooser.showOpenDialog(prodNameField.getScene().getWindow());
         if (selectedImageFile != null) {
             statusLabel.setText("Image selected: " + selectedImageFile.getName());
-            statusLabel.setStyle("-fx-text-fill: blue;");
+            statusLabel.setStyle("-fx-text-fill: #3B82F6;");
 
             // Show preview
             try {
@@ -1206,7 +1224,7 @@ public class OwnerController {
 
         if (name.isEmpty() || type == null || priceStr.isEmpty() || stockStr.isEmpty() || thresholdStr.isEmpty()) {
             statusLabel.setText("All fields are required.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1218,7 +1236,7 @@ public class OwnerController {
 
             if (price < 0 || stock < 0 || threshold < 0 || costPrice < 0) {
                 statusLabel.setText("Values cannot be negative.");
-                statusLabel.setStyle("-fx-text-fill: red;");
+                statusLabel.setStyle("-fx-text-fill: #EF4444;");
                 return;
             }
 
@@ -1230,24 +1248,24 @@ public class OwnerController {
             boolean success = productDAO.addProduct(name, type, price, costPrice, stock, threshold, fis, "kg");
             if (success) {
                 statusLabel.setText("Product added successfully!");
-                statusLabel.setStyle("-fx-text-fill: green;");
+                statusLabel.setStyle("-fx-text-fill: #10B981;");
                 loadProducts();
                 clearFields();
             } else {
                 statusLabel.setText("Failed to add product.");
-                statusLabel.setStyle("-fx-text-fill: red;");
+                statusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
 
         } catch (NumberFormatException e) {
             statusLabel.setText("Invalid number format.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         } catch (FileNotFoundException e) {
             statusLabel.setText("Image file not found.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         } catch (SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Database error: " + e.getMessage());
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1255,7 +1273,7 @@ public class OwnerController {
     public void handleDeleteProduct() {
         if (selectedProduct == null) {
             statusLabel.setText("Click 'Edit' on a product card first.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1266,7 +1284,7 @@ public class OwnerController {
             try {
                 if (productDAO.deleteProduct(selectedProduct.getId())) {
                     statusLabel.setText("Product deleted.");
-                    statusLabel.setStyle("-fx-text-fill: green;");
+                    statusLabel.setStyle("-fx-text-fill: #10B981;");
                     selectedProduct = null;
                     selectedProductId = -1;
                     loadProducts();
@@ -1279,7 +1297,7 @@ public class OwnerController {
                 // String msg = e.getMessage().toLowerCase(); // This line was commented out or
                 // intended to be part of an if block
                 statusLabel.setText("DB Error: " + e.getMessage()); // TEMPORARY DEBUG
-                statusLabel.setStyle("-fx-text-fill: red;");
+                statusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         }
     }
@@ -1306,7 +1324,7 @@ public class OwnerController {
         } catch (SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Error loading carriers.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1320,33 +1338,33 @@ public class OwnerController {
 
         if (username.isEmpty() || password.isEmpty()) {
             statusLabel.setText("Username and Password required for carrier.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
         // Username validation: length and format
         if (username.length() < 3) {
             statusLabel.setText("Username must be at least 3 characters.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
         if (username.length() > 20) {
             statusLabel.setText("Username must be at most 20 characters.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
         if (!username.matches("^[a-z0-9]+$")) {
             statusLabel.setText("Username must contain only lowercase letters and numbers.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
         // Password strength validation
         if (password.length() < 6) {
             statusLabel.setText("Password must be at least 6 characters.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1361,20 +1379,20 @@ public class OwnerController {
 
         if (!hasUppercase) {
             statusLabel.setText("Password must contain at least 1 uppercase letter.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
         if (!hasNumber) {
             statusLabel.setText("Password must contain at least 1 number.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
         try {
             if (userDAO.register(username, password, "carrier", name, surname, "", phone)) {
                 statusLabel.setText("Carrier added successfully.");
-                statusLabel.setStyle("-fx-text-fill: green;");
+                statusLabel.setStyle("-fx-text-fill: #10B981;");
                 loadCarriers();
                 carrUsernameField.clear();
                 carrPasswordField.clear();
@@ -1383,12 +1401,12 @@ public class OwnerController {
                 carrPhoneField.clear();
             } else {
                 statusLabel.setText("Failed to add carrier (Username used?).");
-                statusLabel.setStyle("-fx-text-fill: red;");
+                statusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         } catch (SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Database error.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1397,22 +1415,22 @@ public class OwnerController {
         User selected = carrierTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             statusLabel.setText("Select a carrier to fire.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
         try {
             if (userDAO.deleteUser(selected.getId())) {
                 statusLabel.setText("Carrier fired.");
-                statusLabel.setStyle("-fx-text-fill: green;");
+                statusLabel.setStyle("-fx-text-fill: #10B981;");
                 loadCarriers();
             } else {
                 statusLabel.setText("Failed to delete carrier.");
-                statusLabel.setStyle("-fx-text-fill: red;");
+                statusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         } catch (SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Database error.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1465,9 +1483,11 @@ public class OwnerController {
             // Profit/Loss Summary
             totalProfitLabel.setText("Total Profit: " + FormatHelper.formatCurrency(totalProfit));
             if (totalProfit >= 0) {
-                totalProfitLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+                totalProfitLabel.getStyleClass().removeAll("status-error");
+                totalProfitLabel.getStyleClass().add("status-success");
             } else {
-                totalProfitLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                totalProfitLabel.getStyleClass().removeAll("status-success");
+                totalProfitLabel.getStyleClass().add("status-error");
             }
             inventoryCostLabel.setText("Inventory Cost: " + FormatHelper.formatCurrency(inventoryCost));
 
@@ -1478,11 +1498,11 @@ public class OwnerController {
             loadCostAnalysisTable();
 
             reportStatusLabel.setText("Reports loaded.");
-            reportStatusLabel.setStyle("-fx-text-fill: green;");
+            reportStatusLabel.setStyle("-fx-text-fill: #10B981;");
         } catch (SQLException e) {
             e.printStackTrace();
             reportStatusLabel.setText("Error loading reports.");
-            reportStatusLabel.setStyle("-fx-text-fill: red;");
+            reportStatusLabel.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1527,6 +1547,11 @@ public class OwnerController {
         colPLProfit.setCellValueFactory(
                 data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[3]).asObject());
 
+        // Format Currency Columns
+        formatCurrencyColumn(colPLRevenue);
+        formatCurrencyColumn(colPLCost);
+        formatCurrencyColumn(colPLProfit);
+
         java.util.List<Object[]> profitData = reportDAO.getProfitLossPerProduct();
         profitLossTable.setItems(FXCollections.observableArrayList(profitData));
     }
@@ -1541,6 +1566,11 @@ public class OwnerController {
                 data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[2]).asObject());
         colCAMargin.setCellValueFactory(
                 data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[3]).asObject());
+
+        // Format Currency Columns
+        formatCurrencyColumn(colCAPrice);
+        formatCurrencyColumn(colCACost);
+        formatCurrencyColumn(colCAMargin);
 
         java.util.List<Object[]> costData = reportDAO.getCostAnalysis();
         costAnalysisTable.setItems(FXCollections.observableArrayList(costData));
@@ -1564,11 +1594,11 @@ public class OwnerController {
             }
             allOrdersTable.setItems(orders);
             orderManagementStatus.setText("Showing " + orders.size() + " orders.");
-            orderManagementStatus.setStyle("-fx-text-fill: blue;");
+            orderManagementStatus.setStyle("-fx-text-fill: #3B82F6;");
         } catch (SQLException e) {
             e.printStackTrace();
             orderManagementStatus.setText("Error filtering orders.");
-            orderManagementStatus.setStyle("-fx-text-fill: red;");
+            orderManagementStatus.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1578,11 +1608,11 @@ public class OwnerController {
                     .observableArrayList(orderDAO.getAllOrders());
             allOrdersTable.setItems(orders);
             orderManagementStatus.setText("Loaded " + orders.size() + " orders.");
-            orderManagementStatus.setStyle("-fx-text-fill: blue;");
+            orderManagementStatus.setStyle("-fx-text-fill: #3B82F6;");
         } catch (SQLException e) {
             e.printStackTrace();
             orderManagementStatus.setText("Error loading orders.");
-            orderManagementStatus.setStyle("-fx-text-fill: red;");
+            orderManagementStatus.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1591,13 +1621,13 @@ public class OwnerController {
         com.greengrocer.models.Order selected = allOrdersTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             orderManagementStatus.setText("Select an order to cancel.");
-            orderManagementStatus.setStyle("-fx-text-fill: red;");
+            orderManagementStatus.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
         if ("Cancelled".equals(selected.getStatus()) || "Delivered".equals(selected.getStatus())) {
             orderManagementStatus.setText("Cannot cancel this order.");
-            orderManagementStatus.setStyle("-fx-text-fill: red;");
+            orderManagementStatus.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1608,16 +1638,16 @@ public class OwnerController {
             try {
                 if (orderDAO.cancelOrder(selected.getId())) {
                     orderManagementStatus.setText("Order #" + selected.getId() + " cancelled.");
-                    orderManagementStatus.setStyle("-fx-text-fill: green;");
+                    orderManagementStatus.setStyle("-fx-text-fill: #10B981;");
                     loadAllOrders();
                 } else {
                     orderManagementStatus.setText("Failed to cancel order.");
-                    orderManagementStatus.setStyle("-fx-text-fill: red;");
+                    orderManagementStatus.setStyle("-fx-text-fill: #EF4444;");
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
                 orderManagementStatus.setText("Database error.");
-                orderManagementStatus.setStyle("-fx-text-fill: red;");
+                orderManagementStatus.setStyle("-fx-text-fill: #EF4444;");
             }
         }
     }
@@ -1626,7 +1656,7 @@ public class OwnerController {
     public void handleUpdateProduct() {
         if (selectedProductId == -1) {
             statusLabel.setText("First select a product to update by clicking 'Edit' on a card.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1639,7 +1669,7 @@ public class OwnerController {
 
         if (name.isEmpty() || type == null || priceStr.isEmpty() || stockStr.isEmpty() || thresholdStr.isEmpty()) {
             statusLabel.setText("All fields are required.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1660,7 +1690,7 @@ public class OwnerController {
 
             if (productDAO.updateProduct(updatedProduct)) {
                 statusLabel.setText("Product #" + selectedProductId + " updated successfully!");
-                statusLabel.setStyle("-fx-text-fill: green;");
+                statusLabel.setStyle("-fx-text-fill: #10B981;");
                 loadProducts();
                 clearFields();
                 selectedProductId = -1;
@@ -1669,18 +1699,18 @@ public class OwnerController {
                     previewImageView.setImage(null);
             } else {
                 statusLabel.setText("Failed to update product.");
-                statusLabel.setStyle("-fx-text-fill: red;");
+                statusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         } catch (NumberFormatException e) {
             statusLabel.setText("Invalid number format.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         } catch (java.io.IOException e) {
             statusLabel.setText("Error reading image file.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         } catch (SQLException e) {
             e.printStackTrace();
             statusLabel.setText("Database error: " + e.getMessage());
-            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1731,10 +1761,12 @@ public class OwnerController {
             // Update count label
             if (lowStock.isEmpty()) {
                 alertCountLabel.setText("All stock levels OK");
-                alertCountLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+                alertCountLabel.getStyleClass().removeAll("status-success", "status-error");
+                alertCountLabel.getStyleClass().add("status-success");
             } else {
                 alertCountLabel.setText(lowStock.size() + " products need restocking!");
-                alertCountLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                alertCountLabel.getStyleClass().removeAll("status-success", "status-error");
+                alertCountLabel.getStyleClass().add("status-error");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1751,7 +1783,7 @@ public class OwnerController {
 
         if (code.isEmpty() || discountStr.isEmpty() || maxUsesStr.isEmpty()) {
             couponStatusLabel.setText("Please fill all fields!");
-            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1761,25 +1793,25 @@ public class OwnerController {
 
             if (discount <= 0 || discount > 100) {
                 couponStatusLabel.setText("Discount must be between 1-100%!");
-                couponStatusLabel.setStyle("-fx-text-fill: red;");
+                couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
                 return;
             }
 
             if (couponDAO.createCoupon(code, discount, maxUses)) {
                 couponStatusLabel.setText("Coupon created: " + code.toUpperCase());
-                couponStatusLabel.setStyle("-fx-text-fill: green;");
+                couponStatusLabel.setStyle("-fx-text-fill: #10B981;");
                 clearCouponForm();
                 loadCoupons();
             } else {
                 couponStatusLabel.setText("Failed to create coupon (code may exist)");
-                couponStatusLabel.setStyle("-fx-text-fill: red;");
+                couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         } catch (NumberFormatException e) {
             couponStatusLabel.setText("Invalid number format!");
-            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
         } catch (SQLException e) {
             couponStatusLabel.setText("Database error: " + e.getMessage());
-            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1794,7 +1826,7 @@ public class OwnerController {
         com.greengrocer.models.Coupon selected = couponTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             couponStatusLabel.setText("Select a coupon!");
-            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1810,15 +1842,15 @@ public class OwnerController {
                 int newMaxUses = Integer.parseInt(maxUsesStr);
                 if (couponDAO.updateCoupon(selected.getId(), newMaxUses, selected.isActive())) {
                     couponStatusLabel.setText("Coupon updated!");
-                    couponStatusLabel.setStyle("-fx-text-fill: green;");
+                    couponStatusLabel.setStyle("-fx-text-fill: #10B981;");
                     loadCoupons();
                 }
             } catch (NumberFormatException e) {
                 couponStatusLabel.setText("Invalid number!");
-                couponStatusLabel.setStyle("-fx-text-fill: red;");
+                couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             } catch (SQLException e) {
                 couponStatusLabel.setText("Update error!");
-                couponStatusLabel.setStyle("-fx-text-fill: red;");
+                couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         });
     }
@@ -1828,7 +1860,7 @@ public class OwnerController {
         com.greengrocer.models.Coupon selected = couponTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             couponStatusLabel.setText("Select a coupon!");
-            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1837,12 +1869,12 @@ public class OwnerController {
             if (couponDAO.updateCoupon(selected.getId(), selected.getMaxUses(), newStatus)) {
                 String status = newStatus ? "activated" : "deactivated";
                 couponStatusLabel.setText("Coupon " + status + "!");
-                couponStatusLabel.setStyle("-fx-text-fill: green;");
+                couponStatusLabel.setStyle("-fx-text-fill: #10B981;");
                 loadCoupons();
             }
         } catch (SQLException e) {
             couponStatusLabel.setText("Status change failed!");
-            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
         }
     }
 
@@ -1851,7 +1883,7 @@ public class OwnerController {
         com.greengrocer.models.Coupon selected = couponTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             couponStatusLabel.setText("Select a coupon!");
-            couponStatusLabel.setStyle("-fx-text-fill: red;");
+            couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -1865,13 +1897,13 @@ public class OwnerController {
             try {
                 if (couponDAO.deleteCoupon(selected.getId())) {
                     couponStatusLabel.setText("Coupon deleted!");
-                    couponStatusLabel.setStyle("-fx-text-fill: green;");
+                    couponStatusLabel.setStyle("-fx-text-fill: #10B981;");
                     loadCoupons();
                     loadCouponHistory();
                 }
             } catch (SQLException e) {
                 couponStatusLabel.setText("Delete error!");
-                couponStatusLabel.setStyle("-fx-text-fill: red;");
+                couponStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         }
     }
@@ -1909,6 +1941,8 @@ public class OwnerController {
                     data -> new javafx.beans.property.SimpleStringProperty((String) data.getValue()[2]));
             colHistoryAmount.setCellValueFactory(
                     data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[3]).asObject());
+
+            formatCurrencyColumn(colHistoryAmount);
 
             java.util.List<Object[]> history = couponDAO.getAllCouponUsageHistory();
             couponHistoryTable.setItems(FXCollections.observableArrayList(history));
@@ -2263,7 +2297,7 @@ public class OwnerController {
         Supplier selected = supplierTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             supplierStatusLabel.setText("Select a supplier to edit.");
-            supplierStatusLabel.setStyle("-fx-text-fill: red;");
+            supplierStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
         showSupplierDialog(selected);
@@ -2274,7 +2308,7 @@ public class OwnerController {
         Supplier selected = supplierTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             supplierStatusLabel.setText("Select a supplier to delete.");
-            supplierStatusLabel.setStyle("-fx-text-fill: red;");
+            supplierStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             return;
         }
 
@@ -2284,15 +2318,15 @@ public class OwnerController {
             try {
                 if (supplierDAO.deleteSupplier(selected.getId())) {
                     supplierStatusLabel.setText("Supplier deleted.");
-                    supplierStatusLabel.setStyle("-fx-text-fill: green;");
+                    supplierStatusLabel.setStyle("-fx-text-fill: #10B981;");
                     loadSuppliers();
                 } else {
                     supplierStatusLabel.setText("Failed to delete supplier.");
-                    supplierStatusLabel.setStyle("-fx-text-fill: red;");
+                    supplierStatusLabel.setStyle("-fx-text-fill: #EF4444;");
                 }
             } catch (SQLException e) {
                 supplierStatusLabel.setText("Database error: " + e.getMessage());
-                supplierStatusLabel.setStyle("-fx-text-fill: red;");
+                supplierStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         }
     }
@@ -2326,7 +2360,7 @@ public class OwnerController {
             e.printStackTrace();
             if (supplierStatusLabel != null) {
                 supplierStatusLabel.setText("Error loading suppliers.");
-                supplierStatusLabel.setStyle("-fx-text-fill: red;");
+                supplierStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         }
     }
@@ -2410,15 +2444,15 @@ public class OwnerController {
 
                 if (success) {
                     supplierStatusLabel.setText(isEdit ? "Supplier updated." : "Supplier added.");
-                    supplierStatusLabel.setStyle("-fx-text-fill: green;");
+                    supplierStatusLabel.setStyle("-fx-text-fill: #10B981;");
                     loadSuppliers();
                 } else {
                     supplierStatusLabel.setText("Operation failed.");
-                    supplierStatusLabel.setStyle("-fx-text-fill: red;");
+                    supplierStatusLabel.setStyle("-fx-text-fill: #EF4444;");
                 }
             } catch (SQLException e) {
                 supplierStatusLabel.setText("Database error: " + e.getMessage());
-                supplierStatusLabel.setStyle("-fx-text-fill: red;");
+                supplierStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         });
     }
@@ -2438,13 +2472,13 @@ public class OwnerController {
             analyticsTable.setItems(FXCollections.observableArrayList(data));
             if (analyticsStatusLabel != null) {
                 analyticsStatusLabel.setText("Analytics loaded.");
-                analyticsStatusLabel.setStyle("-fx-text-fill: green;");
+                analyticsStatusLabel.setStyle("-fx-text-fill: #10B981;");
             }
         } catch (SQLException e) {
             e.printStackTrace();
             if (analyticsStatusLabel != null) {
                 analyticsStatusLabel.setText("Error loading analytics.");
-                analyticsStatusLabel.setStyle("-fx-text-fill: red;");
+                analyticsStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
         }
     }
