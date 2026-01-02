@@ -1,20 +1,29 @@
 package com.greengrocer.models;
 
 /**
- * Represents an item in the shopping cart.
- * Applies threshold-based pricing: price doubles (2x) when stock is at or below
- * threshold (scarcity pricing).
+ * Represents a single item in the customer's shopping cart.
  */
 public class CartItem {
     private Product product;
     private double quantity;
     private static final double THRESHOLD_MULTIPLIER = 2.0; // 2x price when low stock
 
+    /**
+     * Constructs a new CartItem.
+     *
+     * @param product  The product added to the cart.
+     * @param quantity The quantity of the product.
+     */
     public CartItem(Product product, double quantity) {
         this.product = product;
         this.quantity = quantity;
     }
 
+    /**
+     * Returns the product associated with this cart item.
+     *
+     * @return The product.
+     */
     public Product getProduct() {
         return product;
     }

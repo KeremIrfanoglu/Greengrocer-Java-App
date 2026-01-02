@@ -8,8 +8,18 @@ import java.sql.*;
  * Populates the database with sample data for testing.
  * Run SetupDatabase first, then run this class.
  */
+/**
+ * Populates the database with initial sample data for testing and demonstration
+ * purposes.
+ * Adds default users, products, orders, and coupons.
+ */
 public class SeedData {
 
+    /**
+     * Main method to execute the data seeding process.
+     * 
+     * @param args Command line arguments (not used).
+     */
     public static void main(String[] args) {
         System.out.println("🌱 Seeding database with sample data...\n");
 

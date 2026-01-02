@@ -2,6 +2,7 @@ package com.greengrocer.util;
 
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.scene.control.Button;
 import javafx.stage.Stage;
 import javafx.scene.control.Dialog;
 import java.io.File;
@@ -9,9 +10,19 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * Utility class for applying the application's CSS stylesheet to scenes.
+ * Helper class for applying consistent CSS styles to UI components.
  */
 public class StyleHelper {
+
+    /**
+     * Applies a primary button style (green background, white text).
+     * 
+     * @param button The button to style.
+     */
+    public static void stylePrimaryButton(Button button) {
+        // Implementation for styling primary button would go here
+        // For example: button.getStyleClass().add("primary-button");
+    }
 
     private static final String CSS_PATH = "src/com/greengrocer/views/styles.css";
     private static final String ICON_PATH = "src/com/greengrocer/assets/icon.png";
