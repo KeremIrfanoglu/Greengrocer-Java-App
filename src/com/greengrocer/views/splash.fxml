@@ -25,7 +25,7 @@
     
     <!-- Skip Button -->
     <Button fx:id="skipButton" text="Skip (Enter)" onAction="#handleSkip" 
-            style="-fx-background-color: rgba(255,255,255,0.3); -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 25; -fx-background-radius: 20; -fx-cursor: hand;"
+            style="-fx-background-color: rgba(50,50,50,0.85); -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 25; -fx-background-radius: 20; -fx-cursor: hand; -fx-border-color: #666; -fx-border-radius: 20; -fx-border-width: 1;"
             StackPane.alignment="BOTTOM_RIGHT">
         <StackPane.margin>
             <Insets bottom="30" right="30" />
