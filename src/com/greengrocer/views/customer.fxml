@@ -75,7 +75,7 @@
                      <Label fx:id="welcomeLabel" text="Welcome, Customer" styleClass="header-title" />
                      <Label text="Group10 GreenGrocer" styleClass="header-subtitle" />
                   </VBox>
-                  <Label fx:id="gPointsLabel" text="G Points: 0" style="-fx-font-weight: bold; -fx-text-fill: #FF4500; -fx-font-size: 18px; -fx-background-color: linear-gradient(to right, rgba(255,215,0,0.3), rgba(255,69,0,0.3)); -fx-padding: 8 15; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(255,69,0,0.4), 10, 0, 0, 2);" />
+                  <Label fx:id="gPointsLabel" text="G Points: 0" styleClass="g-points-badge" />
                   <Label fx:id="statusLabel" styleClass="status-error" />
                   <Region HBox.hgrow="ALWAYS" />
                    <Label fx:id="usernameLabel" text="" style="-fx-font-weight: bold; -fx-text-fill: #a5b4fc; -fx-font-size: 14px;" />
@@ -163,13 +163,13 @@
                                  
                                  <!-- G Points & Coupons -->
                                  <VBox spacing="10">
-                                    <Label text="Use G-Points" style="-fx-font-weight: bold; -fx-text-fill: #ddd;" />
+                                    <Label text="Use G-Points" styleClass="summary-label" />
                                     <HBox spacing="5">
                                        <TextField fx:id="gPointsField" promptText="Available points" HBox.hgrow="ALWAYS" styleClass="text-field" onAction="#handleApplyGPoints" />
                                        <Button onAction="#handleApplyGPoints" text="Apply" styleClass="button-secondary" minWidth="100" prefWidth="100" />
                                     </HBox>
                                     
-                                    <Label text="Coupon Code" style="-fx-font-weight: bold; -fx-text-fill: #ddd;" />
+                                    <Label text="Coupon Code" styleClass="summary-label" />
                                     <HBox spacing="5">
                                        <TextField fx:id="couponCodeField" promptText="Enter code" HBox.hgrow="ALWAYS" styleClass="text-field" />
                                        <Button onAction="#handleApplyCouponCode" text="Apply" styleClass="button-secondary" minWidth="100" prefWidth="100" />
@@ -182,25 +182,25 @@
                                  <!-- Totals -->
                                  <VBox spacing="5">
                                     <HBox>
-                                       <Label text="Subtotal:" style="-fx-text-fill: #aaa;" />
+                                       <Label text="Subtotal:" styleClass="summary-label" />
                                        <Region HBox.hgrow="ALWAYS" />
-                                       <Label fx:id="subtotalLabel" text="0.00 TL" style="-fx-text-fill: #ddd;" />
+                                       <Label fx:id="subtotalLabel" text="0.00 TL" styleClass="summary-value" />
                                     </HBox>
                                     <HBox>
-                                       <Label text="Discount:" style="-fx-text-fill: #aaa;" />
+                                       <Label text="Discount:" styleClass="summary-label" />
                                        <Region HBox.hgrow="ALWAYS" />
                                        <Label fx:id="discountLabel" text="0.00 TL" style="-fx-text-fill: #4CAF50;" />
                                     </HBox>
                                     <HBox>
-                                       <Label text="Tax (20%):" style="-fx-text-fill: #aaa;" />
+                                       <Label text="Tax (20%):" styleClass="summary-label" />
                                        <Region HBox.hgrow="ALWAYS" />
-                                       <Label fx:id="taxLabel" text="0.00 TL" style="-fx-text-fill: #ddd;" />
+                                       <Label fx:id="taxLabel" text="0.00 TL" styleClass="summary-value" />
                                     </HBox>
                                     <Separator />
                                     <HBox alignment="CENTER_LEFT">
-                                       <Label text="Total:" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                                       <Label text="Total:" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: -fx-text-primary;" />
                                        <Region HBox.hgrow="ALWAYS" />
-                                       <Label fx:id="finalTotalLabel" text="0.00 TL" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #FFD700;" />
+                                       <Label fx:id="finalTotalLabel" text="0.00 TL" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -fx-gold;" />
                                     </HBox>
                                  </VBox>
                                  

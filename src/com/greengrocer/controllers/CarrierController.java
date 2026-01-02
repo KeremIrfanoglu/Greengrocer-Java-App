@@ -601,7 +601,7 @@ public class CarrierController {
             if (orderDAO.assignCarrier(selected.getId(), currentUser.getId())) {
                 if (statusLabel != null) {
                     statusLabel.setText("Order #" + selected.getId() + " assigned to you!");
-                    statusLabel.setStyle("-fx-text-fill: green;");
+                    statusLabel.setStyle("-fx-text-fill: #10B981;");
                 }
                 loadAvailableOrders();
                 loadMyDeliveries();
@@ -609,7 +609,7 @@ public class CarrierController {
             } else {
                 if (statusLabel != null) {
                     statusLabel.setText("Failed to assign order (maybe already taken).");
-                    statusLabel.setStyle("-fx-text-fill: red;");
+                    statusLabel.setStyle("-fx-text-fill: #EF4444;");
                 }
             }
         } catch (SQLException e) {
@@ -636,7 +636,7 @@ public class CarrierController {
                 if (orderDAO.updateOrderStatus(selected.getId(), "Delivering")) {
                     if (statusLabel != null) {
                         statusLabel.setText("Delivery started for Order #" + selected.getId());
-                        statusLabel.setStyle("-fx-text-fill: green;");
+                        statusLabel.setStyle("-fx-text-fill: #10B981;");
                     }
                     loadMyDeliveries();
                 } else {
@@ -663,7 +663,7 @@ public class CarrierController {
                 if (orderDAO.updateOrderStatus(selected.getId(), "Delivered")) {
                     if (statusLabel != null) {
                         statusLabel.setText("Order #" + selected.getId() + " Delivered!");
-                        statusLabel.setStyle("-fx-text-fill: green;");
+                        statusLabel.setStyle("-fx-text-fill: #10B981;");
                     }
 
                     // Auto-send message to customer
@@ -861,7 +861,7 @@ public class CarrierController {
         if (selected == null) {
             if (commStatusLabel != null) {
                 commStatusLabel.setText("Please select an order first.");
-                commStatusLabel.setStyle("-fx-text-fill: red;");
+                commStatusLabel.setStyle("-fx-text-fill: #EF4444;");
             }
             return;
         }
@@ -876,7 +876,7 @@ public class CarrierController {
             if (messageDAO.sendMessage(msg)) {
                 if (commStatusLabel != null) {
                     commStatusLabel.setText("Message sent: " + subject);
-                    commStatusLabel.setStyle("-fx-text-fill: green;");
+                    commStatusLabel.setStyle("-fx-text-fill: #10B981;");
                 }
                 loadChatHistory(selected);
                 // Refresh the list to show the new message preview

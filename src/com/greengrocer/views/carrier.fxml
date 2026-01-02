@@ -76,21 +76,21 @@
                              </children>
                           </VBox>
                           
-                          <!-- Details Panel - No white box -->
-                          <VBox spacing="10" prefWidth="300" style="-fx-padding: 15; -fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 10;">
+                          <!-- Details Panel -->
+                          <VBox spacing="10" prefWidth="300" styleClass="glass-card-small">
                              <children>
-                                <Label text="Order Details" styleClass="section-title" style="-fx-text-fill: white;" />
+                                <Label text="Order Details" styleClass="section-title" />
                                 <Separator />
-                                <Label text="Customer:" style="-fx-font-weight: bold; -fx-text-fill: white;" />
-                                <Label fx:id="detailCustomerName" text="-" style="-fx-text-fill: white;" />
-                                <Label text="Address:" style="-fx-font-weight: bold; -fx-text-fill: white;" />
-                                <Label fx:id="detailAddress" text="-" wrapText="true" style="-fx-text-fill: white;" />
-                                <Label text="📅 Scheduled Delivery:" style="-fx-font-weight: bold; -fx-text-fill: #4CAF50;" />
-                                <Label fx:id="detailScheduledDate" text="-" style="-fx-text-fill: #4CAF50;" />
-                                <Label text="Products:" style="-fx-font-weight: bold; -fx-text-fill: white;" />
-                                <Label fx:id="detailProductList" text="-" wrapText="true" style="-fx-padding: 5; -fx-background-color: transparent; -fx-text-fill: white;" />
+                                <Label text="Customer:" styleClass="text-bold" />
+                                <Label fx:id="detailCustomerName" text="-" />
+                                <Label text="Address:" styleClass="text-bold" />
+                                <Label fx:id="detailAddress" text="-" wrapText="true" />
+                                <Label text="📅 Scheduled Delivery:" styleClass="text-success" />
+                                <Label fx:id="detailScheduledDate" text="-" styleClass="text-success" />
+                                <Label text="Products:" styleClass="text-bold" />
+                                <Label fx:id="detailProductList" text="-" wrapText="true" style="-fx-padding: 5;" />
                                 <Separator />
-                                <Label fx:id="detailTotal" text="Total: 0.00 TL" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #FFD700;" />
+                                <Label fx:id="detailTotal" text="Total: 0.00 TL" styleClass="text-gold" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
                              </children>
                           </VBox>
                        </children>
