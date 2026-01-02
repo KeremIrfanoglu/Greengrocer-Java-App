@@ -4,9 +4,9 @@
 # Dependencies
 *.jar
 lib/
-
 # System
 .DS_Store
+.idea/
 .vscode/
 *.jar
 lib/.DS_Store
