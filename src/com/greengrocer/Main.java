@@ -24,7 +24,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
         try {
             // Check if splash video exists
-            File videoFile = new File("src/com/greengrocer/assets/SSH.mp4");
+            File videoFile = new File("src/com/greengrocer/assets/intro.mp4");
 
             if (videoFile.exists()) {
                 // Load splash screen with video
