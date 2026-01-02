@@ -132,6 +132,8 @@ public class OwnerController {
     private TextField carrSurnameField;
     @FXML
     private TextField carrPhoneField;
+    @FXML
+    private Label carrierStatusLabel;
 
     @FXML
     private TableView<User> carrierTable;
@@ -1337,34 +1339,29 @@ public class OwnerController {
         String phone = carrPhoneField.getText();
 
         if (username.isEmpty() || password.isEmpty()) {
-            statusLabel.setText("Username and Password required for carrier.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Username and Password required for carrier.", "red");
             return;
         }
 
         // Username validation: length and format
         if (username.length() < 3) {
-            statusLabel.setText("Username must be at least 3 characters.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Username must be at least 3 characters.", "red");
             return;
         }
 
         if (username.length() > 20) {
-            statusLabel.setText("Username must be at most 20 characters.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Username must be at most 20 characters.", "red");
             return;
         }
 
         if (!username.matches("^[a-z0-9]+$")) {
-            statusLabel.setText("Username must contain only lowercase letters and numbers.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Username must contain only lowercase letters and numbers.", "red");
             return;
         }
 
         // Password strength validation
         if (password.length() < 6) {
-            statusLabel.setText("Password must be at least 6 characters.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Password must be at least 6 characters.", "red");
             return;
         }
 
@@ -1378,21 +1375,18 @@ public class OwnerController {
         }
 
         if (!hasUppercase) {
-            statusLabel.setText("Password must contain at least 1 uppercase letter.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Password must contain at least 1 uppercase letter.", "red");
             return;
         }
 
         if (!hasNumber) {
-            statusLabel.setText("Password must contain at least 1 number.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Password must contain at least 1 number.", "red");
             return;
         }
 
         try {
             if (userDAO.register(username, password, "carrier", name, surname, "", phone)) {
-                statusLabel.setText("Carrier added successfully.");
-                statusLabel.setStyle("-fx-text-fill: #10B981;");
+                setCarrierStatus("Carrier added successfully.", "green");
                 loadCarriers();
                 carrUsernameField.clear();
                 carrPasswordField.clear();
@@ -1400,13 +1394,11 @@ public class OwnerController {
                 carrSurnameField.clear();
                 carrPhoneField.clear();
             } else {
-                statusLabel.setText("Failed to add carrier (Username used?).");
-                statusLabel.setStyle("-fx-text-fill: #EF4444;");
+                setCarrierStatus("Failed to add carrier (Username used?).", "red");
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            statusLabel.setText("Database error.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Database error." + e.getMessage(), "red");
         }
     }
 
@@ -1414,23 +1406,37 @@ public class OwnerController {
     public void handleFireCarrier() {
         User selected = carrierTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            statusLabel.setText("Select a carrier to fire.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Select a carrier to fire.", "red");
             return;
         }
+
+        boolean confirm = StyledAlert.showConfirmation("Fire Carrier", null,
+                "Are you sure you want to fire " + selected.getUsername() + "?");
+
+        if (!confirm)
+            return;
+
         try {
             if (userDAO.deleteUser(selected.getId())) {
-                statusLabel.setText("Carrier fired.");
-                statusLabel.setStyle("-fx-text-fill: #10B981;");
+                setCarrierStatus("Carrier fired.", "green");
                 loadCarriers();
             } else {
-                statusLabel.setText("Failed to delete carrier.");
-                statusLabel.setStyle("-fx-text-fill: #EF4444;");
+                setCarrierStatus("Failed to delete carrier.", "red");
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            statusLabel.setText("Database error.");
-            statusLabel.setStyle("-fx-text-fill: #EF4444;");
+            setCarrierStatus("Database error: " + e.getMessage(), "red");
+        }
+    }
+
+    private void setCarrierStatus(String msg, String color) {
+        if (carrierStatusLabel != null) {
+            carrierStatusLabel.setText(msg);
+            if ("red".equals(color)) {
+                carrierStatusLabel.setStyle("-fx-text-fill: #EF4444;");
+            } else {
+                carrierStatusLabel.setStyle("-fx-text-fill: #10B981;");
+            }
         }
     }
 
@@ -1935,19 +1941,27 @@ public class OwnerController {
             // Setup columns
             colHistoryCode.setCellValueFactory(
                     data -> new javafx.beans.property.SimpleStringProperty((String) data.getValue()[0]));
-            colHistoryDate.setCellValueFactory(
-                    data -> new javafx.beans.property.SimpleStringProperty(data.getValue()[1].toString()));
             colHistoryUser.setCellValueFactory(
                     data -> new javafx.beans.property.SimpleStringProperty((String) data.getValue()[2]));
+            colHistoryDate.setCellValueFactory(data -> {
+                Object timestampObj = data.getValue()[1];
+                if (timestampObj != null && timestampObj instanceof java.sql.Timestamp) {
+                    return new javafx.beans.property.SimpleStringProperty(
+                            FormatHelper.formatDate((java.sql.Timestamp) timestampObj));
+                }
+                return new javafx.beans.property.SimpleStringProperty("");
+            });
             colHistoryAmount.setCellValueFactory(
                     data -> new javafx.beans.property.SimpleDoubleProperty((Double) data.getValue()[3]).asObject());
 
             formatCurrencyColumn(colHistoryAmount);
 
             java.util.List<Object[]> history = couponDAO.getAllCouponUsageHistory();
+            System.out.println("[DEBUG] Coupon History loaded: " + history.size() + " items");
             couponHistoryTable.setItems(FXCollections.observableArrayList(history));
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("[DEBUG] Error loading coupon history: " + e.getMessage());
         }
     }
 
