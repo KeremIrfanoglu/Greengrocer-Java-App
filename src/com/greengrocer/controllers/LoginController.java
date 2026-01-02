@@ -20,23 +20,56 @@ import com.greengrocer.util.StyledAlert;
 import com.greengrocer.util.BackgroundMusicService;
 import javafx.scene.control.Button;
 
+/**
+ * Controller for the Login screen.
+ * Handles user authentication, navigation to registration,
+ * password recovery, and background music toggle functionality.
+ * 
+ * <p>
+ * This controller is the entry point of the application and directs
+ * authenticated users to their role-specific dashboards (Customer, Carrier, or
+ * Owner).
+ * </p>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see RegisterController
+ * @see CustomerController
+ * @see CarrierController
+ * @see OwnerController
+ */
 public class LoginController {
 
+    /** Text field for username input */
     @FXML
     private TextField usernameField;
+
+    /** Password field for password input */
     @FXML
     private PasswordField passwordField;
+
+    /** Label for displaying error messages */
     @FXML
     private Label errorLabel;
+
+    /** Button for toggling background music */
     @FXML
     private Button musicToggleButton;
 
+    /** Data access object for user operations */
     private UserDAO userDAO;
 
+    /**
+     * Constructs a new LoginController and initializes the UserDAO.
+     */
     public LoginController() {
         this.userDAO = new UserDAO();
     }
 
+    /**
+     * Initializes the controller after FXML loading.
+     * Updates the music button icon to reflect the current mute state.
+     */
     @FXML
     public void initialize() {
         // Update music button icon to reflect current mute state
@@ -44,13 +77,21 @@ public class LoginController {
     }
 
     /**
-     * Handle Enter key press in username field - moves focus to password field
+     * Handles Enter key press in username field.
+     * Moves focus to the password field for improved UX.
      */
     @FXML
     public void handleUsernameDone() {
         passwordField.requestFocus();
     }
 
+    /**
+     * Handles the login button action.
+     * Validates user credentials and redirects to the appropriate dashboard
+     * based on the user's role (customer, carrier, or owner).
+     * 
+     * @throws SQLException if database access fails
+     */
     @FXML
     public void handleLogin() {
         String username = usernameField.getText();
@@ -128,6 +169,10 @@ public class LoginController {
         }
     }
 
+    /**
+     * Opens the customer registration screen.
+     * Navigates to the register.fxml view.
+     */
     @FXML
     public void handleOpenRegister() {
         try {
@@ -141,6 +186,12 @@ public class LoginController {
         }
     }
 
+    /**
+     * Displays a styled error alert dialog.
+     * 
+     * @param title   the title of the alert
+     * @param content the content message to display
+     */
     private void showAlert(String title, String content) {
         StyledAlert.showError(title, null, content);
     }
@@ -156,6 +207,10 @@ public class LoginController {
         updateMusicButtonIcon();
     }
 
+    /**
+     * Updates the music toggle button icon based on current mute state.
+     * Sets the button text to 🔇 when muted, 🔊 when unmuted.
+     */
     private void updateMusicButtonIcon() {
         System.out.println("🎵 LoginController: updateMusicButtonIcon called, button=" + musicToggleButton);
         if (musicToggleButton != null) {
@@ -171,6 +226,11 @@ public class LoginController {
         }
     }
 
+    /**
+     * Handles the forgot password action.
+     * Opens a dialog for password recovery that requires
+     * the user to enter their current password to set a new one.
+     */
     @FXML
     public void handleForgotPassword() {
         String username = usernameField.getText().trim();

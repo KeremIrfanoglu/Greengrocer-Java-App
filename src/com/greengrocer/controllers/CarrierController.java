@@ -18,8 +18,31 @@ import com.greengrocer.util.FormatHelper;
 import com.greengrocer.util.BackgroundMusicService;
 
 /**
- * Controller for the Carrier dashboard with tabs:
- * Available Orders, My Deliveries, Completed, My Ratings, Leaderboard
+ * Controller for the Carrier dashboard.
+ * Manages the carrier's workflow including accepting orders, updating delivery
+ * status,
+ * viewing completed deliveries, checking ratings, and accessing the
+ * leaderboard.
+ * 
+ * <p>
+ * Features:
+ * </p>
+ * <ul>
+ * <li>Available Orders: View and claim pending orders for delivery</li>
+ * <li>My Deliveries: Manage active deliveries with status updates (Picked Up →
+ * Delivering → Delivered)</li>
+ * <li>Completed: View history of completed deliveries</li>
+ * <li>My Ratings: View customer ratings and feedback</li>
+ * <li>Leaderboard: Compare performance with other carriers</li>
+ * <li>Communication: Send preset or custom messages to customers about
+ * deliveries</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see LoginController
+ * @see Order
+ * @see CarrierRating
  */
 public class CarrierController {
     private User currentUser;

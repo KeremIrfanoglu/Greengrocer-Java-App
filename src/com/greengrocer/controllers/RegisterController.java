@@ -16,33 +16,87 @@ import com.greengrocer.util.StyleHelper;
 import com.greengrocer.util.BackgroundMusicService;
 import javafx.scene.control.Button;
 
+/**
+ * Controller for the Customer Registration screen.
+ * Handles new customer account creation with comprehensive validation
+ * for username, password, name, address, and phone number fields.
+ * 
+ * <p>
+ * Validation includes:
+ * </p>
+ * <ul>
+ * <li>Username: 3-20 characters, lowercase alphanumeric only</li>
+ * <li>Password: minimum 6 characters with uppercase and number requirement</li>
+ * <li>Name: 2-50 characters, letters only</li>
+ * <li>Phone: Turkish and international format support</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see LoginController
+ */
 public class RegisterController {
 
+    /** Text field for username input */
     @FXML
     private TextField usernameField;
+
+    /** Password field for password input */
     @FXML
     private PasswordField passwordField;
+
+    /** Password field for confirming password */
     @FXML
     private PasswordField confirmPasswordField;
+
+    /** Text field for first name input */
     @FXML
     private TextField firstNameField;
+
+    /** Text field for last name input */
     @FXML
     private TextField lastNameField;
+
+    /** Text field for address input */
     @FXML
     private TextField addressField;
+
+    /** Text field for phone number input */
     @FXML
     private TextField phoneField;
+
+    /** Label for displaying status/error messages */
     @FXML
     private Label statusLabel;
+
+    /** Button for toggling background music */
     @FXML
     private Button musicToggleButton;
 
+    /** Data access object for user operations */
     private UserDAO userDAO;
 
+    /**
+     * Constructs a new RegisterController and initializes the UserDAO.
+     */
     public RegisterController() {
         this.userDAO = new UserDAO();
     }
 
+    /**
+     * Handles the register button action.
+     * Validates all input fields and creates a new customer account.
+     * 
+     * <p>
+     * Performs comprehensive validation including:
+     * </p>
+     * <ul>
+     * <li>Username uniqueness and format validation</li>
+     * <li>Password strength requirements</li>
+     * <li>Name format and length validation</li>
+     * <li>Phone number format validation (optional)</li>
+     * </ul>
+     */
     @FXML
     public void handleRegister() {
         String username = usernameField.getText().trim();
@@ -190,6 +244,11 @@ public class RegisterController {
         return null; // Password is valid
     }
 
+    /**
+     * Displays an error message in the status label.
+     * 
+     * @param message the error message to display
+     */
     private void showError(String message) {
         statusLabel.setText(message);
         statusLabel.setStyle("-fx-text-fill: #f44336;");
@@ -247,6 +306,9 @@ public class RegisterController {
         return null; // Phone is valid
     }
 
+    /**
+     * Navigates back to the login screen.
+     */
     @FXML
     public void handleBack() {
         try {
@@ -271,6 +333,9 @@ public class RegisterController {
         updateMusicButtonIcon();
     }
 
+    /**
+     * Updates the music toggle button icon based on current mute state.
+     */
     private void updateMusicButtonIcon() {
         if (musicToggleButton != null) {
             if (BackgroundMusicService.getInstance().isMuted()) {

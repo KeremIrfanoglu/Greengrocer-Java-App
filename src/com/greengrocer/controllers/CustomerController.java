@@ -26,6 +26,39 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+/**
+ * Controller for the Customer dashboard.
+ * Handles all customer-facing functionality including shopping, cart
+ * management,
+ * order placement, order tracking, favorites, profile management, and
+ * messaging.
+ * 
+ * <p>
+ * Key Features:
+ * </p>
+ * <ul>
+ * <li>Shop: Browse products with search, filter, and sort capabilities</li>
+ * <li>Cart: Add/remove products, apply G-Points and coupons, checkout with
+ * delivery scheduling</li>
+ * <li>Orders: View order history, track status, rate carriers</li>
+ * <li>Favorites: Save and manage favorite products</li>
+ * <li>Profile: Update personal information and change password</li>
+ * <li>Messages: Communicate with the store owner</li>
+ * </ul>
+ * 
+ * <p>
+ * The controller implements asynchronous loading for products to prevent UI
+ * freezing
+ * and uses a rating cache system for efficient order history display.
+ * </p>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see LoginController
+ * @see Product
+ * @see Order
+ * @see CartItem
+ */
 public class CustomerController {
     private User currentUser;
     private ProductDAO productDAO;

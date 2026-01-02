@@ -44,6 +44,37 @@ import javafx.geometry.Pos;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 
+/**
+ * Controller for the Owner/Admin dashboard.
+ * Provides comprehensive management capabilities for the greengrocer system
+ * including
+ * product management, carrier management, order oversight, financial reporting,
+ * and analytics.
+ * 
+ * <p>
+ * Key Features:
+ * </p>
+ * <ul>
+ * <li>Products: Add, edit, delete products with image support and stock
+ * management</li>
+ * <li>Carriers: Manage carrier accounts (add new carriers, view existing)</li>
+ * <li>Orders: View and manage all customer orders</li>
+ * <li>Reports: Financial reports including revenue, profit/loss, and cost
+ * analysis</li>
+ * <li>Stock Alerts: Monitor low-stock products</li>
+ * <li>Suppliers: Manage supplier information</li>
+ * <li>Analytics: Customer analytics, carrier performance, and peak hours
+ * analysis</li>
+ * <li>Coupons: Create and manage discount coupons</li>
+ * <li>Messages: Communication with customers</li>
+ * </ul>
+ * 
+ * @author Group10
+ * @version 1.0
+ * @see LoginController
+ * @see Product
+ * @see User
+ */
 public class OwnerController {
 
     private User currentUser;
