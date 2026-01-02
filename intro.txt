@@ -14,6 +14,15 @@ PREREQUISITES:
    - Password: 1234
    (Database will be provided separately)
 
+   NOTE: If you encounter an error while importing the database:
+   1. In MySQL Workbench, go to 'File' -> 'Open SQL Script'.
+   2. Select the provided SQL file.
+   3. Locate and DELETE the line (usually around line 24) that says:
+      SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '...';
+   4. Execute the script to create the database.
+   (If the import works without errors, skip this step.)
+
+
 ==============================================================
                     STEP-BY-STEP INSTRUCTIONS
 ==============================================================
