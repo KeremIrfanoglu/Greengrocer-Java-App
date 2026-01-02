@@ -65,6 +65,12 @@ public class StyledAlert {
     /**
      * Show an error popup with red accent
      */
+    /**
+     * Shows a styled error alert.
+     * 
+     * @param title   The title of the alert.
+     * @param content The error message content.
+     */
     public static void showError(String title, String header, String content) {
         Alert alert = createStyledAlert(Alert.AlertType.ERROR, title, header, content);
         styleErrorAlert(alert);

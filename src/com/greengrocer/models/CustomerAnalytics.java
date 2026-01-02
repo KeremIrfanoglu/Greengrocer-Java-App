@@ -1,5 +1,10 @@
 package com.greengrocer.models;
 
+/**
+ * Represents analytics data for a specific customer, including their personal
+ * details,
+ * order count, and total amount spent.
+ */
 public class CustomerAnalytics {
     private int userId;
     private String username;
@@ -8,6 +13,16 @@ public class CustomerAnalytics {
     private int orderCount;
     private double totalSpent;
 
+    /**
+     * Constructs a new CustomerAnalytics instance.
+     *
+     * @param userId     The unique identifier for the customer.
+     * @param username   The username of the customer.
+     * @param fullName   The full name of the customer.
+     * @param phone      The phone number of the customer.
+     * @param orderCount The total number of orders placed by the customer.
+     * @param totalSpent The total amount of money spent by the customer.
+     */
     public CustomerAnalytics(int userId, String username, String fullName, String phone, int orderCount,
             double totalSpent) {
         this.userId = userId;

@@ -4,6 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import javafx.scene.image.Image;
 
+/**
+ * Represents a product available for purchase in the store.
+ * Handles product details, pricing, stock, and image data.
+ */
 public class Product {
     private int id;
     private String name;
@@ -15,11 +19,36 @@ public class Product {
     private byte[] imageData; // Store image as byte array for display
     private String unitType; // "kg" for kilograms (decimal), "pcs" for pieces (integer)
 
+    /**
+     * Constructs a new Product instance with default unit type "kg".
+     *
+     * @param id        The unique identifier of the product.
+     * @param name      The name of the product.
+     * @param type      The category of the product (e.g., "Fruit", "Vegetable").
+     * @param price     The selling price of the product.
+     * @param costPrice The cost price of the product for the store.
+     * @param stock     The current stock quantity.
+     * @param threshold The low stock threshold for scarcity pricing.
+     * @param imageData The image of the product as a byte array.
+     */
     public Product(int id, String name, String type, double price, double costPrice, double stock, double threshold,
             byte[] imageData) {
         this(id, name, type, price, costPrice, stock, threshold, imageData, "kg"); // Default to kg
     }
 
+    /**
+     * Constructs a new Product instance with specified unit type.
+     *
+     * @param id        The unique identifier of the product.
+     * @param name      The name of the product.
+     * @param type      The category of the product.
+     * @param price     The selling price.
+     * @param costPrice The cost price.
+     * @param stock     The current stock.
+     * @param threshold The low stock threshold.
+     * @param imageData The image data.
+     * @param unitType  The unit of measurement ("kg" or "piece").
+     */
     public Product(int id, String name, String type, double price, double costPrice, double stock, double threshold,
             byte[] imageData, String unitType) {
         this.id = id;

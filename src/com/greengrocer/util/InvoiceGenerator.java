@@ -25,7 +25,20 @@ public class InvoiceGenerator {
         private static final Color LIGHT_GRAY = new Color(248, 249, 250);
 
         /**
-         * Generate PDF invoice as byte array (for database storage)
+         * Generates a PDF invoice as a byte array for storage in a database or for
+         * direct download.
+         *
+         * @param customer         The user (customer) for whom the invoice is
+         *                         generated.
+         * @param items            The list of cart items included in the invoice.
+         * @param subtotal         The subtotal amount of all items before discounts and
+         *                         VAT.
+         * @param gPointsUsed      The amount of G-Points applied as a discount.
+         * @param couponDiscount   The amount of coupon discount applied.
+         * @param vatAmount        The calculated VAT amount.
+         * @param finalTotal       The final total amount after all calculations.
+         * @param deliveryDateTime The scheduled date and time for delivery.
+         * @return A byte array representing the generated PDF invoice.
          */
         public static byte[] generateInvoiceBytes(User customer, List<CartItem> items,
                         double subtotal, double gPointsUsed, double couponDiscount,

@@ -3,17 +3,29 @@ package com.greengrocer.models;
 import java.sql.Timestamp;
 
 /**
- * Model class for discount coupons
+ * Represents a discount coupon that can be applied to orders.
  */
 public class Coupon {
     private int id;
     private String code;
-    private double discountPercent;
-    private int maxUses;
-    private int currentUses;
-    private Timestamp createdDate;
-    private boolean isActive;
+    private double discountPercent; // Renamed back to match usage
+    private Timestamp createdDate; // Renamed back/restored
+    private int maxUses; // Renamed back
+    private int currentUses; // Renamed back
+    private boolean isActive; // Restored
 
+    /**
+     * Constructs a new Coupon.
+     *
+     * @param id              The unique identifier of the coupon.
+     * @param code            The unique code string for the coupon.
+     * @param discountPercent The discount percentage (0-100).
+     * @param maxUses         The maximum number of times this coupon can be used
+     *                        total.
+     * @param currentUses     The number of times this coupon has already been used.
+     * @param createdDate     The creation timestamp of the coupon.
+     * @param isActive        Whether the coupon is currently active.
+     */
     public Coupon(int id, String code, double discountPercent, int maxUses, int currentUses,
             Timestamp createdDate, boolean isActive) {
         this.id = id;
@@ -25,77 +37,60 @@ public class Coupon {
         this.isActive = isActive;
     }
 
-    // For creating new coupons
-    public Coupon(String code, double discountPercent, int maxUses) {
-        this.code = code;
-        this.discountPercent = discountPercent;
-        this.maxUses = maxUses;
-        this.currentUses = 0;
-        this.isActive = true;
-    }
-
-    // Getters and Setters
+    /**
+     * @return The coupon ID.
+     */
     public int getId() {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
+    /**
+     * @return The code.
+     */
     public String getCode() {
         return code;
     }
 
-    public void setCode(String code) {
-        this.code = code;
-    }
-
+    /**
+     * @return The discount percentage.
+     */
     public double getDiscountPercent() {
         return discountPercent;
     }
 
-    public void setDiscountPercent(double discountPercent) {
-        this.discountPercent = discountPercent;
-    }
-
-    public int getMaxUses() {
-        return maxUses;
-    }
-
-    public void setMaxUses(int maxUses) {
-        this.maxUses = maxUses;
-    }
-
-    public int getCurrentUses() {
-        return currentUses;
-    }
-
-    public void setCurrentUses(int currentUses) {
-        this.currentUses = currentUses;
-    }
-
+    /**
+     * @return The creation date.
+     */
     public Timestamp getCreatedDate() {
         return createdDate;
     }
 
-    public void setCreatedDate(Timestamp createdDate) {
-        this.createdDate = createdDate;
+    /**
+     * @return The maximum usage limit.
+     */
+    public int getMaxUses() {
+        return maxUses;
     }
 
+    /**
+     * @return The current usage count.
+     */
+    public int getCurrentUses() {
+        return currentUses;
+    }
+
+    /**
+     * @return True if the coupon is marked as active, false otherwise.
+     */
     public boolean isActive() {
         return isActive;
     }
 
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    // Helper methods
-    public int getRemainingUses() {
-        return maxUses - currentUses;
-    }
-
+    /**
+     * Checks if the coupon is valid for use.
+     * 
+     * @return True if active and usage limit not reached.
+     */
     public boolean canBeUsed() {
         return isActive && currentUses < maxUses;
     }

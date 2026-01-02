@@ -3,10 +3,17 @@ package com.greengrocer.util;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * Utility class for password hashing and verification.
+ * Currently uses SHA-256 for hashing.
+ */
 public class PasswordUtils {
 
     /**
-     * Hash a password using SHA-256
+     * Hashes a plain text password using SHA-256.
+     * 
+     * @param password The plain text password.
+     * @return The hashed password string.
      */
     public static String hashPassword(String password) {
         try {

@@ -19,7 +19,19 @@ public class Order {
     private String customerName;
     private String customerAddress;
 
-    // Basic constructor (for simple queries)
+    /**
+     * Constructs a new Order with basic details.
+     * This constructor is typically used for simple queries where full details are
+     * not immediately needed.
+     *
+     * @param id          The unique identifier of the order.
+     * @param customerId  The ID of the customer who placed the order.
+     * @param carrierId   The ID of the carrier assigned to the order.
+     * @param orderDate   The timestamp when the order was placed.
+     * @param status      The current status of the order (e.g., "Pending",
+     *                    "Delivered").
+     * @param totalAmount The total monetary amount of the order.
+     */
     public Order(int id, int customerId, int carrierId, Timestamp orderDate, String status, double totalAmount) {
         this(id, customerId, carrierId, orderDate, status, totalAmount, null, null, null, null, null);
     }

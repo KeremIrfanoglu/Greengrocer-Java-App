@@ -1,19 +1,52 @@
 package com.greengrocer.models;
 
 /**
- * Statistics for product sales analysis.
+ * Represents sales statistics for a specific product.
  * Contains average price, average cost, profit margin, etc.
  */
 public class ProductSalesStats {
+    /**
+     * The name of the product.
+     */
     private String productName;
+    /**
+     * The total quantity of the product sold.
+     */
     private double quantitySold;
+    /**
+     * The total revenue generated from the sales of this product.
+     */
     private double revenue;
+    /**
+     * The total cost associated with the quantity sold.
+     */
     private double totalCost;
+    /**
+     * The average selling price per unit of the product.
+     */
     private double avgSellingPrice;
+    /**
+     * The average cost per unit of the product.
+     */
     private double avgCost;
+    /**
+     * The total profit generated from the sales (revenue - totalCost).
+     */
     private double profit;
+    /**
+     * The profit margin as a percentage of revenue.
+     */
     private double profitMargin; // percentage
 
+    /**
+     * Constructs a new ProductSalesStats instance with detailed sales and cost
+     * information.
+     *
+     * @param productName  The name of the product.
+     * @param quantitySold The total quantity of the product sold.
+     * @param revenue      The total revenue generated from this product.
+     * @param totalCost    The total cost associated with the quantity sold.
+     */
     public ProductSalesStats(String productName, double quantitySold, double revenue, double totalCost) {
         this.productName = productName;
         this.quantitySold = quantitySold;

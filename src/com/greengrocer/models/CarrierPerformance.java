@@ -1,5 +1,8 @@
 package com.greengrocer.models;
 
+/**
+ * Represents the performance metrics for a carrier.
+ */
 public class CarrierPerformance {
     private int carrierId;
     private String carrierName;
@@ -9,6 +12,18 @@ public class CarrierPerformance {
     private int reviewCount;
     private double totalValue;
 
+    /**
+     * Constructs a new CarrierPerformance instance.
+     *
+     * @param carrierId     The unique identifier of the carrier.
+     * @param carrierName   The name of the carrier.
+     * @param deliveryCount The total number of deliveries made by the carrier.
+     * @param averageRating The average rating received by the carrier from
+     *                      customers.
+     * @param reviewCount   The total number of reviews received by the carrier.
+     * @param totalValue    The total monetary value of deliveries handled by the
+     *                      carrier.
+     */
     public CarrierPerformance(int carrierId, String carrierName, int deliveryCount, double averageRating,
             int reviewCount, double totalValue) {
         this.carrierId = carrierId;

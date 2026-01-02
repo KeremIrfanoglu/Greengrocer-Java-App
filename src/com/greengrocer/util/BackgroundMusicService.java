@@ -8,7 +8,7 @@ import java.io.File;
 
 /**
  * Singleton service for managing background music playback.
- * Provides play, pause, and mute functionality across all application screens.
+ * Supports playing, looping, and muting/unmuting the audio.
  */
 public class BackgroundMusicService {
 
@@ -17,9 +17,13 @@ public class BackgroundMusicService {
     private boolean muted = false;
     private boolean initialized = false;
 
-    private static final String MUSIC_FILE_PATH = "src/com/greengrocer/assets/background.mp3";
+    private static final String MUSIC_FILE_PATH = "/com/greengrocer/assets/background_music.mp3";
     private static final double DEFAULT_VOLUME = 0.3; // 30% volume for background music
 
+    /**
+     * Private constructor to enforce Singleton pattern.
+     * Initializes the media player with the background music file.
+     */
     private BackgroundMusicService() {
         // Private constructor for singleton
     }

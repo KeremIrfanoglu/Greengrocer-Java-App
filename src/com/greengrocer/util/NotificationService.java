@@ -84,7 +84,11 @@ public class NotificationService {
     }
 
     /**
-     * Show price drop notification popup
+     * Displays a popup alert for price drops on favorite products.
+     * The alert will list the products that have dropped in price and the discount
+     * amount.
+     *
+     * @param products A list of products that have experienced a price drop.
      */
     public static void showPriceDropAlert(List<Product> products) {
         if (products.isEmpty())

@@ -17,7 +17,18 @@ public class Message {
     private Timestamp sentAt;
     private boolean isRead;
 
-    // Full constructor
+    /**
+     * Constructs a new Message with all details, including sender and receiver IDs,
+     * subject, content, timestamp, and read status.
+     *
+     * @param id         The unique identifier of the message.
+     * @param senderId   The ID of the user who sent the message.
+     * @param receiverId The ID of the user who is the recipient of the message.
+     * @param subject    The subject line of the message.
+     * @param content    The main body content of the message.
+     * @param sentAt     The timestamp when the message was sent.
+     * @param isRead     A boolean indicating whether the message has been read.
+     */
     public Message(int id, int senderId, int receiverId, String subject, String content,
             Timestamp sentAt, boolean isRead) {
         this.id = id;

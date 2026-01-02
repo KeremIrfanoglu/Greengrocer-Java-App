@@ -3,7 +3,7 @@ package com.greengrocer.models;
 import java.sql.Timestamp;
 
 /**
- * Represents a carrier rating given by a customer after delivery.
+ * Represents a rating given to a carrier by a customer for a specific order.
  */
 public class CarrierRating {
     private int id;
@@ -14,6 +14,17 @@ public class CarrierRating {
     private String comment;
     private Timestamp createdAt;
 
+    /**
+     * Constructs a new CarrierRating instance.
+     *
+     * @param id         The unique identifier of the rating.
+     * @param orderId    The ID of the order associated with this rating.
+     * @param customerId The ID of the customer who gave the rating.
+     * @param carrierId  The ID of the carrier being rated.
+     * @param rating     The rating score (1-5 stars).
+     * @param comment    The text comment associated with the rating.
+     * @param createdAt  The timestamp when the rating was submitted.
+     */
     public CarrierRating(int id, int orderId, int customerId, int carrierId, int rating, String comment,
             Timestamp createdAt) {
         this.id = id;
