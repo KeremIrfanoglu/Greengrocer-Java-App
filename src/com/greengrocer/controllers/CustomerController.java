@@ -18,7 +18,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import java.sql.SQLException;
 import com.greengrocer.util.FormatHelper;
 import com.greengrocer.util.StyledAlert;
-import com.greengrocer.util.BackgroundMusicService;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.FlowPane;
@@ -212,8 +212,6 @@ public class CustomerController {
     private javafx.scene.control.PasswordField confirmNewPasswordField;
     @FXML
     private Label passwordStatusLabel;
-    @FXML
-    private Button musicToggleButton;
 
     private com.greengrocer.util.NotificationService notificationService;
 
@@ -3041,23 +3039,4 @@ public class CustomerController {
         }
     }
 
-    /**
-     * Toggle background music mute state.
-     */
-    @FXML
-    public void handleToggleMusic() {
-        BackgroundMusicService music = BackgroundMusicService.getInstance();
-        music.toggleMute();
-        updateMusicButtonIcon();
-    }
-
-    private void updateMusicButtonIcon() {
-        if (musicToggleButton != null) {
-            if (BackgroundMusicService.getInstance().isMuted()) {
-                musicToggleButton.setText("🔇");
-            } else {
-                musicToggleButton.setText("🔊");
-            }
-        }
-    }
 }

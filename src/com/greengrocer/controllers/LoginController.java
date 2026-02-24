@@ -17,13 +17,11 @@ import java.sql.SQLException;
 
 import com.greengrocer.util.StyleHelper;
 import com.greengrocer.util.StyledAlert;
-import com.greengrocer.util.BackgroundMusicService;
-import javafx.scene.control.Button;
 
 /**
  * Controller for the Login screen.
  * Handles user authentication, navigation to registration,
- * password recovery, and background music toggle functionality.
+ * and password recovery functionality.
  * 
  * <p>
  * This controller is the entry point of the application and directs
@@ -52,10 +50,6 @@ public class LoginController {
     @FXML
     private Label errorLabel;
 
-    /** Button for toggling background music */
-    @FXML
-    private Button musicToggleButton;
-
     /** Data access object for user operations */
     private UserDAO userDAO;
 
@@ -64,16 +58,6 @@ public class LoginController {
      */
     public LoginController() {
         this.userDAO = new UserDAO();
-    }
-
-    /**
-     * Initializes the controller after FXML loading.
-     * Updates the music button icon to reflect the current mute state.
-     */
-    @FXML
-    public void initialize() {
-        // Update music button icon to reflect current mute state
-        updateMusicButtonIcon();
     }
 
     /**
@@ -193,36 +177,6 @@ public class LoginController {
      */
     private void showAlert(String title, String content) {
         StyledAlert.showError(title, null, content);
-    }
-
-    /**
-     * Toggle background music mute state.
-     */
-    @FXML
-    public void handleToggleMusic() {
-        System.out.println("🎵 LoginController: handleToggleMusic called!");
-        BackgroundMusicService music = BackgroundMusicService.getInstance();
-        music.toggleMute();
-        updateMusicButtonIcon();
-    }
-
-    /**
-     * Updates the music toggle button icon based on current mute state.
-     * Sets the button text to 🔇 when muted, 🔊 when unmuted.
-     */
-    private void updateMusicButtonIcon() {
-        System.out.println("🎵 LoginController: updateMusicButtonIcon called, button=" + musicToggleButton);
-        if (musicToggleButton != null) {
-            if (BackgroundMusicService.getInstance().isMuted()) {
-                musicToggleButton.setText("🔇");
-                System.out.println("🎵 LoginController: Set to MUTED icon");
-            } else {
-                musicToggleButton.setText("🔊");
-                System.out.println("🎵 LoginController: Set to UNMUTED icon");
-            }
-        } else {
-            System.out.println("🎵 LoginController: musicToggleButton is NULL!");
-        }
     }
 
     /**

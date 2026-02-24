@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 import com.greengrocer.util.FormatHelper;
 import com.greengrocer.util.StyledAlert;
-import com.greengrocer.util.BackgroundMusicService;
 
 import javafx.geometry.Side;
 import javafx.geometry.Insets;
@@ -85,8 +84,6 @@ public class OwnerController {
 
     @FXML
     private javafx.scene.control.TabPane mainTabPane;
-    @FXML
-    private Button musicToggleButton;
 
     @FXML
     private TextField prodNameField;
@@ -2582,23 +2579,4 @@ public class OwnerController {
         }
     }
 
-    /**
-     * Toggle background music mute state.
-     */
-    @FXML
-    public void handleToggleMusic() {
-        BackgroundMusicService music = BackgroundMusicService.getInstance();
-        music.toggleMute();
-        updateMusicButtonIcon();
-    }
-
-    private void updateMusicButtonIcon() {
-        if (musicToggleButton != null) {
-            if (BackgroundMusicService.getInstance().isMuted()) {
-                musicToggleButton.setText("🔇");
-            } else {
-                musicToggleButton.setText("🔊");
-            }
-        }
-    }
 }

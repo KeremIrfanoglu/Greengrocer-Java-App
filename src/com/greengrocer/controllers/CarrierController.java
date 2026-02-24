@@ -15,7 +15,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import com.greengrocer.util.FormatHelper;
-import com.greengrocer.util.BackgroundMusicService;
 
 /**
  * Controller for the Carrier dashboard.
@@ -81,8 +80,6 @@ public class CarrierController {
     private Label avgRatingLabel;
     @FXML
     private TabPane mainTabPane;
-    @FXML
-    private Button musicToggleButton;
 
     // Available Orders Tab
     @FXML
@@ -1223,23 +1220,4 @@ public class CarrierController {
         }
     }
 
-    /**
-     * Toggle background music mute state.
-     */
-    @FXML
-    public void handleToggleMusic() {
-        BackgroundMusicService music = BackgroundMusicService.getInstance();
-        music.toggleMute();
-        updateMusicButtonIcon();
-    }
-
-    private void updateMusicButtonIcon() {
-        if (musicToggleButton != null) {
-            if (BackgroundMusicService.getInstance().isMuted()) {
-                musicToggleButton.setText("🔇");
-            } else {
-                musicToggleButton.setText("🔊");
-            }
-        }
-    }
 }

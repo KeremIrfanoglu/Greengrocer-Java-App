@@ -79,7 +79,6 @@
                   <Label fx:id="statusLabel" styleClass="status-error" />
                   <Region HBox.hgrow="ALWAYS" />
                    <Label fx:id="usernameLabel" text="" style="-fx-font-weight: bold; -fx-text-fill: #a5b4fc; -fx-font-size: 14px;" />
-                   <Button fx:id="musicToggleButton" text="🔊" onAction="#handleToggleMusic" styleClass="music-toggle-button" />
                    <Button onAction="#handleLogout" text="Logout" styleClass="button-danger" />
                </children>
             </HBox>

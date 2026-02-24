@@ -62,7 +62,6 @@
                <Label fx:id="welcomeLabel" text="Welcome!" styleClass="header-subtitle" />
             </VBox>
             <Region HBox.hgrow="ALWAYS" />
-            <Button fx:id="musicToggleButton" text="🔊" onAction="#handleToggleMusic" styleClass="music-toggle-button" />
             <Button onAction="#handleLogout" text="Logout" styleClass="button-danger" />
          </children>
       </HBox>

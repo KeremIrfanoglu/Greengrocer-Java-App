@@ -13,8 +13,6 @@ import java.io.File;
 import java.sql.SQLException;
 
 import com.greengrocer.util.StyleHelper;
-import com.greengrocer.util.BackgroundMusicService;
-import javafx.scene.control.Button;
 
 /**
  * Controller for the Customer Registration screen.
@@ -68,10 +66,6 @@ public class RegisterController {
     /** Label for displaying status/error messages */
     @FXML
     private Label statusLabel;
-
-    /** Button for toggling background music */
-    @FXML
-    private Button musicToggleButton;
 
     /** Data access object for user operations */
     private UserDAO userDAO;
@@ -323,26 +317,4 @@ public class RegisterController {
         }
     }
 
-    /**
-     * Toggle background music mute state.
-     */
-    @FXML
-    public void handleToggleMusic() {
-        BackgroundMusicService music = BackgroundMusicService.getInstance();
-        music.toggleMute();
-        updateMusicButtonIcon();
-    }
-
-    /**
-     * Updates the music toggle button icon based on current mute state.
-     */
-    private void updateMusicButtonIcon() {
-        if (musicToggleButton != null) {
-            if (BackgroundMusicService.getInstance().isMuted()) {
-                musicToggleButton.setText("🔇");
-            } else {
-                musicToggleButton.setText("🔊");
-            }
-        }
-    }
 }

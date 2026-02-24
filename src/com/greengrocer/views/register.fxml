@@ -12,7 +12,7 @@
     - First name, last name, address, phone inputs
     - Input validation with error feedback
     - Navigation back to login screen
-    - Background music toggle
+
     
     Validation:
     - Username: 3-20 chars, lowercase alphanumeric
@@ -40,14 +40,7 @@
            fx:controller="com.greengrocer.controllers.RegisterController"
            styleClass="login-container" prefWidth="960" prefHeight="540">
     
-    <!-- Floating Music Toggle Button -->
-    <Button fx:id="musicToggleButton" text="🔊" onAction="#handleToggleMusic" 
-            styleClass="music-toggle-floating" 
-            StackPane.alignment="TOP_RIGHT">
-        <StackPane.margin>
-            <Insets top="15" right="15" />
-        </StackPane.margin>
-    </Button>
+
     
     <VBox alignment="CENTER" spacing="0">
         
