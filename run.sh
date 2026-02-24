@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "============================================"
-echo "  QuickCommerce System - Starting..."
+echo "  Greengrocer Java App - Starting..."
 echo "============================================"
 echo
 
