@@ -5,8 +5,6 @@ import javafx.scene.image.Image;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
 import javafx.scene.control.Dialog;
-import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -24,8 +22,8 @@ public class StyleHelper {
         // For example: button.getStyleClass().add("primary-button");
     }
 
-    private static final String CSS_PATH = "src/com/greengrocer/views/styles.css";
-    private static final String ICON_PATH = "src/com/greengrocer/assets/icon.png";
+    private static final String CSS_RESOURCE = "/com/greengrocer/views/styles.css";
+    private static final String ICON_RESOURCE = "/com/greengrocer/assets/icon.png";
 
     /**
      * Applies the application's CSS stylesheet to the given scene.
@@ -33,12 +31,12 @@ public class StyleHelper {
      * @param scene The scene to apply styles to
      */
     public static void applyStyles(Scene scene) {
-        try {
-            String cssUrl = new File(CSS_PATH).toURI().toURL().toExternalForm();
+        URL cssUrl = StyleHelper.class.getResource(CSS_RESOURCE);
+        if (cssUrl != null) {
             scene.getStylesheets().clear();
-            scene.getStylesheets().add(cssUrl);
-        } catch (MalformedURLException e) {
-            System.err.println("Could not load CSS stylesheet: " + e.getMessage());
+            scene.getStylesheets().add(cssUrl.toExternalForm());
+        } else {
+            System.err.println("Could not find CSS stylesheet: " + CSS_RESOURCE);
         }
     }
 
@@ -61,8 +59,10 @@ public class StyleHelper {
      */
     public static void applyAppIcon(Stage stage) {
         try {
-            URL iconUrl = new File(ICON_PATH).toURI().toURL();
-            stage.getIcons().add(new Image(iconUrl.toExternalForm()));
+            URL iconUrl = StyleHelper.class.getResource(ICON_RESOURCE);
+            if (iconUrl != null) {
+                stage.getIcons().add(new Image(iconUrl.toExternalForm()));
+            }
         } catch (Exception e) {
             // Silently fail if icon can't be loaded
         }

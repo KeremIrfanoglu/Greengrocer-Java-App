@@ -309,7 +309,7 @@ public class RegisterController {
             // Navigate back to Login
             Stage stage = (Stage) usernameField.getScene().getWindow();
             // Use File URI for consistency
-            Parent root = FXMLLoader.load(new File("src/com/greengrocer/views/login.fxml").toURI().toURL());
+            Parent root = FXMLLoader.load(getClass().getResource("/com/greengrocer/views/login.fxml"));
             stage.setTitle("Greengrocer Login");
             stage.setScene(StyleHelper.createStyledScene(root, 1200, 750));
         } catch (Exception e) {

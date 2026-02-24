@@ -1530,7 +1530,7 @@ public class CustomerController {
     public void handleLogout() {
         try {
             javafx.scene.Parent root = javafx.fxml.FXMLLoader.load(
-                    new java.io.File("src/com/greengrocer/views/login.fxml").toURI().toURL());
+                    getClass().getResource("/com/greengrocer/views/login.fxml"));
             javafx.stage.Stage stage = (javafx.stage.Stage) welcomeLabel.getScene().getWindow();
             stage.setScene(com.greengrocer.util.StyleHelper.createStyledScene(root, 960, 540));
             stage.setTitle("Greengrocer Login");

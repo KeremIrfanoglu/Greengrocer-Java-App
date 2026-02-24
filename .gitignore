@@ -1,18 +1,17 @@
-﻿bin/
+﻿# Build outputs
+bin/
+target/
 *.class
 
-# Dependencies
+# Dependencies (managed by Maven)
 *.jar
 lib/
-# System
+
+# IDE
 .DS_Store
 .idea/
 .vscode/
-*.jar
-lib/.DS_Store
-lib/
-.DS_Store
-.vscode/launch.json
+*.iml
 
 # Database credentials (never commit)
 db.properties

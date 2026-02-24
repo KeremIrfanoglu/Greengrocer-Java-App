@@ -7,7 +7,6 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import com.greengrocer.util.StyleHelper;
 
-import java.io.File;
 import java.net.URL;
 
 /**
@@ -20,16 +19,18 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Load the Login FXML
-        URL url = new File("src/com/greengrocer/views/login.fxml").toURI().toURL();
+        // Load the Login FXML from classpath
+        URL url = getClass().getResource("/com/greengrocer/views/login.fxml");
         Parent root = FXMLLoader.load(url);
 
         primaryStage.setTitle("Greengrocer Login");
         Scene scene = new Scene(root, 960, 540);
 
-        // Load CSS stylesheet
-        URL cssUrl = new File("src/com/greengrocer/views/styles.css").toURI().toURL();
-        scene.getStylesheets().add(cssUrl.toExternalForm());
+        // Load CSS stylesheet from classpath
+        URL cssUrl = getClass().getResource("/com/greengrocer/views/styles.css");
+        if (cssUrl != null) {
+            scene.getStylesheets().add(cssUrl.toExternalForm());
+        }
 
         primaryStage.setScene(scene);
         StyleHelper.applyAppIcon(primaryStage);

@@ -3,29 +3,24 @@
     "configurations": [
         {
             "type": "java",
-            "name": "SchemaUpdate",
-            "request": "launch",
-            "mainClass": "com.greengrocer.setup.SchemaUpdate",
-            "projectName": "OOP-Project-3_dc4c4ae"
-        },
-        {
-            "type": "java",
             "name": "Launch Greengrocer",
             "request": "launch",
             "mainClass": "com.greengrocer.Main",
-            "vmArgs": "--module-path \"${workspaceFolder}/lib\" --add-modules javafx.controls,javafx.fxml,javafx.media,javafx.web --enable-native-access=javafx.graphics,javafx.media -Djava.library.path=\"${workspaceFolder}/lib\" -Dprism.order=sw"
+            "projectName": "quickcommerce"
         },
         {
             "type": "java",
             "name": "Setup Database",
             "request": "launch",
-            "mainClass": "com.greengrocer.setup.SetupDatabase"
+            "mainClass": "com.greengrocer.setup.SetupDatabase",
+            "projectName": "quickcommerce"
         },
         {
             "type": "java",
             "name": "Seed Data",
             "request": "launch",
-            "mainClass": "com.greengrocer.setup.SeedData"
+            "mainClass": "com.greengrocer.setup.SeedData",
+            "projectName": "quickcommerce"
         }
     ]
 }

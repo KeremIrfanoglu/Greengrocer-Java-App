@@ -97,14 +97,14 @@ public class LoginController {
                 String fxmlFile = "";
                 switch (user.getRole().toLowerCase()) {
                     case "owner":
-                        fxmlFile = "src/com/greengrocer/views/owner.fxml";
+                        fxmlFile = "/com/greengrocer/views/owner.fxml";
                         break;
                     case "carrier":
-                        fxmlFile = "src/com/greengrocer/views/carrier.fxml";
+                        fxmlFile = "/com/greengrocer/views/carrier.fxml";
                         break;
                     case "customer":
                     default:
-                        fxmlFile = "src/com/greengrocer/views/customer.fxml";
+                        fxmlFile = "/com/greengrocer/views/customer.fxml";
                         break;
                 }
 
@@ -113,7 +113,7 @@ public class LoginController {
                 // Use Platform.runLater so "Logging in..." message is visible during load
                 javafx.application.Platform.runLater(() -> {
                     try {
-                        FXMLLoader loader = new FXMLLoader(new java.io.File(finalFxmlFile).toURI().toURL());
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource(finalFxmlFile));
                         Parent root = loader.load();
 
                         // Pass user data to controller
@@ -160,7 +160,7 @@ public class LoginController {
     public void handleOpenRegister() {
         try {
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            Parent root = FXMLLoader.load(new java.io.File("src/com/greengrocer/views/register.fxml").toURI().toURL());
+            Parent root = FXMLLoader.load(getClass().getResource("/com/greengrocer/views/register.fxml"));
             stage.setTitle("Customer Registration");
             stage.setScene(StyleHelper.createStyledScene(root, 1200, 750));
         } catch (Exception e) {
