@@ -700,9 +700,21 @@ public class CustomerController {
         iv.setFitHeight(60);
         iv.setFitWidth(60);
         iv.setPreserveRatio(true);
-        if (product.getImage() != null) {
-            iv.setImage(product.getImage());
-        }
+
+        // Lazy load image in background thread
+        final int productId = product.getId();
+        new Thread(() -> {
+            try {
+                byte[] imgData = new com.greengrocer.dao.ProductDAO().getProductImage(productId);
+                if (imgData != null && imgData.length > 0) {
+                    javafx.scene.image.Image img = new javafx.scene.image.Image(
+                            new java.io.ByteArrayInputStream(imgData), 60, 0, true, true);
+                    javafx.application.Platform.runLater(() -> iv.setImage(img));
+                }
+            } catch (Exception e) {
+                // Silently skip - product just won't have an image
+            }
+        }).start();
         VBox imageContainer = new VBox(iv);
         imageContainer.setAlignment(Pos.CENTER);
         imageContainer.setPrefHeight(65);

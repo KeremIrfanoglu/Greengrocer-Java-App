@@ -28,16 +28,19 @@ import java.util.List;
  */
 public class ProductDAO {
 
+    /**
+     * Returns all products WITHOUT loading image BLOBs (lazy loading).
+     * Images are loaded separately via getProductImage() for better performance.
+     */
     public List<Product> getAllProducts() throws SQLException {
         List<Product> products = new ArrayList<>();
-        String query = "SELECT * FROM ProductInfo";
+        String query = "SELECT id, name, type, price, cost_price, stock, threshold, unit_type FROM ProductInfo";
 
         try (Connection conn = DatabaseAdapter.getConnection();
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
-                byte[] imageData = rs.getBytes("image");
                 double costPrice = 0;
                 try {
                     costPrice = rs.getDouble("cost_price");
@@ -60,11 +63,29 @@ public class ProductDAO {
                         costPrice,
                         rs.getDouble("stock"),
                         rs.getDouble("threshold"),
-                        imageData,
+                        null, // Image loaded lazily
                         unitType));
             }
         }
         return products;
+    }
+
+    /**
+     * Loads a single product's image data from the database (lazy loading).
+     * Call this only when the image needs to be displayed.
+     */
+    public byte[] getProductImage(int productId) throws SQLException {
+        String query = "SELECT image FROM ProductInfo WHERE id = ?";
+        try (Connection conn = DatabaseAdapter.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, productId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBytes("image");
+                }
+            }
+        }
+        return null;
     }
 
     /**

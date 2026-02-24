@@ -775,9 +775,21 @@ public class OwnerController {
         iv.setFitHeight(80);
         iv.setFitWidth(80);
         iv.setPreserveRatio(true);
-        if (product.getImage() != null) {
-            iv.setImage(product.getImage());
-        }
+
+        // Lazy load image in background thread
+        final int productId = product.getId();
+        new Thread(() -> {
+            try {
+                byte[] imgData = new com.greengrocer.dao.ProductDAO().getProductImage(productId);
+                if (imgData != null && imgData.length > 0) {
+                    javafx.scene.image.Image img = new javafx.scene.image.Image(
+                            new java.io.ByteArrayInputStream(imgData), 80, 0, true, true);
+                    javafx.application.Platform.runLater(() -> iv.setImage(img));
+                }
+            } catch (Exception e) {
+                // Silently skip - product just won't have an image
+            }
+        }).start();
         // Wrap in a container with fixed height
         VBox imageContainer = new VBox(iv);
         imageContainer.setAlignment(Pos.CENTER);
@@ -1136,7 +1148,8 @@ public class OwnerController {
                     product.setStock(stock);
                     product.setThreshold(threshold);
                     if (selectedImage[0] != null) {
-                        product.setImageData(java.nio.file.Files.readAllBytes(selectedImage[0].toPath()));
+                        byte[] rawImage = java.nio.file.Files.readAllBytes(selectedImage[0].toPath());
+                        product.setImageData(com.greengrocer.util.ImageCompressor.compress(rawImage));
                     }
                     if (productDAO.updateProduct(product)) {
                         statusLabel.setText("Product updated successfully!");
@@ -1145,8 +1158,12 @@ public class OwnerController {
                         dialog.close();
                     }
                 } else {
-                    FileInputStream imageStream = selectedImage[0] != null ? new FileInputStream(selectedImage[0])
-                            : null;
+                    java.io.ByteArrayInputStream imageStream = null;
+                    if (selectedImage[0] != null) {
+                        byte[] rawImage = java.nio.file.Files.readAllBytes(selectedImage[0].toPath());
+                        byte[] compressed = com.greengrocer.util.ImageCompressor.compress(rawImage);
+                        imageStream = new java.io.ByteArrayInputStream(compressed);
+                    }
                     // Use dbUnitType instead of hardcoded string
                     if (productDAO.addProduct(name, type, price, cost, stock, threshold, imageStream, dbUnitType)) {
                         statusLabel.setText("Product added successfully!");
