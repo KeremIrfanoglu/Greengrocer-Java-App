@@ -3,53 +3,82 @@ package com.greengrocer.setup;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * Handles the initialization of the database schema and default tables.
- * Checks if tables exist and creates them if they don't.
+ * Drops existing tables and recreates them with the correct schema.
+ * Loads credentials from db.properties file.
  */
 public class SetupDatabase {
-        // Database credentials
-        private static final String DB_URL = "jdbc:mysql://localhost:3306/"; // Connect to server first
-        private static final String DB_NAME = "cmpe343_project";
-        private static final String FULL_DB_URL = "jdbc:mysql://localhost:3306/" + DB_NAME;
-        private static final String USER = "myuser";
-        private static final String PASS = "1234";
 
-        /**
-         * Main method to execute the database verification and setup process.
-         * 
-         * @param args Command line arguments (not used).
-         */
+        private static final String DB_URL;
+        private static final String USER;
+        private static final String PASS;
+
+        static {
+                Properties props = new Properties();
+                try (FileInputStream fis = new FileInputStream("db.properties")) {
+                        props.load(fis);
+                } catch (IOException e) {
+                        System.err.println("Warning: db.properties not found. Using environment variables.");
+                }
+
+                DB_URL = props.getProperty("DB_URL",
+                                System.getenv().getOrDefault("DB_URL",
+                                                "jdbc:mysql://localhost:3306/railway?useSSL=false&allowPublicKeyRetrieval=true"));
+                USER = props.getProperty("DB_USER",
+                                System.getenv().getOrDefault("DB_USER", "root"));
+                PASS = props.getProperty("DB_PASS",
+                                System.getenv().getOrDefault("DB_PASS", ""));
+        }
+
         public static void main(String[] args) {
                 try {
-                        // 1. Create Database if not exists
-                        try (Connection rootConn = DriverManager.getConnection(DB_URL, USER, PASS);
-                                        Statement rootStmt = rootConn.createStatement()) {
-                                rootStmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + DB_NAME);
-                                System.out.println("Database '" + DB_NAME + "' checked/created.");
-                        }
-
-                        // 2. Connect to the specific database to create tables
-                        try (Connection conn = DriverManager.getConnection(FULL_DB_URL, USER, PASS);
+                        System.out.println("Connecting to database...");
+                        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
                                         Statement stmt = conn.createStatement()) {
 
-                                // Create UserInfo Table
-                                String createUsers = "CREATE TABLE IF NOT EXISTS UserInfo (" +
+                                System.out.println("Connected successfully!\n");
+
+                                // Drop all tables in correct order (respect foreign keys)
+                                System.out.println("Dropping existing tables...");
+                                stmt.executeUpdate("SET FOREIGN_KEY_CHECKS = 0");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS CouponUsage");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS Coupons");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS CarrierRatings");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS Messages");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS Cart");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS CustomerFavorites");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS OrderItems");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS OrderInfo");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS Favorites");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS Suppliers");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS ProductInfo");
+                                stmt.executeUpdate("DROP TABLE IF EXISTS UserInfo");
+                                stmt.executeUpdate("SET FOREIGN_KEY_CHECKS = 1");
+                                System.out.println("All existing tables dropped.\n");
+
+                                // ==================== UserInfo ====================
+                                // Columns used by: UserDAO, SeedData, ReportDAO, AnalyticsDAO, CarrierRatingDAO
+                                stmt.executeUpdate("CREATE TABLE UserInfo (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY," +
                                                 "username VARCHAR(50) UNIQUE NOT NULL," +
                                                 "password VARCHAR(100) NOT NULL," +
                                                 "role VARCHAR(20) NOT NULL," +
-                                                "full_name VARCHAR(100)," +
-                                                "phone_number VARCHAR(20)," +
+                                                "first_name VARCHAR(50)," +
+                                                "last_name VARCHAR(50)," +
                                                 "address TEXT," +
+                                                "phone VARCHAR(20)," +
                                                 "g_points DECIMAL(10, 2) DEFAULT 0.0" +
-                                                ")";
-                                stmt.executeUpdate(createUsers);
-                                System.out.println("Table 'UserInfo' checked/created.");
+                                                ")");
+                                System.out.println("Table 'UserInfo' created.");
 
-                                // Create ProductInfo Table
-                                String createProducts = "CREATE TABLE IF NOT EXISTS ProductInfo (" +
+                                // ==================== ProductInfo ====================
+                                // Columns used by: ProductDAO, OrderDAO, AnalyticsDAO
+                                stmt.executeUpdate("CREATE TABLE ProductInfo (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY," +
                                                 "name VARCHAR(100) UNIQUE NOT NULL," +
                                                 "type VARCHAR(50)," +
@@ -59,88 +88,124 @@ public class SetupDatabase {
                                                 "threshold DECIMAL(10, 2) DEFAULT 10.0," +
                                                 "image LONGBLOB," +
                                                 "unit_type VARCHAR(20) DEFAULT 'kg'" +
-                                                ")";
-                                stmt.executeUpdate(createProducts);
-                                System.out.println("Table 'ProductInfo' checked/created.");
+                                                ")");
+                                System.out.println("Table 'ProductInfo' created.");
 
-                                // Create Favorites Table
-                                String createFavorites = "CREATE TABLE IF NOT EXISTS Favorites (" +
+                                // ==================== Favorites ====================
+                                // Columns used by: FavoriteDAO
+                                stmt.executeUpdate("CREATE TABLE Favorites (" +
                                                 "user_id INT," +
                                                 "product_id INT," +
                                                 "PRIMARY KEY (user_id, product_id)," +
                                                 "FOREIGN KEY (user_id) REFERENCES UserInfo(id)," +
                                                 "FOREIGN KEY (product_id) REFERENCES ProductInfo(id)" +
-                                                ")";
-                                stmt.executeUpdate(createFavorites);
-                                System.out.println("Table 'Favorites' checked/created.");
+                                                ")");
+                                System.out.println("Table 'Favorites' created.");
 
-                                // New Tables for Order System
-                                String createOrders = "CREATE TABLE IF NOT EXISTS OrderInfo (" +
+                                // ==================== CustomerFavorites ====================
+                                // Columns used by: FavoritesDAO (customer_id, product_id)
+                                // Also referenced by: ProductDAO.deleteProduct
+                                stmt.executeUpdate("CREATE TABLE CustomerFavorites (" +
+                                                "customer_id INT," +
+                                                "product_id INT," +
+                                                "PRIMARY KEY (customer_id, product_id)," +
+                                                "FOREIGN KEY (customer_id) REFERENCES UserInfo(id)," +
+                                                "FOREIGN KEY (product_id) REFERENCES ProductInfo(id)" +
+                                                ")");
+                                System.out.println("Table 'CustomerFavorites' created.");
+
+                                // ==================== OrderInfo ====================
+                                // Columns used by: OrderDAO.createOrder, getOrdersByCustomer, getPendingOrders,
+                                // getActiveDeliveries, getCompletedDeliveriesByCarrier, saveInvoice,
+                                // cancelOrder, completeDelivery, getAllOrders, getOrdersByStatus
+                                stmt.executeUpdate("CREATE TABLE OrderInfo (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY," +
-                                                "customer_username VARCHAR(50)," +
-                                                "carrier_username VARCHAR(50)," +
+                                                "customer_id INT," +
+                                                "carrier_id INT," +
+                                                "order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
                                                 "status VARCHAR(50) DEFAULT 'Pending'," +
-                                                "total_price DECIMAL(10, 2)," +
-                                                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                                                "delivery_time TIMESTAMP NULL," +
-                                                "FOREIGN KEY (customer_username) REFERENCES UserInfo(username)" +
-                                                ")";
-                                stmt.executeUpdate(createOrders);
-                                System.out.println("Table 'OrderInfo' checked/created.");
+                                                "total_amount DECIMAL(10, 2)," +
+                                                "delivery_date TIMESTAMP NULL," +
+                                                "delivered_at TIMESTAMP NULL," +
+                                                "invoice_data LONGBLOB," +
+                                                "FOREIGN KEY (customer_id) REFERENCES UserInfo(id)," +
+                                                "FOREIGN KEY (carrier_id) REFERENCES UserInfo(id)" +
+                                                ")");
+                                System.out.println("Table 'OrderInfo' created.");
 
-                                String createOrderItems = "CREATE TABLE IF NOT EXISTS OrderItems (" +
+                                // ==================== OrderItems ====================
+                                // Columns used by: OrderDAO.createOrder (product_id, quantity,
+                                // price_at_purchase, cost_at_purchase)
+                                // OrderDAO.cancelOrder (product_id, quantity)
+                                // OrderDAO.getOrderDetailsText (product_id via JOIN)
+                                stmt.executeUpdate("CREATE TABLE OrderItems (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY," +
                                                 "order_id INT," +
-                                                "product_name VARCHAR(100)," +
+                                                "product_id INT," +
                                                 "quantity DECIMAL(10, 2)," +
                                                 "price_at_purchase DECIMAL(10, 2)," +
-                                                "FOREIGN KEY (order_id) REFERENCES OrderInfo(id)" +
-                                                ")";
-                                stmt.executeUpdate(createOrderItems);
-                                System.out.println("Table 'OrderItems' checked/created.");
+                                                "cost_at_purchase DECIMAL(10, 2) DEFAULT 0.0," +
+                                                "FOREIGN KEY (order_id) REFERENCES OrderInfo(id)," +
+                                                "FOREIGN KEY (product_id) REFERENCES ProductInfo(id)" +
+                                                ")");
+                                System.out.println("Table 'OrderItems' created.");
 
-                                // Coupon Table
-                                String createCoupons = "CREATE TABLE IF NOT EXISTS Coupons (" +
+                                // ==================== Coupons ====================
+                                // Columns used by: CouponDAO.createCoupon (code, discount_percent, max_uses)
+                                // CouponDAO.createCouponFromResultSet (id, code, discount_percent, max_uses,
+                                // current_uses, created_date, is_active)
+                                // CouponDAO.applyCoupon (current_uses, max_uses, is_active)
+                                stmt.executeUpdate("CREATE TABLE Coupons (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY," +
                                                 "code VARCHAR(50) UNIQUE NOT NULL," +
-                                                "discount_percentage DECIMAL(5, 2) NOT NULL," +
-                                                "valid_until TIMESTAMP," +
-                                                "usage_limit INT DEFAULT 1," +
-                                                "usage_count INT DEFAULT 0," +
-                                                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                                                "is_active BOOLEAN DEFAULT TRUE" +
-                                                ")";
-                                stmt.executeUpdate(createCoupons);
-                                System.out.println("Table 'Coupons' checked/created.");
+                                                "discount_percent DECIMAL(5, 2) NOT NULL," +
+                                                "max_uses INT DEFAULT 1," +
+                                                "current_uses INT DEFAULT 0," +
+                                                "is_active BOOLEAN DEFAULT TRUE," +
+                                                "created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                                                ")");
+                                System.out.println("Table 'Coupons' created.");
 
-                                // Coupon Usage History (Who used which coupon)
-                                String createCouponUsage = "CREATE TABLE IF NOT EXISTS CouponUsage (" +
+                                // ==================== CouponUsage ====================
+                                // Columns used by: CouponDAO.applyCoupon (coupon_id, user_id, order_id,
+                                // discount_amount)
+                                // CouponDAO.getCouponUsageHistory (used_date, discount_amount, order_id)
+                                // CouponDAO.hasUserUsedCoupon (user_id, coupon_id)
+                                stmt.executeUpdate("CREATE TABLE CouponUsage (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY," +
                                                 "coupon_id INT," +
                                                 "user_id INT," +
-                                                "used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                                                "order_id INT," +
+                                                "discount_amount DECIMAL(10, 2)," +
+                                                "used_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
                                                 "FOREIGN KEY (coupon_id) REFERENCES Coupons(id)," +
-                                                "FOREIGN KEY (user_id) REFERENCES UserInfo(id)" +
-                                                ")";
-                                stmt.executeUpdate(createCouponUsage);
-                                System.out.println("Table 'CouponUsage' checked/created.");
+                                                "FOREIGN KEY (user_id) REFERENCES UserInfo(id)," +
+                                                "FOREIGN KEY (order_id) REFERENCES OrderInfo(id)" +
+                                                ")");
+                                System.out.println("Table 'CouponUsage' created.");
 
-                                // Create Messages Table
-                                String createMessages = "CREATE TABLE IF NOT EXISTS Messages (" +
+                                // ==================== Messages ====================
+                                // Columns used by: MessageDAO.sendMessage (sender_id, receiver_id, subject,
+                                // content)
+                                // MessageDAO.getInbox/getSentMessages (id, sender_id, receiver_id, subject,
+                                // content, sent_at, is_read)
+                                // MessageDAO.getUnreadCount (receiver_id, is_read)
+                                stmt.executeUpdate("CREATE TABLE Messages (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY," +
-                                                "sender_username VARCHAR(50)," +
-                                                "receiver_username VARCHAR(50)," +
+                                                "sender_id INT," +
+                                                "receiver_id INT," +
+                                                "subject VARCHAR(200)," +
                                                 "content TEXT," +
                                                 "sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
                                                 "is_read BOOLEAN DEFAULT FALSE," +
-                                                "FOREIGN KEY (sender_username) REFERENCES UserInfo(username)," +
-                                                "FOREIGN KEY (receiver_username) REFERENCES UserInfo(username)" +
-                                                ")";
-                                stmt.executeUpdate(createMessages);
-                                System.out.println("Table 'Messages' checked/created.");
+                                                "FOREIGN KEY (sender_id) REFERENCES UserInfo(id)," +
+                                                "FOREIGN KEY (receiver_id) REFERENCES UserInfo(id)" +
+                                                ")");
+                                System.out.println("Table 'Messages' created.");
 
-                                // Create CarrierRatings Table
-                                String createCarrierRatings = "CREATE TABLE IF NOT EXISTS CarrierRatings (" +
+                                // ==================== CarrierRatings ====================
+                                // Columns used by: CarrierRatingDAO
+                                stmt.executeUpdate("CREATE TABLE CarrierRatings (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY," +
                                                 "order_id INT," +
                                                 "customer_id INT," +
@@ -151,12 +216,12 @@ public class SetupDatabase {
                                                 "FOREIGN KEY (order_id) REFERENCES OrderInfo(id)," +
                                                 "FOREIGN KEY (customer_id) REFERENCES UserInfo(id)," +
                                                 "FOREIGN KEY (carrier_id) REFERENCES UserInfo(id)" +
-                                                ")";
-                                stmt.executeUpdate(createCarrierRatings);
-                                System.out.println("Table 'CarrierRatings' checked/created.");
+                                                ")");
+                                System.out.println("Table 'CarrierRatings' created.");
 
-                                // Create Suppliers Table
-                                String createSuppliers = "CREATE TABLE IF NOT EXISTS Suppliers (" +
+                                // ==================== Suppliers ====================
+                                // Columns used by: SupplierDAO
+                                stmt.executeUpdate("CREATE TABLE Suppliers (" +
                                                 "id INT AUTO_INCREMENT PRIMARY KEY," +
                                                 "name VARCHAR(100) NOT NULL," +
                                                 "contact_person VARCHAR(100)," +
@@ -164,13 +229,27 @@ public class SetupDatabase {
                                                 "phone VARCHAR(20)," +
                                                 "address TEXT," +
                                                 "supplied_product_type VARCHAR(50)" +
-                                                ")";
-                                stmt.executeUpdate(createSuppliers);
-                                System.out.println("Table 'Suppliers' checked/created.");
+                                                ")");
+                                System.out.println("Table 'Suppliers' created.");
 
+                                // ==================== Cart ====================
+                                // Columns used by: CartDAO (user_id, product_id, quantity)
+                                stmt.executeUpdate("CREATE TABLE Cart (" +
+                                                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                                                "user_id INT," +
+                                                "product_id INT," +
+                                                "quantity DECIMAL(10, 2) DEFAULT 1.0," +
+                                                "UNIQUE KEY unique_cart_item (user_id, product_id)," +
+                                                "FOREIGN KEY (user_id) REFERENCES UserInfo(id)," +
+                                                "FOREIGN KEY (product_id) REFERENCES ProductInfo(id)" +
+                                                ")");
+                                System.out.println("Table 'Cart' created.");
+
+                                System.out.println("\n✅ All 12 tables created successfully!");
                         }
 
                 } catch (Exception e) {
+                        System.err.println("❌ Database setup failed:");
                         e.printStackTrace();
                 }
         }

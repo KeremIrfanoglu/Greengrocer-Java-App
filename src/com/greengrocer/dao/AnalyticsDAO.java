@@ -33,9 +33,9 @@ public class AnalyticsDAO {
     public List<CarrierPerformance> getCarrierPerformance() throws SQLException {
         List<CarrierPerformance> list = new ArrayList<>();
         String sql = "SELECT u.id, u.first_name, u.last_name, " +
-                "(SELECT COUNT(*) FROM OrderInfo o WHERE o.carrier_id = u.id AND o.status = 'DELIVERED') as delivery_count, "
+                "(SELECT COUNT(*) FROM OrderInfo o WHERE o.carrier_id = u.id AND o.status = 'Delivered') as delivery_count, "
                 +
-                "(SELECT COALESCE(SUM(o.total_amount), 0) FROM OrderInfo o WHERE o.carrier_id = u.id AND o.status = 'DELIVERED') as total_value, "
+                "(SELECT COALESCE(SUM(o.total_amount), 0) FROM OrderInfo o WHERE o.carrier_id = u.id AND o.status = 'Delivered') as total_value, "
                 +
                 "(SELECT COALESCE(AVG(cr.rating), 0) FROM CarrierRatings cr WHERE cr.carrier_id = u.id) as avg_rating, "
                 +

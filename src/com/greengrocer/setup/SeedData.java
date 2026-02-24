@@ -65,9 +65,14 @@ public class SeedData {
         stmt.executeUpdate("SET FOREIGN_KEY_CHECKS = 0");
         stmt.executeUpdate("TRUNCATE TABLE CouponUsage");
         stmt.executeUpdate("TRUNCATE TABLE Coupons");
+        stmt.executeUpdate("TRUNCATE TABLE CarrierRatings");
+        stmt.executeUpdate("TRUNCATE TABLE Messages");
+        stmt.executeUpdate("TRUNCATE TABLE Cart");
+        stmt.executeUpdate("TRUNCATE TABLE CustomerFavorites");
         stmt.executeUpdate("TRUNCATE TABLE Favorites");
         stmt.executeUpdate("TRUNCATE TABLE OrderItems");
         stmt.executeUpdate("TRUNCATE TABLE OrderInfo");
+        stmt.executeUpdate("TRUNCATE TABLE Suppliers");
         stmt.executeUpdate("TRUNCATE TABLE ProductInfo");
         stmt.executeUpdate("TRUNCATE TABLE UserInfo");
         stmt.executeUpdate("SET FOREIGN_KEY_CHECKS = 1");
@@ -222,7 +227,7 @@ public class SeedData {
     }
 
     private static void seedFavorites(Connection conn) throws SQLException {
-        String sql = "INSERT INTO Favorites (user_id, product_id) VALUES (?, ?)";
+        String sql = "INSERT INTO CustomerFavorites (customer_id, product_id) VALUES (?, ?)";
         PreparedStatement ps = conn.prepareStatement(sql);
 
         // cust's favorites
@@ -239,8 +244,8 @@ public class SeedData {
         ps.close();
     }
 
-    private static void addFavorite(PreparedStatement ps, int userId, int productId) throws SQLException {
-        ps.setInt(1, userId);
+    private static void addFavorite(PreparedStatement ps, int customerId, int productId) throws SQLException {
+        ps.setInt(1, customerId);
         ps.setInt(2, productId);
         ps.executeUpdate();
     }

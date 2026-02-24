@@ -1,0 +1,6 @@
+# Database Configuration
+# Copy this file as 'db.properties' and fill in your credentials.
+# db.properties is gitignored and will NOT be pushed to GitHub.
+DB_URL=jdbc:mysql://YOUR_HOST:YOUR_PORT/YOUR_DATABASE?useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
+DB_USER=your_username
+DB_PASS=your_password

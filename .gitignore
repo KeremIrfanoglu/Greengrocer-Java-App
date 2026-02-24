@@ -13,3 +13,6 @@ lib/.DS_Store
 lib/
 .DS_Store
 .vscode/launch.json
+
+# Database credentials (never commit)
+db.properties
