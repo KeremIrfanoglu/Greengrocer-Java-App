@@ -6,10 +6,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
-import javafx.scene.Scene;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import java.io.File;
 import java.sql.SQLException;
 
 import com.greengrocer.util.StyleHelper;

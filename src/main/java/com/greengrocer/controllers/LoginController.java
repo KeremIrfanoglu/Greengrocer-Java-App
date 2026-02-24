@@ -10,7 +10,6 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 
 import java.io.IOException;
 import java.sql.SQLException;
