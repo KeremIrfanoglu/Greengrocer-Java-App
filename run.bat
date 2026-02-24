@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo   QuickCommerce System - Starting...
+echo   Greengrocer Java App - Starting...
 echo ============================================
 echo.
 
@@ -16,13 +16,20 @@ if defined JAVA_HOME (
     )
 )
 
-REM 2. Check if java is on PATH and is version 21+
+REM 2. Check if java is on PATH
 where java >nul 2>&1
 if %errorlevel%==0 (
-    for /f "tokens=3" %%v in ('java -version 2^>^&1 ^| findstr /i "version"') do (
-        set "JAVA_VER=%%~v"
+    REM Java found on PATH - derive JAVA_HOME from it (mvnw.cmd requires JAVA_HOME)
+    for /f "delims=" %%I in ('where java') do (
+        set "JAVA_EXE_PATH=%%~dpI"
     )
-    echo [OK] Found Java on PATH: %JAVA_VER%
+    REM java.exe is in <JDK>/bin/, so go one level up for JAVA_HOME
+    if not defined JAVA_HOME (
+        for %%J in ("%JAVA_EXE_PATH%..") do set "JAVA_HOME=%%~fJ"
+        echo [OK] Found Java on PATH, set JAVA_HOME: %JAVA_HOME%
+    ) else (
+        echo [OK] Found Java on PATH
+    )
     goto :run
 )
 

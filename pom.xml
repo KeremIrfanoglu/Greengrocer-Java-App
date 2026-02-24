@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.greengrocer</groupId>
-    <artifactId>quickcommerce</artifactId>
+    <artifactId>greengrocer</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>QuickCommerce System</name>
+    <name>Greengrocer Java App</name>
     <description>A JavaFX-based greengrocer management system with order tracking, carrier management, and analytics.</description>
 
     <properties>
