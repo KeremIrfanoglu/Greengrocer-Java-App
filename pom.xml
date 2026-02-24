@@ -9,7 +9,7 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>QuickCommerce System</name>
+    <name>QuickCommerce System</nameQuickCommerce-Syste>
     <description>A JavaFX-based greengrocer management system with order tracking, carrier management, and analytics.</description>
 
     <properties>
