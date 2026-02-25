@@ -1,48 +1,48 @@
 /* ============================================
-   GREENGROCER - PREMIUM DARK THEME
-   Professional "Midnight Slate" Palette
+   GREENGROCER - FRESH LIGHT GREEN THEME
+   Professional "Fresh Produce" Palette
    ============================================ */
 
 /* ============= ROOT & VARIABLES ============= */
 .root {
     -fx-font-family: 'Segoe UI', 'Arial', sans-serif;
 
-    /* Primary Colors - Professional Emerald */
-    -fx-primary: #10B981;
-    /* Emerald 500 */
-    -fx-primary-dark: #059669;
-    /* Emerald 600 */
-    -fx-primary-light: #34D399;
-    /* Emerald 400 */
+    /* Primary Colors - Professional Green */
+    -fx-primary: #2E7D32;
+    /* Green 800 */
+    -fx-primary-dark: #1B5E20;
+    /* Green 900 */
+    -fx-primary-light: #4CAF50;
+    /* Green 500 */
 
-    /* Accent Colors - Royal Gold & Blue */
-    -fx-accent: #3B82F6;
-    /* Royal Blue 500 */
-    -fx-gold: #F59E0B;
-    /* Amber 500 */
+    /* Accent Colors - Matching Green & Gold */
+    -fx-accent: #388E3C;
+    /* Green 700 */
+    -fx-gold: #E65100;
+    /* Deep Orange */
 
-    /* Background Colors - Midnight Slate */
-    -fx-bg-dark: #0F172A;
-    /* Slate 900 (Deepest) */
-    -fx-bg-medium: #1E293B;
-    /* Slate 800 (Card Bg) */
-    -fx-bg-light: #334155;
-    /* Slate 700 (Borders/Input) */
-    -fx-bg-card: rgba(30, 41, 59, 0.95);
-    /* High opacity for readability */
+    /* Background Colors - Fresh Light Green */
+    -fx-bg-dark: #E8F5E9;
+    /* Green 50 (Lightest) */
+    -fx-bg-medium: #FFFFFF;
+    /* White (Card Bg) */
+    -fx-bg-light: #C8E6C9;
+    /* Green 100 (Borders/Input) */
+    -fx-bg-card: rgba(255, 255, 255, 0.97);
+    /* Near-white for readability */
 
-    /* Text Colors - High Contrast */
-    -fx-text-primary: #F1F5F9;
-    /* Slate 100 (Almost White) */
-    -fx-text-secondary: #94A3B8;
-    /* Slate 400 (Readable Gray) */
-    -fx-text-muted: #64748B;
-    /* Slate 500 (Dim text) */
+    /* Text Colors - Dark for Readability */
+    -fx-text-primary: #1B3B1E;
+    /* Very Dark Green */
+    -fx-text-secondary: #3D5940;
+    /* Medium Dark Green - legible */
+    -fx-text-muted: #6B8F70;
+    /* Sage Green (Dim text but still readable) */
 
     /* Status Colors */
-    -fx-success: #10B981;
-    -fx-warning: #F59E0B;
-    -fx-danger: #EF4444;
+    -fx-success: #2E7D32;
+    -fx-warning: #E65100;
+    -fx-danger: #C62828;
 
     /* Global Text Overrides for JavaFX Defaults */
     -fx-text-base-color: -fx-text-primary;
@@ -70,65 +70,68 @@
 /* ============= MAIN CONTAINERS ============= */
 .main-container,
 .dashboard-container {
-    -fx-background-color: -fx-bg-dark;
+    -fx-background-color: transparent;
 }
 
 .login-container {
-    /* Subtle professional gradient */
-    -fx-background-color: linear-gradient(to bottom right, #0F172A 0%, #1E293B 100%);
+    /* Soft green gradient with background image */
+    -fx-background-color: linear-gradient(to bottom right, #C8E6C9 0%, #E8F5E9 40%, #A5D6A7 100%);
 }
+
+/* Background image layer - applied via ImageView in FXML with 0.15 opacity */
 
 /* ============= GLASS CARDS ============= */
 .glass-card {
-    -fx-background-color: -fx-bg-medium;
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 16;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: rgba(46, 125, 50, 0.2);
     -fx-border-radius: 16;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.4), 20, 0, 0, 4);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 20, 0, 0, 4);
     -fx-padding: 24;
 }
 
 .glass-card-small {
-    -fx-background-color: rgba(51, 65, 85, 0.5);
-    /* Slate 700 with alpha */
+    -fx-background-color: rgba(200, 230, 201, 0.5);
+    /* Light green with alpha */
     -fx-background-radius: 12;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: rgba(46, 125, 50, 0.15);
     -fx-border-radius: 12;
     -fx-padding: 12;
 }
 
 /* ============= HEADER BAR ============= */
 .header-bar {
-    /* Sophisticated dark gradient, not harsh green */
-    -fx-background-color: linear-gradient(to right, #0F172A, #1E293B);
+    /* Professional green header */
+    -fx-background-color: linear-gradient(to right, #2E7D32, #388E3C);
     -fx-padding: 15 25;
-    -fx-border-color: transparent transparent rgba(255, 255, 255, 0.05) transparent;
+    -fx-border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
     -fx-border-width: 0 0 1 0;
 }
 
 .header-title {
-    -fx-font-size: 20px;
-    -fx-font-weight: 700;
-    -fx-text-fill: -fx-text-primary;
+    -fx-text-fill: white;
 }
 
 .header-subtitle {
-    -fx-font-size: 13px;
-    -fx-text-fill: -fx-text-secondary;
+    -fx-text-fill: rgba(255, 255, 255, 0.85);
 }
 
+/* Force all labels inside header bar to be white */
+.header-bar .label {
+    -fx-text-fill: white;
+}
+
+
+
 /* ============= SPECIAL BADGES (G-Points) ============= */
-/* This targets the G-Points label if we add this class */
 .g-points-badge {
-    -fx-text-fill: #F59E0B;
-    /* Gold Text */
+    -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-font-size: 16px;
-    -fx-background-color: rgba(245, 158, 11, 0.15);
-    /* Gold tint bg */
+    -fx-background-color: rgba(255, 255, 255, 0.2);
     -fx-background-radius: 20;
     -fx-padding: 6 16;
-    -fx-border-color: rgba(245, 158, 11, 0.3);
+    -fx-border-color: rgba(255, 255, 255, 0.4);
     -fx-border-radius: 20;
 }
 
@@ -200,20 +203,20 @@
 .button {
     -fx-background-color: -fx-bg-light;
     -fx-text-fill: -fx-text-primary;
-    -fx-font-size: 14px;
+    -fx-font-size: 16px;
     -fx-font-weight: 600;
     -fx-padding: 10 20;
     -fx-background-radius: 8;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: rgba(46, 125, 50, 0.2);
     -fx-border-radius: 8;
     -fx-cursor: hand;
     -fx-transition: all 0.2s;
 }
 
 .button:hover {
-    -fx-background-color: #475569;
-    /* Lighter slate */
-    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-background-color: #A5D6A7;
+    /* Medium green */
+    -fx-border-color: rgba(46, 125, 50, 0.4);
 }
 
 .button-primary {
@@ -252,41 +255,50 @@
 .text-field,
 .password-field,
 .combo-box {
-    -fx-background-color: rgba(15, 23, 42, 0.6);
-    -fx-border-color: -fx-bg-light;
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #A5D6A7;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
-    -fx-text-fill: -fx-text-primary;
-    -fx-prompt-text-fill: -fx-text-muted;
+    -fx-text-fill: #1B3B1E;
+    -fx-prompt-text-fill: #81A784;
     -fx-padding: 10 14;
 }
 
 .text-field:focused,
 .password-field:focused {
     -fx-border-color: -fx-primary;
-    -fx-effect: dropshadow(three-pass-box, rgba(16, 185, 129, 0.2), 8, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, rgba(46, 125, 50, 0.2), 8, 0, 0, 0);
 }
 
 /* ============= COMBO BOX POPUP FIX ============= */
 .combo-box-popup .list-view {
-    -fx-background-color: -fx-bg-medium;
-    -fx-border-color: -fx-bg-light;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.4), 10, 0, 0, 2);
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #A5D6A7;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 10, 0, 0, 2);
 }
 
 .combo-box-popup .list-cell {
     -fx-background-color: transparent;
-    -fx-text-fill: -fx-text-primary;
+    -fx-text-fill: #1B3B1E;
     -fx-padding: 8 12;
 }
 
 .combo-box-popup .list-cell:filled:selected,
 .combo-box-popup .list-cell:filled:hover {
-    -fx-background-color: -fx-bg-light;
-    -fx-text-fill: -fx-primary;
+    -fx-background-color: #E8F5E9;
+    -fx-text-fill: #2E7D32;
 }
 
-/* ============= SCROLL PANE FIX (The "White Box" Killer) ============= */
+/* Force combo-box button cell (selected value display) to use dark text */
+.combo-box>.list-cell {
+    -fx-text-fill: #1B3B1E;
+}
+
+.combo-box:showing>.list-cell {
+    -fx-text-fill: #1B3B1E;
+}
+
+/* ============= SCROLL PANE FIX ============= */
 .scroll-pane {
     -fx-background-color: transparent;
 }
@@ -300,12 +312,12 @@
 }
 
 .scroll-bar .thumb {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-color: rgba(46, 125, 50, 0.2);
     -fx-background-radius: 4;
 }
 
 .scroll-bar .thumb:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-color: rgba(46, 125, 50, 0.35);
 }
 
 .scroll-bar .track {
@@ -318,7 +330,7 @@
 }
 
 .split-pane>.split-pane-divider {
-    -fx-background-color: -fx-bg-dark;
+    -fx-background-color: #A5D6A7;
     -fx-padding: 0 1 0 1;
 }
 
@@ -329,40 +341,44 @@
 
 .tab-pane .tab-header-area {
     -fx-padding: 0 0 0 10;
-    -fx-background-color: transparent;
+    -fx-background-color: rgba(168, 208, 172, 0.6);
 }
 
 .tab-pane .tab-header-background {
-    -fx-background-color: transparent;
-    /* Fix for white bar */
+    -fx-background-color: rgba(168, 208, 172, 0.6);
 }
 
 .tab {
-    -fx-background-color: transparent;
+    -fx-background-color: rgba(200, 230, 201, 0.5);
     -fx-padding: 10 20;
-    -fx-border-color: transparent;
-    -fx-background-radius: 0;
+    -fx-border-color: rgba(46, 125, 50, 0.15);
+    -fx-background-radius: 6 6 0 0;
+    -fx-border-radius: 6 6 0 0;
 }
 
 .tab-label {
-    -fx-text-fill: -fx-text-secondary;
+    -fx-text-fill: #3D5940;
     -fx-font-weight: 600;
     -fx-font-size: 14px;
 }
 
 .tab:selected {
-    -fx-background-color: transparent;
-    -fx-border-color: -fx-primary;
-    -fx-border-width: 0 0 3 0;
-    /* Underline style */
+    -fx-background-color: rgba(255, 255, 255, 0.8);
+    -fx-border-color: #2E7D32 #2E7D32 transparent #2E7D32;
+    -fx-border-width: 2 1 0 1;
 }
 
 .tab:selected .tab-label {
-    -fx-text-fill: -fx-text-primary;
+    -fx-text-fill: #1B5E20;
+    -fx-font-weight: 700;
+}
+
+.tab:hover {
+    -fx-background-color: rgba(200, 230, 201, 0.8);
 }
 
 .tab:hover .tab-label {
-    -fx-text-fill: -fx-text-primary;
+    -fx-text-fill: #1B3B1E;
 }
 
 .tab-content-area {
@@ -373,7 +389,7 @@
 /* ============= TABLE VIEW ============= */
 .table-view {
     -fx-background-color: transparent;
-    -fx-border-color: -fx-bg-light;
+    -fx-border-color: #A5D6A7;
     -fx-border-radius: 8;
 }
 
@@ -383,57 +399,44 @@
 .table-view .column-header-background .filler,
 .table-view .column-header-background .label,
 .table-view .column-header-background .show-hide-columns-button {
-    -fx-background-color: -fx-bg-light;
+    -fx-background-color: #C8E6C9;
 }
 
 .table-view .column-header .label {
-    -fx-text-fill: -fx-text-primary;
+    -fx-text-fill: #1B3B1E;
     -fx-font-weight: 700;
 }
 
 .table-row-cell {
-    -fx-background-color: -fx-bg-medium;
-    -fx-border-color: transparent transparent rgba(255, 255, 255, 0.05) transparent;
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent transparent rgba(46, 125, 50, 0.08) transparent;
 }
 
 .table-row-cell:odd {
-    -fx-background-color: rgba(30, 41, 59, 0.7);
+    -fx-background-color: #F1F8E9;
 }
 
 .table-row-cell:hover {
-    -fx-background-color: rgba(51, 65, 85, 0.8);
+    -fx-background-color: #E8F5E9;
 }
 
 .table-row-cell:selected {
-    -fx-background-color: rgba(16, 185, 129, 0.2);
-    /* Emerald tint */
+    -fx-background-color: rgba(46, 125, 50, 0.15);
 }
 
 /* ============= PRODUCT ITEMS ============= */
 .product-card {
-    -fx-background-color: -fx-bg-medium;
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 12;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 8, 0, 0, 2);
+    -fx-border-color: rgba(46, 125, 50, 0.15);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 8, 0, 0, 2);
 }
 
 .product-card:hover {
-    -fx-border-color: -fx-primary;
-    -fx-effect: dropshadow(three-pass-box, rgba(16, 185, 129, 0.3), 12, 0, 0, 4);
+    -fx-border-color: #2E7D32;
+    -fx-effect: dropshadow(three-pass-box, rgba(46, 125, 50, 0.2), 12, 0, 0, 4);
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
-}
-
-/* ============= MUSIC BUTTON ============= */
-.music-toggle-button {
-    -fx-background-color: rgba(255, 255, 255, 0.05);
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-text-fill: -fx-text-secondary;
-}
-
-.music-toggle-button:hover {
-    -fx-text-fill: -fx-primary;
-    -fx-border-color: -fx-primary;
 }
 
 /* ============= CHARTS ============= */
@@ -451,11 +454,11 @@
 }
 
 .chart-vertical-grid-lines {
-    -fx-stroke: #334155;
+    -fx-stroke: #1E3A28;
 }
 
 .chart-horizontal-grid-lines {
-    -fx-stroke: #334155;
+    -fx-stroke: #1E3A28;
 }
 
 .chart-alternative-column-fill {

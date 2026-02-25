@@ -16,13 +16,13 @@ import java.util.Optional;
 public class StyledAlert {
 
     // Theme colors
-    private static final String BG_PRIMARY = "#1a1a2e";
-    private static final String BG_SECONDARY = "#16213e";
+    private static final String BG_PRIMARY = "#E8F5E9";
+    private static final String BG_SECONDARY = "#C8E6C9";
     private static final String TEXT_PRIMARY = "#eee";
-    private static final String ACCENT_COLOR = "#6366f1";
-    private static final String SUCCESS_COLOR = "#4CAF50";
-    private static final String WARNING_COLOR = "#ff9800";
-    private static final String ERROR_COLOR = "#f44336";
+    private static final String ACCENT_COLOR = "#10B981";
+    private static final String SUCCESS_COLOR = "#2E7D32";
+    private static final String WARNING_COLOR = "#E65100";
+    private static final String ERROR_COLOR = "#C62828";
 
     private static final String BASE_STYLE = "-fx-background-color: linear-gradient(to bottom, " + BG_PRIMARY + ", "
             + BG_SECONDARY + ");" +
@@ -32,7 +32,7 @@ public class StyledAlert {
             "-fx-font-size: 16px;" +
             "-fx-font-weight: bold;";
 
-    private static final String CONTENT_STYLE = "-fx-text-fill: #cccccc;" +
+    private static final String CONTENT_STYLE = "-fx-text-fill: #1B3B1E;" +
             "-fx-font-size: 13px;";
 
     /**

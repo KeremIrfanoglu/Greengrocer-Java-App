@@ -73,7 +73,7 @@ public class InvoiceGenerator {
                         headerCell.setBorder(Rectangle.NO_BORDER);
                         headerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
 
-                        Paragraph title = new Paragraph("GROUP10 GREENGROCER", titleFont);
+                        Paragraph title = new Paragraph("GREENGROCER", titleFont);
                         title.setAlignment(Element.ALIGN_CENTER);
                         headerCell.addElement(title);
 
@@ -234,7 +234,7 @@ public class InvoiceGenerator {
                         footerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
 
                         Font footerFont = new Font(Font.HELVETICA, 10, Font.NORMAL, Color.WHITE);
-                        Paragraph thanks = new Paragraph("Thank you for shopping with Group10 GreenGrocer!",
+                        Paragraph thanks = new Paragraph("Thank you for shopping with GreenGrocer!",
                                         footerFont);
                         thanks.setAlignment(Element.ALIGN_CENTER);
                         footerCell.addElement(thanks);

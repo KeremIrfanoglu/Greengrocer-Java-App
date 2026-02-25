@@ -1,6 +1,7 @@
 package com.greengrocer.controllers;
 
 import com.greengrocer.dao.UserDAO;
+import com.greengrocer.util.BackgroundHelper;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import javafx.scene.control.PasswordField;
@@ -65,6 +66,10 @@ public class RegisterController {
     @FXML
     private Label statusLabel;
 
+    /** Root pane for background image */
+    @FXML
+    private javafx.scene.layout.StackPane rootPane;
+
     /** Data access object for user operations */
     private UserDAO userDAO;
 
@@ -73,6 +78,14 @@ public class RegisterController {
      */
     public RegisterController() {
         this.userDAO = new UserDAO();
+    }
+
+    /**
+     * Initializes the controller. Adds the background image.
+     */
+    @FXML
+    public void initialize() {
+        BackgroundHelper.addBackground(rootPane, 0.15);
     }
 
     /**

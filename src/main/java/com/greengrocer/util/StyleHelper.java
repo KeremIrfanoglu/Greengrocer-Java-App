@@ -49,7 +49,33 @@ public class StyleHelper {
      * @return A styled Scene
      */
     public static Scene createStyledScene(javafx.scene.Parent root, double width, double height) {
-        Scene scene = new Scene(root, width, height);
+        // Wrap root in a StackPane with background image
+        javafx.scene.layout.StackPane wrapper = new javafx.scene.layout.StackPane();
+        wrapper.getStyleClass().add("dashboard-container");
+
+        // Add background image
+        try {
+            javafx.scene.image.Image bgImage = new javafx.scene.image.Image(
+                    StyleHelper.class.getResourceAsStream("/com/greengrocer/assets/background.png"));
+            javafx.scene.image.ImageView bgView = new javafx.scene.image.ImageView(bgImage);
+            bgView.setPreserveRatio(false);
+            bgView.setOpacity(0.10);
+            bgView.setMouseTransparent(true);
+            wrapper.getChildren().add(bgView);
+
+            // Bind after scene is created
+            javafx.application.Platform.runLater(() -> {
+                if (wrapper.getScene() != null) {
+                    bgView.fitWidthProperty().bind(wrapper.getScene().widthProperty());
+                    bgView.fitHeightProperty().bind(wrapper.getScene().heightProperty());
+                }
+            });
+        } catch (Exception e) {
+            // Continue without background
+        }
+
+        wrapper.getChildren().add(root);
+        Scene scene = new Scene(wrapper, width, height);
         applyStyles(scene);
         return scene;
     }

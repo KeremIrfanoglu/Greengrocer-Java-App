@@ -2,6 +2,7 @@ package com.greengrocer.controllers;
 
 import com.greengrocer.dao.UserDAO;
 import com.greengrocer.models.User;
+import com.greengrocer.util.BackgroundHelper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -49,6 +50,10 @@ public class LoginController {
     @FXML
     private Label errorLabel;
 
+    /** Root pane for background image */
+    @FXML
+    private javafx.scene.layout.StackPane rootPane;
+
     /** Data access object for user operations */
     private UserDAO userDAO;
 
@@ -57,6 +62,14 @@ public class LoginController {
      */
     public LoginController() {
         this.userDAO = new UserDAO();
+    }
+
+    /**
+     * Initializes the controller. Adds the background image.
+     */
+    @FXML
+    public void initialize() {
+        BackgroundHelper.addBackground(rootPane, 0.15);
     }
 
     /**
@@ -90,7 +103,7 @@ public class LoginController {
                 // Successful Login
                 System.out.println("Login Successful: " + user.getRole());
                 errorLabel.setText("Success! Logging in...");
-                errorLabel.setStyle("-fx-text-fill: #4CAF50;"); // Green color for success
+                errorLabel.setStyle("-fx-text-fill: #2E7D32;"); // Green color for success
 
                 // Redirect based on role
                 String fxmlFile = "";
@@ -128,7 +141,7 @@ public class LoginController {
                         }
 
                         Stage stage = (Stage) usernameField.getScene().getWindow();
-                        stage.setTitle("Group10 GreenGrocer - " +
+                        stage.setTitle("GreenGrocer - " +
                                 user.getRole().substring(0, 1).toUpperCase() + user.getRole().substring(1)
                                 + " Dashboard");
                         stage.setScene(StyleHelper.createStyledScene(root, 1200, 750));

@@ -26,14 +26,94 @@ The application features real-time inventory management, order processing with d
 
 ## 📸 Screenshots
 
-<!-- 
-  Add your screenshots here. Place image files in a /screenshots folder and reference them like:
-  ![Login Screen](screenshots/login.png)
--->
+<div align="center">
 
-| Login Screen | Customer Dashboard | Owner Panel |
-|:---:|:---:|:---:|
-| *Coming soon* | *Coming soon* | *Coming soon* |
+<img src="screenshots/login.png" width="32%" alt="Login Screen" /> <img src="screenshots/register.png" width="32%" alt="Register Screen" /> <img src="screenshots/customer_dashboard.png" width="32%" alt="Customer Dashboard" />
+
+<img src="screenshots/cart.png" width="32%" alt="Shopping Cart" /> <img src="screenshots/owner_panel.png" width="32%" alt="Owner Panel" />
+
+</div>
+
+---
+
+## ✨ Features
+
+### 👤 Customer Panel
+- 🛒 Browse products by category with real-time stock & pricing
+- 🛍️ Add to cart, adjust quantities, and place orders
+- ⭐ Favorite products for quick access
+- 💰 Earn & spend **G-Points** (loyalty rewards system)
+- 🎟️ Apply discount coupons at checkout
+- 📄 Download **PDF invoices** for completed orders
+- 💬 Built-in messaging with the store owner
+- 📊 View personal order history and spending analytics
+
+### 🏪 Owner Panel
+- 📦 Full product management — add, edit, and delete products with images
+- 🖼️ Upload product images (auto-compressed for performance)
+- 📊 Sales analytics with revenue charts and profit/loss tracking
+- 🚚 Assign carriers to pending orders
+- 👥 Manage carriers and supplier records
+- 🎟️ Create and distribute discount coupons
+- 💬 Messaging system with customers and carriers
+- 📈 Inventory tracking with **low-stock alerts**
+
+### 🚚 Carrier Panel
+- 📋 View and accept delivery assignments
+- 🔄 Update delivery status in real-time
+- ⭐ View customer ratings and feedback
+- 💬 Communicate with the owner
+- 📊 Track delivery history and performance metrics
+
+---
+
+## 🔧 Technical Highlights
+
+| Feature | Description |
+|---------|-------------|
+| ☁️ **Cloud Database** | MySQL hosted on Railway — no local database installation required |
+| 🔐 **Password Security** | All passwords are stored with salted SHA-256 hashing |
+| 🖥️ **Cross-Platform** | Runs on Windows, macOS, and Linux with automatic JDK detection |
+| 🖼️ **Smart Image Handling** | Product images can be uploaded through the app and are automatically resized and compressed for optimal performance |
+| 📄 **PDF Generation** | Professional invoices generated with OpenPDF |
+| 🏗️ **MVC Architecture** | Clean separation of concerns with DAO pattern for database operations |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Language** | Java 21 |
+| **UI Framework** | JavaFX 21 (FXML + CSS) |
+| **Database** | MySQL 8.0 (Cloud — Railway) |
+| **PDF Generation** | OpenPDF 2.0 |
+| **Build Tool** | Apache Maven (via included wrapper — no installation needed) |
+| **Architecture** | MVC + DAO Pattern |
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Presentation Layer                │
+│            JavaFX UI (FXML Views + CSS)             │
+├─────────────────────────────────────────────────────┤
+│                    Controller Layer                  │
+│    CustomerController · OwnerController · Carrier   │
+│    LoginController · RegisterController             │
+├─────────────────────────────────────────────────────┤
+│                  Data Access Layer (DAO)             │
+│   ProductDAO · OrderDAO · UserDAO · CartDAO · ...   │
+├─────────────────────────────────────────────────────┤
+│                   Database Adapter                   │
+│               JDBC · Connection Pooling             │
+├─────────────────────────────────────────────────────┤
+│                  MySQL Database (Cloud)              │
+│                   Railway Platform                   │
+└─────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -104,7 +184,7 @@ You should now have a folder named `Greengrocer-Java-App-main` (or similar) cont
 
 **To request the `db.properties` file, contact me via:**
 
-- 📧 **Email:** keremirfanoglu1@gmail.com
+- 📧 **Email:** kerem.irfanoglu@gmail.com
 - 💬 **GitHub Issues:** [Open an issue](https://github.com/KeremIrfanoglu/Greengrocer-Java-App/issues) on the repository
 
 Once you receive the file, place `db.properties` in the **root directory** of the project — the same folder where `pom.xml`, `run.bat`, and `run.sh` are located:
@@ -189,87 +269,6 @@ That's it! The script will automatically detect your JDK installation and launch
 | 🚚 Carrier | `carrier2` | `123456` |
 
 </details>
-
----
-
-## ✨ Features
-
-### 👤 Customer Panel
-- 🛒 Browse products by category with real-time stock & pricing
-- 🛍️ Add to cart, adjust quantities, and place orders
-- ⭐ Favorite products for quick access
-- 💰 Earn & spend **G-Points** (loyalty rewards system)
-- 🎟️ Apply discount coupons at checkout
-- 📄 Download **PDF invoices** for completed orders
-- 💬 Built-in messaging with the store owner
-- 📊 View personal order history and spending analytics
-
-### 🏪 Owner Panel
-- 📦 Full product management — add, edit, and delete products with images
-- 🖼️ Upload product images (auto-compressed for performance)
-- 📊 Sales analytics with revenue charts and profit/loss tracking
-- 🚚 Assign carriers to pending orders
-- 👥 Manage carriers and supplier records
-- 🎟️ Create and distribute discount coupons
-- 💬 Messaging system with customers and carriers
-- 📈 Inventory tracking with **low-stock alerts**
-
-### 🚚 Carrier Panel
-- 📋 View and accept delivery assignments
-- 🔄 Update delivery status in real-time
-- ⭐ View customer ratings and feedback
-- 💬 Communicate with the owner
-- 📊 Track delivery history and performance metrics
-
----
-
-## 🔧 Technical Highlights
-
-| Feature | Description |
-|---------|-------------|
-| ☁️ **Cloud Database** | MySQL hosted on Railway — no local database installation required |
-| 🔐 **Password Security** | All passwords are stored with salted SHA-256 hashing |
-| 🖥️ **Cross-Platform** | Runs on Windows, macOS, and Linux with automatic JDK detection |
-| �️ **Smart Image Handling** | Product images can be uploaded through the app and are automatically resized and compressed for optimal performance |
-| 📄 **PDF Generation** | Professional invoices generated with OpenPDF |
-| 🏗️ **MVC Architecture** | Clean separation of concerns with DAO pattern for database operations |
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Language** | Java 21 |
-| **UI Framework** | JavaFX 21 (FXML + CSS) |
-| **Database** | MySQL 8.0 (Cloud — Railway) |
-| **PDF Generation** | OpenPDF 2.0 |
-| **Build Tool** | Apache Maven (via included wrapper — no installation needed) |
-| **Architecture** | MVC + DAO Pattern |
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│                    Presentation Layer                │
-│            JavaFX UI (FXML Views + CSS)             │
-├─────────────────────────────────────────────────────┤
-│                    Controller Layer                  │
-│    CustomerController · OwnerController · Carrier   │
-│    LoginController · RegisterController             │
-├─────────────────────────────────────────────────────┤
-│                  Data Access Layer (DAO)             │
-│   ProductDAO · OrderDAO · UserDAO · CartDAO · ...   │
-├─────────────────────────────────────────────────────┤
-│                   Database Adapter                   │
-│               JDBC · Connection Pooling             │
-├─────────────────────────────────────────────────────┤
-│                  MySQL Database (Cloud)              │
-│                   Railway Platform                   │
-└─────────────────────────────────────────────────────┘
-```
 
 ---
 

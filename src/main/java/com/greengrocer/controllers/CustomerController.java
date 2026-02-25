@@ -722,7 +722,7 @@ public class CustomerController {
 
         // Name label with fixed height (2 lines max)
         Label nameLabel = new Label(product.getName());
-        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #F8FAFC;");
+        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #1B3B1E;");
         nameLabel.setWrapText(true);
         nameLabel.setMaxWidth(160);
         nameLabel.setPrefHeight(32);
@@ -731,7 +731,7 @@ public class CustomerController {
 
         // Type label
         Label typeLabel = new Label(product.getType());
-        typeLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #94A3B8;");
+        typeLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #6B8F70;");
         typeLabel.setPrefHeight(16);
 
         // Price label
@@ -761,7 +761,7 @@ public class CustomerController {
         if (product.getStock() <= product.getThreshold()) {
             stockLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold; -fx-font-size: 10px;");
         } else {
-            stockLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 10px;");
+            stockLabel.setStyle("-fx-text-fill: #6B8F70; -fx-font-size: 10px;");
         }
         stockLabel.setPrefHeight(16);
 
@@ -965,7 +965,7 @@ public class CustomerController {
                 // Center: Editable Quantity Field
                 TextField qtyField = new TextField(String.valueOf((int) finalCartItem.getQuantity()));
                 qtyField.setStyle(
-                        "-fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: transparent; -fx-alignment: center; -fx-padding: 0; -fx-font-size: 13px;");
+                        "-fx-font-weight: bold; -fx-text-fill: #1B3B1E; -fx-background-color: transparent; -fx-alignment: center; -fx-padding: 0; -fx-font-size: 13px;");
                 qtyField.setPrefWidth(30);
                 qtyField.setPrefHeight(30);
                 qtyField.setMinWidth(30);
@@ -1832,7 +1832,7 @@ public class CustomerController {
                 currentUser.setGPoints(points);
                 gPointsLabel.setText("G Points: " + String.format("%.0f", points));
                 gPointsLabel.setStyle(
-                        "-fx-font-weight: bold; -fx-text-fill: #FF4500; -fx-font-size: 18px; -fx-background-color: linear-gradient(to right, rgba(255,215,0,0.3), rgba(255,69,0,0.3)); -fx-padding: 8 15; -fx-background-radius: 20;");
+                        "-fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 18px; -fx-background-color: rgba(255,255,255,0.2); -fx-padding: 8 15; -fx-background-radius: 20;");
             } catch (java.sql.SQLException e) {
                 gPointsLabel.setText("G Points: 0");
             }
@@ -1919,7 +1919,7 @@ public class CustomerController {
                             : String.valueOf((int) item.getQuantity());
                     Label name = new Label(
                             item.getProduct().getName() + " x " + qtyStr + item.getProduct().getUnitLabel());
-                    name.setStyle("-fx-text-fill: white; -fx-wrap-text: true; -fx-font-size: 11px;");
+                    name.setStyle("-fx-text-fill: #1B3B1E; -fx-wrap-text: true; -fx-font-size: 11px;");
                     name.setPrefWidth(160);
                     name.setWrapText(true);
 
@@ -1927,7 +1927,7 @@ public class CustomerController {
                     javafx.scene.layout.HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 
                     Label price = new Label(FormatHelper.formatCurrency(itemTotal));
-                    price.setStyle("-fx-text-fill: #ddd; -fx-alignment: CENTER-RIGHT; -fx-font-size: 11px;");
+                    price.setStyle("-fx-text-fill: #3D5940; -fx-alignment: CENTER-RIGHT; -fx-font-size: 11px;");
 
                     row.getChildren().addAll(name, spacer, price);
                     cartSummaryList.getChildren().add(row);

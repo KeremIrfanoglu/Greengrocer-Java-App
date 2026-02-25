@@ -36,12 +36,13 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
 
-<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+<StackPane fx:id="rootPane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
            fx:controller="com.greengrocer.controllers.RegisterController"
-           styleClass="login-container" prefWidth="960" prefHeight="540">
+           styleClass="login-container" prefWidth="960" prefHeight="650">
     
 
     
+
     <VBox alignment="CENTER" spacing="0">
         
         <!-- Registration Card -->
@@ -81,7 +82,7 @@
                 <PasswordField fx:id="confirmPasswordField" promptText="Confirm password" prefWidth="200" styleClass="password-field" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                 
                 <!-- Password Hint -->
-                <Label text="Min 6 chars, 1 uppercase, 1 number" style="-fx-font-size: 10px; -fx-text-fill: #888;" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                <Label text="Min 6 chars, 1 uppercase, 1 number" style="-fx-font-size: 10px; -fx-text-fill: #3D5940;" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                 
                 <!-- First Name -->
                 <Label text="First Name" styleClass="text-label" GridPane.columnIndex="0" GridPane.rowIndex="4" />
