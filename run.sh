@@ -9,25 +9,25 @@ echo
 # ============================================
 
 find_jdk() {
-    # 1. If JAVA_HOME is set and valid, use it
+    
     if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
         echo "[OK] Using JAVA_HOME: $JAVA_HOME"
         return 0
     fi
 
-    # 2. Check if java is on PATH
+    
     if command -v java &> /dev/null; then
         echo "[OK] Found Java on PATH"
         return 0
     fi
 
-    # 3. Auto-search common JDK installation directories
+    
     echo "[INFO] JAVA_HOME not set and Java not on PATH. Searching for JDK..."
     echo
 
     SEARCH_DIRS=()
 
-    # macOS paths
+    #macOS paths
     if [ -d "/Library/Java/JavaVirtualMachines" ]; then
         for d in /Library/Java/JavaVirtualMachines/temurin-21*/Contents/Home \
                  /Library/Java/JavaVirtualMachines/jdk-21*/Contents/Home \
@@ -38,7 +38,7 @@ find_jdk() {
         done
     fi
 
-    # Linux paths
+    
     for d in /usr/lib/jvm/java-21-openjdk* \
              /usr/lib/jvm/jdk-21* \
              /usr/lib/jvm/temurin-21* \
@@ -48,7 +48,7 @@ find_jdk() {
         [ -d "$d" ] && SEARCH_DIRS+=("$d")
     done
 
-    # User-local paths (SDKMAN, IntelliJ, etc.)
+    
     for d in "$HOME/.sdkman/candidates/java/"*21* \
              "$HOME/.jdks/jdk-21"* \
              "$HOME/.jdks/temurin-21"* \
@@ -56,7 +56,7 @@ find_jdk() {
         [ -d "$d" ] && SEARCH_DIRS+=("$d")
     done
 
-    # Homebrew paths (macOS)
+    
     if [ -d "/opt/homebrew/opt/openjdk@21" ]; then
         SEARCH_DIRS+=("/opt/homebrew/opt/openjdk@21")
     fi
@@ -64,7 +64,7 @@ find_jdk() {
         SEARCH_DIRS+=("/usr/local/opt/openjdk@21")
     fi
 
-    # Use the first found JDK
+    
     for jdk_dir in "${SEARCH_DIRS[@]}"; do
         if [ -x "$jdk_dir/bin/java" ]; then
             echo "[OK] Found JDK at: $jdk_dir"
