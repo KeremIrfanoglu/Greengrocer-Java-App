@@ -1,4 +1,4 @@
-﻿package com.greengrocer.controllers;
+package com.greengrocer.controllers;
 
 import com.greengrocer.dao.ProductDAO;
 import com.greengrocer.dao.ReportDAO;
